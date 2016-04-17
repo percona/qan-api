@@ -1,0 +1,156 @@
+[
+    {
+        "Created": "2015-04-22T19:22:46Z",
+        "DSN": "root:pass@tcp(127.0.0.1:3300)/",
+        "Deleted": "0001-01-01T00:00:00Z",
+        "Name": "os-bm-cloud-0001",
+        "ParentUUID": "",
+        "Prefix": "os",
+        "Properties": {
+            "key-0001-01": "value-0001-01",
+            "key-0001-02": "value-0001-02",
+            "key-0001-03": "value-0001-03"
+        },
+        "Subsystems": [
+            {
+                "Created": "2015-04-22T19:22:46Z",
+                "DSN": "user:pass@tcp(127.0.0.1:3307)/",
+                "Deleted": "0001-01-01T00:00:00Z",
+                "Name": "agent-bm-cloud-0001",
+                "ParentUUID": "2e6eef26d97b48b4af3179d414899d57",
+                "Prefix": "agent",
+                "Properties": {
+                    "key-0002-01": "value-0002-01",
+                    "key-0002-02": "value-0002-02",
+                    "key-0002-03": "value-0002-03"
+                },
+                "Subsystems": [],
+                "Type": "Percona Agent",
+                "UUID": "bfffe31b03ef4823ab104a6fa172c39a",
+                "V2": null
+            },
+            {
+                "Created": "2015-04-22T19:22:46Z",
+                "DSN": "user:pass@tcp(127.0.0.1:3308)/",
+                "Deleted": "0001-01-01T00:00:00Z",
+                "Name": "mysql-bm-cloud-0001",
+                "ParentUUID": "2e6eef26d97b48b4af3179d414899d57",
+                "Prefix": "mysql",
+                "Properties": {
+                    "key-0003-01": "value-0003-01",
+                    "key-0003-02": "value-0003-02",
+                    "key-0003-03": "value-0003-03"
+                },
+                "Subsystems": [
+                    {
+                        "Created": "2015-04-22T19:22:46Z",
+                        "DSN": "user:pass@tcp(127.0.0.1:3307)/",
+                        "Deleted": "0001-01-01T00:00:00Z",
+                        "Name": "bm-cloud-0001",
+                        "ParentUUID": "3d341070b1d74a84bb5f797c3ddbccc4",
+                        "Prefix": "db",
+                        "Properties": {
+                            "key-0004-01": "value-0004-01",
+                            "key-0004-02": "value-0004-02",
+                            "key-0004-03": "value-0004-03"
+                        },
+                        "Subsystems": [
+                            {
+                                "Created": "2015-04-22T19:22:46Z",
+                                "DSN": "user:pass@tcp(127.0.0.1:3307)/",
+                                "Deleted": "0001-01-01T00:00:00Z",
+                                "Name": "table0001",
+                                "ParentUUID": "25b4caccb54d433daecedd104ff5c279",
+                                "Prefix": "tbl",
+                                "Properties": {
+                                    "key-0005-01": "value-0005-01",
+                                    "key-0005-02": "value-0005-02",
+                                    "key-0005-03": "value-0005-03"
+                                },
+                                "Subsystems": [
+                                    {
+                                        "Created": "2015-04-22T19:22:46Z",
+                                        "DSN": "user:pass@tcp(127.0.0.1:3307)/",
+                                        "Deleted": "0001-01-01T00:00:00Z",
+                                        "Name": "index0001",
+                                        "ParentUUID": "fb06046d8a8342688f9049623798ab2a",
+                                        "Prefix": "idx",
+                                        "Properties": {
+                                            "key-0006-01": "value-0006-01",
+                                            "key-0006-02": "value-0006-02",
+                                            "key-0006-03": "value-0006-03"
+                                        },
+                                        "Subsystems": [],
+                                        "Type": "Index",
+                                        "UUID": "02b3f9dcc0bf487b8089224ecd9b81d8",
+                                        "V2": null
+                                    }
+                                ],
+                                "Type": "Table",
+                                "UUID": "fb06046d8a8342688f9049623798ab2a",
+                                "V2": null
+                            }
+                        ],
+                        "Type": "Database",
+                        "UUID": "25b4caccb54d433daecedd104ff5c279",
+                        "V2": null
+                    }
+                ],
+                "Type": "MySQL",
+                "UUID": "3d341070b1d74a84bb5f797c3ddbccc4",
+                "V2": {
+                    "Alias": "mysql-bm-cloud-0001",
+                    "DSN": "user:pass@tcp(127.0.0.1:3308)/",
+                    "Distro": "debian",
+                    "Hostname": "mysql-bm-cloud-0001",
+                    "Id": 1,
+                    "Version": "5.1"
+                }
+            }
+        ],
+        "Type": "OS",
+        "UUID": "2e6eef26d97b48b4af3179d414899d57",
+        "V2": {
+            "Alias": "os-bm-cloud-0001",
+            "Hostname": "os-bm-cloud-0001",
+            "Id": 1
+        }
+    },
+    {
+        "Created": "2015-04-22T19:22:46Z",
+        "DSN": "user:pass@tcp(127.0.0.1:3308)/",
+        "Deleted": "0001-01-01T00:00:00Z",
+        "Name": "mysql-bm-cloud-0002",
+        "ParentUUID": "",
+        "Prefix": "mysql",
+        "Properties": {},
+        "Subsystems": [],
+        "Type": "MySQL",
+        "UUID": "3d341070b1d74a84bb5f797c3ddbc002",
+        "V2": {
+            "Alias": "mysql-bm-cloud-0002",
+            "DSN": "user:pass@tcp(127.0.0.1:3308)/",
+            "Distro": "debian",
+            "Hostname": "mysql-bm-cloud-0002",
+            "Id": 2,
+            "Version": "5.1"
+        }
+    },
+    {
+        "Created": "2015-04-22T19:22:46Z",
+        "DSN": "root:pass@tcp(127.0.0.1:3300)/",
+        "Deleted": "0001-01-01T00:00:00Z",
+        "Name": "os-bm-cloud-0002\r\n",
+        "ParentUUID": "",
+        "Prefix": "os",
+        "Properties": {},
+        "Subsystems": [],
+        "Type": "OS",
+        "UUID": "2e6eef26d97b48b4af3179d414899002",
+        "V2": {
+            "Alias": "os-bm-cloud-0002",
+            "Hostname": "os-bm-cloud-0002",
+            "Id": 2
+        }
+    }
+]

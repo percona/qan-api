@@ -1,0 +1,4 @@
+1	1	\N	1	2013-09-06 00:00:00	select c from t where id=101	\N	2013-09-06 19:32:25	1.1234	\N
+2	1	\N	2	2013-09-06 00:00:00	delete from db.t where id > 101	select * from db.t where id > 101	2013-09-06 19:32:25	2.1234	\N
+3	4	\N	1	2013-09-06 00:00:00	select c from t where id=101	\N	2013-09-06 19:32:25	1.1234	\N
+4	4	\N	2	2013-09-06 00:00:00	delete from db.t where id > 101	select * from db.t where id > 101	2013-09-06 19:32:25	2.1234	\N

@@ -1,0 +1,6 @@
+1	1	OS	os
+2	1	Percona Agent	agent
+3	1	MySQL	mysql
+4	3	Database	db
+5	4	Table	tbl
+6	5	Index	idx

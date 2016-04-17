@@ -1,0 +1,228 @@
+{
+  "Lock_time": {
+    "Cnt": 112737,
+    "Sum": 1.0750000058615115,
+    "Min": 0,
+    "Avg": 9.535467556006559e-06,
+    "Med": 0,
+    "P95": 6.3865693119094e-05,
+    "Max": 0.1182280033826828
+  },
+  "Query_time": {
+    "Cnt": 112737,
+    "Sum": 62.68778494838625,
+    "Min": 2.499999936844688e-05,
+    "Avg": 0.0005560533360687818,
+    "Med": 0.000458900487173675,
+    "P95": 0.001392382742257344,
+    "Max": 0.23546500504016876
+  },
+  "Rows_examined": {
+    "Cnt": 112737,
+    "Sum": 4781070,
+    "Min": 0,
+    "Avg": 42.4091,
+    "Med": 0,
+    "P95": 345.1795,
+    "Max": 757
+  },
+  "Rows_sent": {
+    "Cnt": 112737,
+    "Sum": 4448624,
+    "Min": 0,
+    "Avg": 39.4602,
+    "Med": 0,
+    "P95": 311.3897,
+    "Max": 757
+  },
+  "Bytes_sent": {
+    "Cnt": 112737,
+    "Sum": 2.7398880518e+10,
+    "Min": 51817,
+    "P5": null,
+    "Avg": 243033.6138,
+    "Med": 310624.6799,
+    "P95": 315577.1267,
+    "Max": 317574
+  },
+  "Filesort": {
+    "Cnt": 112737,
+    "Sum": 0,
+    "Min": null,
+    "P5": null,
+    "Avg": null,
+    "Med": null,
+    "P95": null,
+    "Max": null
+  },
+  "Filesort_on_disk": {
+    "Cnt": 112737,
+    "Sum": 0,
+    "Min": null,
+    "P5": null,
+    "Avg": null,
+    "Med": null,
+    "P95": null,
+    "Max": null
+  },
+  "Full_join": {
+    "Cnt": 112737,
+    "Sum": 0,
+    "Min": null,
+    "P5": null,
+    "Avg": null,
+    "Med": null,
+    "P95": null,
+    "Max": null
+  },
+  "Full_scan": {
+    "Cnt": 112737,
+    "Sum": 7729,
+    "Min": null,
+    "P5": null,
+    "Avg": null,
+    "Med": null,
+    "P95": null,
+    "Max": null
+  },
+  "InnoDB_IO_r_bytes": {
+    "Cnt": 112737,
+    "Sum": 0,
+    "Min": 0,
+    "P5": null,
+    "Avg": 0,
+    "Med": 0,
+    "P95": 0,
+    "Max": 0
+  },
+  "InnoDB_IO_r_ops": {
+    "Cnt": 112737,
+    "Sum": 0,
+    "Min": 0,
+    "P5": null,
+    "Avg": 0,
+    "Med": 0,
+    "P95": 0,
+    "Max": 0
+  },
+  "InnoDB_IO_r_wait": {
+    "Cnt": 112737,
+    "Sum": 0,
+    "Min": 0,
+    "P5": null,
+    "Avg": 0,
+    "Med": 0,
+    "P95": 0,
+    "Max": 0
+  },
+  "InnoDB_pages_distinct": {
+    "Cnt": 112737,
+    "Sum": 112039,
+    "Min": 33,
+    "P5": null,
+    "Avg": 0.9938,
+    "Med": 34.2315,
+    "P95": 34.2862,
+    "Max": 38
+  },
+  "InnoDB_queue_wait": {
+    "Cnt": 112737,
+    "Sum": 0,
+    "Min": 0,
+    "P5": null,
+    "Avg": 0,
+    "Med": 0,
+    "P95": 0,
+    "Max": 0
+  },
+  "InnoDB_rec_lock_wait": {
+    "Cnt": 112737,
+    "Sum": 0,
+    "Min": 0,
+    "P5": null,
+    "Avg": 0,
+    "Med": 0,
+    "P95": 0,
+    "Max": 0
+  },
+  "Merge_passes": {
+    "Cnt": 112737,
+    "Sum": 0,
+    "Min": 0,
+    "P5": null,
+    "Avg": 0,
+    "Med": 0,
+    "P95": 0,
+    "Max": 0
+  },
+  "QC_Hit": {
+    "Cnt": 112737,
+    "Sum": 101736,
+    "Min": null,
+    "P5": null,
+    "Avg": null,
+    "Med": null,
+    "P95": null,
+    "Max": null
+  },
+  "Rows_affected": {
+    "Cnt": 112737,
+    "Sum": 0,
+    "Min": 0,
+    "P5": null,
+    "Avg": 0,
+    "Med": 0,
+    "P95": 0,
+    "Max": 0
+  },
+  "Tmp_disk_tables": {
+    "Cnt": 112737,
+    "Sum": 0,
+    "Min": 0,
+    "P5": null,
+    "Avg": 0,
+    "Med": 0,
+    "P95": 0,
+    "Max": 0
+  },
+  "Tmp_table": {
+    "Cnt": 112737,
+    "Sum": 0,
+    "Min": null,
+    "P5": null,
+    "Avg": null,
+    "Med": null,
+    "P95": null,
+    "Max": null
+  },
+  "Tmp_table_on_disk": {
+    "Cnt": 112737,
+    "Sum": 0,
+    "Min": null,
+    "P5": null,
+    "Avg": null,
+    "Med": null,
+    "P95": null,
+    "Max": null
+  },
+  "Tmp_table_sizes": {
+    "Cnt": 112737,
+    "Sum": 0,
+    "Min": 0,
+    "P5": null,
+    "Avg": 0,
+    "Med": 0,
+    "P95": 0,
+    "Max": 0
+  },
+  "Tmp_tables": {
+    "Cnt": 112737,
+    "Sum": 0,
+    "Min": 0,
+    "P5": null,
+    "Avg": 0,
+    "Med": 0,
+    "P95": 0,
+    "Max": 0
+  }
+}

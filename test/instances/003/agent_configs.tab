@@ -1,0 +1,5 @@
+1	agent	0	0	{}	1	2014-01-01 00:00:00
+2	agent	0	0	{}	1	2014-01-01 00:00:00
+3	agent	0	0	{}	1	2014-01-01 00:00:00
+2	mm	2	1	{"Service":"mysql","InstanceId":1,"Collect":1,"Report":60,"Userstat":true}	1	2014-01-01 00:00:00
+2	sysconfig	2	1	{"Service":"mysql","InstanceId":1,"Report":3600}	1	2014-01-01 00:00:00

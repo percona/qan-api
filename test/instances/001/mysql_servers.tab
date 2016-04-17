@@ -1,0 +1,2 @@
+1	db1	db1-mysql-alias	db1user:pass@tcp(10.0.0.1:3306)/	distro1	version1	0
+2	db2	db2-mysql-alias	db2user:pass@tcp(10.0.0.2:3306)/	\N	\N	0

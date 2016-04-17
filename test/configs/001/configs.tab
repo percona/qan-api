@@ -1,0 +1,4 @@
+mm	default-mysql	{"Service":"mysql", "InstanceId":0, "Collect":1, "Report":60, "Status":{"aborted_clients":"counter", "aborted_connects":"counter"}, "UserStats":false} 	2014-05-01 02:46:49
+mm	default-server	{"Service":"server", "InstanceId":0, "Collect":10, "Report":60} 	2014-05-01 02:46:49
+qan	default	{"Service":"mysql", "InstanceId":0, "Start":["SET GLOBAL slow_query_log=OFF", "SET GLOBAL long_query_time=1", "SET GLOBAL slow_query_log=ON"], "Stop":["SET GLOBAL slow_query_log=OFF"], "MaxWorkers":2, "Interval":60, "MaxSlowLogSize":1073741824, "RemoveOldSlowLogs":"true", "ExampleQueries":"true", "WorkerRunTime":120, "ReportLimit":200} 	2014-05-01 02:46:49
+sysconfig	default-mysql	{"Service":"mysql", "InstanceId":0, "Report":3600} 	2014-05-01 02:46:49

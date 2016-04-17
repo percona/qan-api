@@ -1,0 +1,2 @@
+1	AAAAAAAAAAAAAAAA	SELECT a	select * from a where id=?	\N	\N	\N	2015-01-01 00:00:00	2015-01-01 00:00:00	new
+2	BBBBBBBBBBBBBBBB	SELECT b	select * from b where id=?	\N	\N	\N	2015-01-01 00:00:00	2015-01-01 00:00:00	new

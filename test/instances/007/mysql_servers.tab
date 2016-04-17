@@ -1,0 +1,2 @@
+1	host1	host1-mysql-alias	user:pass@tcp/	Percona Server	5.5.16	0
+2	host2	host2-mysql-alias	user:pass@tcp/	Percona Server	5.5.16	0

@@ -1,0 +1,11 @@
+*.swp
+*.tmp
+*.dump
+coverage.out
+revel-build.log
+todo/
+tmp/
+app/routes/routes.go
+vendor/
+distro/
+docs/docs

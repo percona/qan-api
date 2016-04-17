@@ -1,0 +1,180 @@
+{
+    "Class": [
+        {
+            "Fingerprint": "select c from t where id=1",
+            "Id": "1000000000000001",
+            "Metrics": {
+                "NumberMetrics": {
+                    "Errors": {
+                        "Cnt": 10,
+                        "Sum": 1
+                    },
+                    "No_good_index_used": {
+                        "Cnt": 10,
+                        "Sum": 2
+                    },
+                    "No_index_used": {
+                        "Cnt": 10,
+                        "Sum": 3
+                    },
+                    "Select_full_range_join": {
+                        "Cnt": 10,
+                        "Sum": 4
+                    },
+                    "Select_range": {
+                        "Cnt": 10,
+                        "Sum": 5
+                    },
+                    "Select_range_check": {
+                        "Cnt": 10,
+                        "Sum": 6
+                    },
+                    "Sort_range": {
+                        "Cnt": 10,
+                        "Sum": 7
+                    },
+                    "Sort_rows": {
+                        "Cnt": 10,
+                        "Sum": 8
+                    },
+                    "Sort_scan": {
+                        "Cnt": 10,
+                        "Sum": 9
+                    },
+                    "Warnings": {
+                        "Cnt": 10,
+                        "Sum": 10
+                    }
+                },
+                "TimeMetrics": {
+                    "Query_time": {
+                        "Avg": 1,
+                        "Cnt": 10,
+                        "Max": 1.1,
+                        "Min": 0.001,
+                        "Sum": 1
+                    }
+                }
+            },
+            "TotalQueries": 10
+        },
+        {
+            "Fingerprint": "select * from user",
+            "Id": "2000000000000002",
+            "Metrics": {
+                "NumberMetrics": {
+                    "Errors": {
+                        "Cnt": 5,
+                        "Sum": 100
+                    },
+                    "No_good_index_used": {
+                        "Cnt": 5,
+                        "Sum": 200
+                    },
+                    "No_index_used": {
+                        "Cnt": 5,
+                        "Sum": 300
+                    },
+                    "Select_full_range_join": {
+                        "Cnt": 5,
+                        "Sum": 400
+                    },
+                    "Select_range": {
+                        "Cnt": 5,
+                        "Sum": 500
+                    },
+                    "Select_range_check": {
+                        "Cnt": 5,
+                        "Sum": 600
+                    },
+                    "Sort_range": {
+                        "Cnt": 5,
+                        "Sum": 700
+                    },
+                    "Sort_rows": {
+                        "Cnt": 5,
+                        "Sum": 800
+                    },
+                    "Sort_scan": {
+                        "Cnt": 5,
+                        "Sum": 900
+                    },
+                    "Warnings": {
+                        "Cnt": 5,
+                        "Sum": 1000
+                    }
+                },
+                "TimeMetrics": {
+                    "Query_time": {
+                        "Avg": 1,
+                        "Cnt": 5,
+                        "Max": 1.1,
+                        "Min": 0.001,
+                        "Sum": 1
+                    }
+                }
+            },
+            "TotalQueries": 5
+        }
+    ],
+    "Global": {
+        "Metrics": {
+            "NumberMetrics": {
+                "Errors": {
+                    "Cnt": 15,
+                    "Sum": 1
+                },
+                "No_good_index_used": {
+                    "Cnt": 15,
+                    "Sum": 10
+                },
+                "No_index_used": {
+                    "Cnt": 15,
+                    "Sum": 9
+                },
+                "Select_full_range_join": {
+                    "Cnt": 15,
+                    "Sum": 3
+                },
+                "Select_range": {
+                    "Cnt": 15,
+                    "Sum": 4
+                },
+                "Select_range_check": {
+                    "Cnt": 15,
+                    "Sum": 5
+                },
+                "Sort_range": {
+                    "Cnt": 15,
+                    "Sum": 6
+                },
+                "Sort_rows": {
+                    "Cnt": 15,
+                    "Sum": 7
+                },
+                "Sort_scan": {
+                    "Cnt": 15,
+                    "Sum": 8
+                },
+                "Warnings": {
+                    "Cnt": 15,
+                    "Sum": 2
+                }
+            },
+            "TimeMetrics": {
+                "Query_time": {
+                    "Avg": 1,
+                    "Cnt": 15,
+                    "Max": 1.1,
+                    "Min": 0.001,
+                    "Sum": 1
+                }
+            }
+        },
+        "TotalQueries": 10,
+        "UniqueQueries": 2
+    },
+    "InstanceId": 1,
+    "RunTime": 1.123456,
+    "Service": "mysql"
+}

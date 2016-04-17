@@ -1,0 +1,4 @@
+1	foo.123	foo-mysql-alias	dsn1	distro1	version1	0
+2	bar.123	bar1-mysql-alias	dsn2	distro2	version2	0
+3	bar.456	bar2-mysql-alias	dsn3	distro3	version3	0
+4	host1	host1-mysql-alias	dsn4	distro5	version4	0

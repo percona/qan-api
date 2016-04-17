@@ -1,0 +1,39 @@
+{
+    "Class": [
+        {
+            "Fingerprint": "call\n pita",
+            "Id": "1000000000000001",
+            "Metrics": {
+                "TimeMetrics": {
+                    "Query_time": {
+                        "Avg": 1,
+                        "Cnt": 1,
+                        "Max": 1.12,
+                        "Min": 1,
+                        "Sum": 1
+                    }
+                }
+            },
+            "TotalQueries": 1
+        }
+    ],
+    "Global": {
+        "Metrics": {
+            "TimeMetrics": {
+                "Query_time": {
+                    "Avg": 2,
+                    "Cnt": 15,
+                    "Max": 5.54321,
+                    "Min": 0.0001,
+                    "Sum": 7.001001
+                }
+            }
+        },
+        "TotalQueries": 1,
+        "UniqueQueries": 1
+    },
+    "InstanceId": 1,
+    "RunTime": 1.0,
+    "Service": "mysql",
+    "StopOffset": 524
+}

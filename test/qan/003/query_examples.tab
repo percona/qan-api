@@ -1,0 +1,605 @@
+2039	3	2013-07-01 00:00:00	2013-07-01 00:00:08		\N	TRUNCATE cache_admin_menu
+1563	3	2013-07-01 00:00:00	2013-07-01 00:00:50		\N	SELECT option_name, option_value FROM wp_options WHERE autoload = 'yes'
+1578	3	2013-07-01 00:00:00	2013-07-01 00:01:04		\N	DESC wp_comments
+1559	3	2013-07-01 00:00:00	2013-07-01 00:01:33		\N	SELECT user_id, meta_key, meta_value FROM wp_usermeta WHERE user_id IN (1460)
+1569	3	2013-07-01 00:00:00	2013-07-01 00:02:45		\N	SELECT option_value FROM wp_options WHERE option_name = 'akismet_alert_code' LIMIT 1
+1564	3	2013-07-01 00:00:00	2013-07-01 00:03:11		\N	SHOW /*!50002 GLOBAL */ STATUS
+1575	3	2013-07-01 00:00:00	2013-07-01 00:03:39		\N	SELECT * FROM cache\
+ WHERE `cacheid` IN ('vBPage_91c3321b1e5f57ed05ab99529ba1956b')
+1591	3	2013-07-01 00:00:00	2013-07-01 00:03:57		\N	SELECT cid, data, created, expire, serialized FROM cache_bootstrap WHERE cid IN ('variables')
+1582	3	2013-07-01 00:00:00	2013-07-01 00:04:28		\N	SELECT * FROM wp_posts WHERE ID in (13501,348,365,4495,244,3922,186,6289,485,1289)
+1701	3	2013-07-01 00:00:00	2013-07-01 00:04:56		\N	commit
+1571	3	2013-07-01 00:00:00	2013-07-01 00:05:27		\N	SELECT wp_users.ID FROM wp_users WHERE 1=1 ORDER BY display_name ASC
+1560	3	2013-07-01 00:00:00	2013-07-01 00:06:24		\N	SELECT * FROM wp_users WHERE ID = '3306'
+2216	3	2013-07-01 00:00:00	2013-07-01 00:10:03		\N	SELECT menu_links.*\
+FROM \
+menu_links menu_links\
+WHERE  (link_path = 'admin') AND (module = 'system')
+2037	3	2013-07-01 00:00:00	2013-07-01 00:10:06		\N	SELECT 1 AS expression\
+FROM \
+cache cache\
+WHERE ( (cid = 'entity_info:en') ) FOR UPDATE
+1570	3	2013-07-01 00:00:00	2013-07-01 00:11:58		\N	SELECT post_id, meta_key, meta_value FROM wp_postmeta WHERE post_id IN (209,105,179,93,144,167,219)
+1603	3	2013-07-01 00:00:00	2013-07-01 00:12:13		\N	SELECT cid, data, created, expire, serialized FROM cache_field WHERE cid IN ('field_info_fields')
+2827	3	2013-07-01 00:00:00	2013-07-01 00:15:01		\N	FLUSH LOGS
+2836	3	2013-07-01 00:00:00	2013-07-01 00:15:05		\N	FLUSH TABLES WITH READ LOCK
+1598	3	2013-07-01 00:00:00	2013-07-01 00:15:12		\N	SELECT cid, data, created, expire, serialized FROM cache_menu WHERE cid IN ('menu_custom')
+1623	3	2013-07-01 00:00:00	2013-07-01 00:15:18	select * from  wp_commentmeta WHERE meta_id = 3392409	\N	DELETE FROM wp_commentmeta WHERE meta_id = 3392409
+1612	3	2013-07-01 00:00:00	2013-07-01 00:16:28		\N	SELECT meta_id FROM wp_commentmeta WHERE meta_key = 'akismet_result' AND comment_id = 27045
+1765	3	2013-07-01 00:00:00	2013-07-01 00:21:17		\N	SHOW STATUS LIKE 'uptime'
+1588	3	2013-07-01 00:00:00	2013-07-01 00:22:22		\N	SELECT * FROM template\
+ WHERE `templateid` IN (621)
+1668	3	2013-07-01 00:00:00	2013-07-01 00:26:03		\N	SELECT comment_approved, COUNT( * ) AS num_comments FROM wp_comments  GROUP BY comment_approved
+1611	3	2013-07-01 00:00:00	2013-07-01 00:35:02		\N	SET NAMES utf8
+1644	3	2013-07-01 00:00:00	2013-07-01 00:41:12		\N	SELECT cid, data, created, expire, serialized FROM cache_path WHERE cid IN ('ajax/server-version')
+1665	3	2013-07-01 00:00:00	2013-07-01 00:44:24		\N	SELECT data, created, headers, expire, serialized FROM cache_views WHERE cid = 'views_data:en'
+1608	3	2013-07-01 00:00:00	2013-07-01 00:59:19		\N	SELECT cid, data, created, expire, serialized FROM cache WHERE cid IN ('entity_property_info:en')
+1593	3	2013-07-01 00:00:00	2013-07-01 01:04:53		\N	SELECT * FROM menu_router WHERE path IN ('node/605','node/%','node') ORDER BY fit DESC LIMIT 0, 1
+2397	3	2013-07-01 00:00:00	2013-07-01 01:04:53		\N	SELECT f.*, fn.type FROM flags f LEFT JOIN flag_types fn ON fn.fid = f.fid
+2221	3	2013-07-01 00:00:00	2013-07-01 01:10:04	select  language='und' from menu_links where   (mlid = '151')	\N	UPDATE menu_links SET language='und'\
+WHERE  (mlid = '151')
+1727	3	2013-07-01 00:00:00	2013-07-01 01:10:10		\N	SELECT cid, data, created, expire, serialized FROM cache_token WHERE cid IN ('info:en')
+1627	3	2013-07-01 00:00:00	2013-07-01 01:21:51		\N	SELECT * FROM wp_comments WHERE comment_ID in (848677,805958,400765,863720,806190)
+3028	3	2013-07-01 00:00:00	2013-07-01 01:38:30		\N	SELECT user_id FROM wp_lockdowns WHERE release_date > now() AND lockdown_IP LIKE '176.9.155%'
+1621	3	2013-07-01 00:00:00	2013-07-01 01:43:58		\N	SELECT FOUND_ROWS()
+2344	3	2013-07-01 00:00:00	2013-07-01 02:37:04		\N	SELECT * FROM cacheevent\
+ WHERE `event` IN ('userChg_0')
+3833	3	2013-07-01 00:00:00	2013-07-01 02:37:04		\N	SELECT * FROM user\
+ WHERE `email` = 'amyyjackk@yahoo.com'
+1601	3	2013-07-01 00:00:00	2013-07-01 02:52:28		\N	show tables
+1574	3	2013-07-01 00:00:00	2013-07-01 03:09:04	select  `option_value` = '2027668' from `wp_options` where  `option_name` = 'akismet_spam_count'	\N	UPDATE `wp_options` SET `option_value` = '2027668' WHERE `option_name` = 'akismet_spam_count'
+2222	3	2013-07-01 00:00:00	2013-07-01 03:10:05	select  has_children='1' from menu_links where   (mlid = '39')	\N	UPDATE menu_links SET has_children='1'\
+WHERE  (mlid = '39')
+1955	3	2013-07-01 00:00:00	2013-07-01 04:10:06	select * from  cache_bootstrap \
+WHERE  (cid = 'variables')	\N	DELETE FROM cache_bootstrap \
+WHERE  (cid = 'variables')
+2223	3	2013-07-01 00:00:00	2013-07-01 05:10:06		\N	TRUNCATE cache_block
+2228	3	2013-07-01 00:00:00	2013-07-01 05:10:06		\N	TRUNCATE cache_views
+4914	3	2013-07-01 00:00:00	2013-07-01 05:20:52		\N	SELECT DISTINCT post_mime_type FROM wp_posts WHERE post_type = 'attachment'
+2360	3	2013-07-01 00:00:00	2013-07-01 05:26:13	select  `CRC32`=2188947700 from node where  (`nodeid` = 10752) \
+/**node**/	\N	UPDATE node SET `CRC32`=2188947700 \
+ WHERE (`nodeid` = 10752) \
+/**node**/
+1659	3	2013-07-01 00:00:00	2013-07-01 06:08:54		\N	SELECT `userid`,`lastactivity` FROM user\
+ WHERE `userid` IN (4872,3681)
+3049	3	2013-07-01 00:00:00	2013-07-01 06:32:46		\N	administrator command: Refresh
+2219	3	2013-07-01 00:00:00	2013-07-01 07:10:06		\N	TRUNCATE cache_filter
+2120	3	2013-07-01 00:00:00	2013-07-01 08:27:31	select * from  cache_image \
+WHERE  (expire <> '0') AND (expire < '1372681650')	\N	DELETE FROM cache_image \
+WHERE  (expire <> '0') AND (expire < '1372681650')
+1721	3	2013-07-01 00:00:00	2013-07-01 09:02:18		\N	SELECT data, created, headers, expire, serialized FROM cache WHERE cid = 'schema'
+1619	3	2013-07-01 00:00:00	2013-07-01 09:45:09		\N	SELECT wp_posts.* FROM wp_posts WHERE ID IN (6804,6778,6787,6754,6749,6742,6735,6730,6727,6701)
+3444	3	2013-07-01 00:00:00	2013-07-01 09:55:59		\N	SELECT * FROM user\
+ WHERE `fbuserid` = 656160874
+1671	3	2013-07-01 00:00:00	2013-07-01 10:20:49	select * from  wp_comments WHERE comment_ID = 1929922	\N	DELETE FROM wp_comments WHERE comment_ID = 1929922
+2083	3	2013-07-01 00:00:00	2013-07-01 11:38:13		\N	SELECT 1 AS expression\
+FROM \
+cache_views cache_views\
+WHERE ( (cid = 'views_data:en') ) FOR UPDATE
+1986	3	2013-07-01 00:00:00	2013-07-01 12:06:56		\N	SELECT 1 AS expression\
+FROM \
+variable variable\
+WHERE ( (name = 'javascript_parsed') ) FOR UPDATE
+5354	3	2013-07-01 00:00:00	2013-07-01 13:12:25		\N	SELECT /*!40001 SQL_NO_CACHE */ /*!50084 SQL_NO_FCACHE */ * FROM `wp_commentmeta`
+5353	3	2013-07-01 00:00:00	2013-07-01 13:12:28		\N	SELECT /*!40001 SQL_NO_CACHE */ /*!50084 SQL_NO_FCACHE */ * FROM `wp_posts`
+3138	3	2013-07-01 00:00:00	2013-07-01 13:12:28		\N	show table status like 'wp\\_redirection\\_logs'
+5350	3	2013-07-01 00:00:00	2013-07-01 13:13:23		\N	SELECT /*!40001 SQL_NO_CACHE */ /*!50084 SQL_NO_FCACHE */ * FROM `wp_redirection_logs`
+5351	3	2013-07-01 00:00:00	2013-07-01 13:13:27		\N	SELECT /*!40001 SQL_NO_CACHE */ /*!50084 SQL_NO_FCACHE */ * FROM `wp_sk2_spams`
+5352	3	2013-07-01 00:00:00	2013-07-01 13:13:30		\N	SELECT /*!40001 SQL_NO_CACHE */ /*!50084 SQL_NO_FCACHE */ * FROM `wp_sph_stats`
+1616	3	2013-07-01 00:00:00	2013-07-01 13:16:56		\N	SELECT * FROM closure\
+ WHERE `child` IN (7258) \
+ ORDER BY `child` ASC, `depth` ASC
+1640	3	2013-07-01 00:00:00	2013-07-01 13:18:24		\N	SELECT * FROM user\
+ WHERE `userid` IN (13405)
+1595	3	2013-07-01 00:00:00	2013-07-01 13:23:00		\N	SELECT cid, data, created, expire, serialized FROM cache_views WHERE cid IN ('views_data:en')
+2060	3	2013-07-01 00:00:00	2013-07-01 13:29:07	select * from  cache_page \
+WHERE  (expire <> '0') AND (expire <= '1372697822')	\N	DELETE FROM cache_page \
+WHERE  (expire <> '0') AND (expire <= '1372697822')
+2145	3	2013-07-01 00:00:00	2013-07-01 14:07:55	select * from  session\
+ WHERE `lastactivity` < 1371406075  \
+/**session**/	\N	DELETE FROM session\
+ WHERE `lastactivity` < 1371406075  \
+/**session**/
+2144	3	2013-07-01 00:00:00	2013-07-01 14:07:55	select * from  searchlog\
+ WHERE `dateline` < 1372615675  \
+/**searchlog**/	\N	DELETE FROM searchlog\
+ WHERE `dateline` < 1372615675  \
+/**searchlog**/
+2235	3	2013-07-01 00:00:00	2013-07-01 14:10:05	select * from  cache_menu	\N	DELETE FROM cache_menu
+2098	3	2013-07-01 00:00:00	2013-07-01 15:32:15		\N	SELECT w.wid AS wid\
+FROM \
+watchdog w\
+ORDER BY wid DESC\
+LIMIT 1 OFFSET 999
+3635	3	2013-07-01 00:00:00	2013-07-01 16:00:31		\N	SELECT SUM(score) FROM search_index WHERE word = 'percona'
+2329	3	2013-07-01 00:00:00	2013-07-01 16:34:15		\N	SELECT image_styles.*\
+FROM \
+image_styles image_styles\
+ORDER BY name ASC
+1637	3	2013-07-01 00:00:00	2013-07-01 18:05:52		\N	administrator command: Init DB
+1629	3	2013-07-01 00:00:00	2013-07-01 19:33:17		\N	SELECT * FROM wp_comments WHERE comment_ID = 1931559 LIMIT 1
+2039	3	2013-07-02 00:00:00	2013-07-01 20:00:07		\N	TRUNCATE cache_admin_menu
+1559	3	2013-07-02 00:00:00	2013-07-01 20:00:36		\N	SELECT user_id, meta_key, meta_value FROM wp_usermeta WHERE user_id IN (1179)
+1560	3	2013-07-02 00:00:00	2013-07-01 20:00:44		\N	SELECT * FROM wp_users WHERE ID = '2368'
+1571	3	2013-07-02 00:00:00	2013-07-01 20:00:53		\N	SELECT wp_users.ID FROM wp_users WHERE 1=1 ORDER BY display_name ASC
+1591	3	2013-07-02 00:00:00	2013-07-01 20:01:20		\N	SELECT cid, data, created, expire, serialized FROM cache_bootstrap WHERE cid IN ('system_list')
+1603	3	2013-07-02 00:00:00	2013-07-01 20:01:26		\N	SELECT cid, data, created, expire, serialized FROM cache_field WHERE cid IN ('field_info_fields')
+1569	3	2013-07-02 00:00:00	2013-07-01 20:01:28		\N	SELECT option_value FROM wp_options WHERE option_name = 'anarchy_accepted_domains1' LIMIT 1
+1582	3	2013-07-02 00:00:00	2013-07-01 20:02:29		\N	SELECT * FROM wp_posts WHERE ID in (15926,14859,14646,424,205,9611,157,4495,16,9784)
+1564	3	2013-07-02 00:00:00	2013-07-01 20:03:10		\N	SHOW /*!50002 GLOBAL */ STATUS
+1563	3	2013-07-02 00:00:00	2013-07-01 20:05:02		\N	SELECT option_name, option_value FROM wp_options WHERE autoload = 'yes'
+2145	3	2013-07-02 00:00:00	2013-07-01 20:06:46	select * from  session\
+ WHERE `lastactivity` < 1371427605  \
+/**session**/	\N	DELETE FROM session\
+ WHERE `lastactivity` < 1371427605  \
+/**session**/
+1575	3	2013-07-02 00:00:00	2013-07-01 20:06:49		\N	SELECT * FROM cache\
+ WHERE `cacheid` IN ('vBUserRep_765')
+1608	3	2013-07-02 00:00:00	2013-07-01 20:10:06		\N	SELECT cid, data, created, expire, serialized FROM cache WHERE cid IN ('entity_info:en')
+1701	3	2013-07-02 00:00:00	2013-07-01 20:10:40		\N	commit
+2344	3	2013-07-02 00:00:00	2013-07-01 20:23:32		\N	SELECT * FROM cacheevent\
+ WHERE `event` IN ('userPerms_2217','userChg_2217')
+1578	3	2013-07-02 00:00:00	2013-07-01 20:27:49		\N	DESC wp_comments
+1570	3	2013-07-02 00:00:00	2013-07-01 20:34:33		\N	SELECT post_id, meta_key, meta_value FROM wp_postmeta WHERE post_id IN (72)
+1612	3	2013-07-02 00:00:00	2013-07-01 20:42:33		\N	SELECT meta_id FROM wp_commentmeta WHERE meta_key = 'akismet_result' AND comment_id = 1931685
+1609	3	2013-07-02 00:00:00	2013-07-01 20:59:25		\N	SELECT * FROM wp_posts WHERE ID = 700 LIMIT 1
+1627	3	2013-07-02 00:00:00	2013-07-01 21:15:51		\N	SELECT * FROM wp_comments WHERE comment_ID in (863720,342104,360057)
+1588	3	2013-07-02 00:00:00	2013-07-01 21:27:18		\N	SELECT * FROM template\
+ WHERE `templateid` IN (623)
+1611	3	2013-07-02 00:00:00	2013-07-01 21:32:51		\N	SET NAMES utf8
+1668	3	2013-07-02 00:00:00	2013-07-01 21:37:00		\N	SELECT comment_approved, COUNT( * ) AS num_comments FROM wp_comments  GROUP BY comment_approved
+3833	3	2013-07-02 00:00:00	2013-07-01 23:09:38		\N	SELECT * FROM user\
+ WHERE `email` = 'cocoer114@yahoo.com'
+1598	3	2013-07-02 00:00:00	2013-07-02 00:15:04		\N	SELECT cid, data, created, expire, serialized FROM cache_menu WHERE cid IN ('menu_custom')
+2836	3	2013-07-02 00:00:00	2013-07-02 00:15:05		\N	FLUSH TABLES WITH READ LOCK
+1637	3	2013-07-02 00:00:00	2013-07-02 00:15:05		\N	administrator command: Init DB
+1644	3	2013-07-02 00:00:00	2013-07-02 00:34:06		\N	SELECT cid, data, created, expire, serialized FROM cache_path WHERE cid IN ('ajax/server-version')
+1671	3	2013-07-02 00:00:00	2013-07-02 00:58:43	select * from  wp_comments WHERE comment_ID = 1932241	\N	DELETE FROM wp_comments WHERE comment_ID = 1932241
+2069	3	2013-07-02 00:00:00	2013-07-02 01:02:11	select  `lastactivity`=1372741330 from user where  (`userid` = 3681) \
+/**user**/	\N	UPDATE user SET `lastactivity`=1372741330 \
+ WHERE (`userid` = 3681) \
+/**user**/
+2221	3	2013-07-02 00:00:00	2013-07-02 01:10:04	select  language='und' from menu_links where   (mlid = '189')	\N	UPDATE menu_links SET language='und'\
+WHERE  (mlid = '189')
+1623	3	2013-07-02 00:00:00	2013-07-02 01:47:49	select * from  wp_commentmeta WHERE meta_id = 3408691	\N	DELETE FROM wp_commentmeta WHERE meta_id = 3408691
+1628	3	2013-07-02 00:00:00	2013-07-02 01:54:42		\N	SELECT 1 FROM blocked_ips WHERE ip = '157.55.36.37'
+2216	3	2013-07-02 00:00:00	2013-07-02 02:20:25		\N	SELECT menu_links.*\
+FROM \
+menu_links menu_links\
+WHERE  (link_path = 'admin') AND (module = 'system')
+1574	3	2013-07-02 00:00:00	2013-07-02 02:38:27	select  `option_value` = '2032330' from `wp_options` where  `option_name` = 'akismet_spam_count'	\N	UPDATE `wp_options` SET `option_value` = '2032330' WHERE `option_name` = 'akismet_spam_count'
+1593	3	2013-07-02 00:00:00	2013-07-02 04:01:31		\N	SELECT * FROM menu_router WHERE path IN ('node/1170', 'node/%', 'node') ORDER BY fit DESC LIMIT 0, 1
+3007	3	2013-07-02 00:00:00	2013-07-02 05:04:17	select * from  nodestats where dateline < 1367571857;/**vBForum:calculateStats called from cron **/	\N	DELETE FROM nodestats where dateline < 1367571857;/**vBForum:calculateStats called from cron **/
+1735	3	2013-07-02 00:00:00	2013-07-02 05:48:31		\N	SELECT `languageid`,`title` FROM language\
+ ORDER BY `title`
+2224	3	2013-07-02 00:00:00	2013-07-02 06:10:06		\N	TRUNCATE cache_image
+2232	3	2013-07-02 00:00:00	2013-07-02 06:10:07		\N	TRUNCATE cache_bootstrap
+2233	3	2013-07-02 00:00:00	2013-07-02 06:10:07		\N	TRUNCATE cache_page
+1601	3	2013-07-02 00:00:00	2013-07-02 08:55:57		\N	show tables
+1655	3	2013-07-02 00:00:00	2013-07-02 09:42:42		\N	SELECT comment_id, meta_key, meta_value FROM wp_commentmeta WHERE comment_id IN (1863)
+2037	3	2013-07-02 00:00:00	2013-07-02 10:10:06		\N	SELECT 1 AS expression\
+FROM \
+cache cache\
+WHERE ( (cid = 'entity_info:en') ) FOR UPDATE
+2629	3	2013-07-02 00:00:00	2013-07-02 10:57:56		\N	SELECT umeta_id FROM wp_usermeta WHERE meta_key = 'first_name' AND user_id = 3647
+3019	3	2013-07-02 00:00:00	2013-07-02 11:20:55		\N	SELECT *\
+\	\	\	\	\	FROM words as words\
+\	\	\	\	\	WHERE words.word = 9223372036854775807
+3444	3	2013-07-02 00:00:00	2013-07-02 13:24:53		\N	SELECT * FROM user\
+ WHERE `fbuserid` = 656160874
+2222	3	2013-07-02 00:00:00	2013-07-02 15:10:05	select  has_children='1' from menu_links where   (mlid = '816')	\N	UPDATE menu_links SET has_children='1'\
+WHERE  (mlid = '816')
+1595	3	2013-07-02 00:00:00	2013-07-02 16:07:39		\N	SELECT cid, data, created, expire, serialized FROM cache_views WHERE cid IN ('views_data:en')
+1621	3	2013-07-02 00:00:00	2013-07-02 18:48:50		\N	SELECT FOUND_ROWS()
+1619	3	2013-07-02 00:00:00	2013-07-02 18:50:34		\N	SELECT wp_posts.* FROM wp_posts WHERE ID IN (16128,16459,15897,16342,15621,7821,694)
+1824	3	2013-07-02 00:00:00	2013-07-02 19:10:08		\N	SELECT name, value FROM variable
+2660	3	2013-07-02 00:00:00	2013-07-02 19:35:29		\N	select distinct ID from wp_yarpp_related_cache where reference_ID = 16524 and ID != 0
+1657	3	2013-07-02 00:00:00	2013-07-02 19:35:29		\N	select max(ID) as max_id from wp_yarpp_related_cache where reference_ID = 16524
+1591	3	2013-07-03 00:00:00	2013-07-02 20:00:53		\N	SELECT cid, data, created, expire, serialized FROM cache_bootstrap WHERE cid IN ('variables')
+1564	3	2013-07-03 00:00:00	2013-07-02 20:00:57		\N	SHOW /*!50002 GLOBAL */ STATUS
+1578	3	2013-07-03 00:00:00	2013-07-02 20:03:16		\N	DESC wp_comments
+1559	3	2013-07-03 00:00:00	2013-07-02 20:03:44		\N	SELECT user_id, meta_key, meta_value FROM wp_usermeta WHERE user_id IN (1781)
+1560	3	2013-07-03 00:00:00	2013-07-02 20:04:14		\N	SELECT * FROM wp_users WHERE ID = '2065'
+1582	3	2013-07-03 00:00:00	2013-07-02 20:04:14		\N	SELECT * FROM wp_posts WHERE ID in (15298,6426,507,2075,4495,193,1063,222,412,471)
+1569	3	2013-07-03 00:00:00	2013-07-02 20:04:48		\N	SELECT option_value FROM wp_options WHERE option_name = 'widget_akismet_widget' LIMIT 1
+1609	3	2013-07-03 00:00:00	2013-07-02 20:04:51		\N	SELECT * FROM wp_posts WHERE ID = 9645 LIMIT 1
+1575	3	2013-07-03 00:00:00	2013-07-02 20:04:53		\N	SELECT * FROM cache\
+ WHERE `cacheid` IN ('vBPage_a620194cf5279fd25418ffa772aabbb5')
+1563	3	2013-07-03 00:00:00	2013-07-02 20:05:01		\N	SELECT option_name, option_value FROM wp_options WHERE autoload = 'yes'
+1612	3	2013-07-03 00:00:00	2013-07-02 20:08:13		\N	SELECT meta_id FROM wp_commentmeta WHERE meta_key = 'akismet_as_submitted' AND comment_id = 1936030
+2222	3	2013-07-03 00:00:00	2013-07-02 20:10:04	select  has_children='1' from menu_links where   (mlid = '39')	\N	UPDATE menu_links SET has_children='1'\
+WHERE  (mlid = '39')
+1701	3	2013-07-03 00:00:00	2013-07-02 20:10:09		\N	commit
+1608	3	2013-07-03 00:00:00	2013-07-02 20:13:43		\N	SELECT cid, data, created, expire, serialized FROM cache WHERE cid IN ('entity_info:en')
+1623	3	2013-07-03 00:00:00	2013-07-02 20:19:04	select * from  wp_commentmeta WHERE meta_id = 3419876	\N	DELETE FROM wp_commentmeta WHERE meta_id = 3419876
+1603	3	2013-07-03 00:00:00	2013-07-02 20:23:13		\N	SELECT cid, data, created, expire, serialized FROM cache_field WHERE cid IN ('field_info_fields')
+1571	3	2013-07-03 00:00:00	2013-07-02 20:29:34		\N	SELECT wp_users.ID FROM wp_users WHERE 1=1 ORDER BY display_name ASC
+1619	3	2013-07-03 00:00:00	2013-07-02 20:48:08		\N	SELECT wp_posts.* FROM wp_posts WHERE ID IN (346,337,310,277,269,261,255,235,233,230)
+1574	3	2013-07-03 00:00:00	2013-07-02 20:55:07	select  `option_value` = '2036014' from `wp_options` where  `option_name` = 'akismet_spam_count'	\N	UPDATE `wp_options` SET `option_value` = '2036014' WHERE `option_name` = 'akismet_spam_count'
+1597	3	2013-07-03 00:00:00	2013-07-02 21:32:21		\N	SELECT * FROM phrase\
+ WHERE `varname` IN ('_hide_title_label') AND `languageid` IN (1,0,-1)
+1611	3	2013-07-03 00:00:00	2013-07-02 21:57:01		\N	SET NAMES utf8
+2037	3	2013-07-03 00:00:00	2013-07-02 22:10:06		\N	SELECT 1 AS expression\
+FROM \
+cache cache\
+WHERE ( (cid = 'entity_info:en') ) FOR UPDATE
+2039	3	2013-07-03 00:00:00	2013-07-02 22:30:28		\N	TRUNCATE cache_admin_menu
+1598	3	2013-07-03 00:00:00	2013-07-03 00:17:25		\N	SELECT cid, data, created, expire, serialized FROM cache_menu WHERE cid IN ('menu_custom')
+1570	3	2013-07-03 00:00:00	2013-07-03 00:18:02		\N	SELECT post_id, meta_key, meta_value FROM wp_postmeta WHERE post_id IN (151)
+2216	3	2013-07-03 00:00:00	2013-07-03 00:20:24		\N	SELECT menu_links.*\
+FROM \
+menu_links menu_links\
+WHERE  (link_path = 'admin') AND (module = 'system')
+2221	3	2013-07-03 00:00:00	2013-07-03 00:20:24	select  language='und' from menu_links where   (mlid = '1')	\N	UPDATE menu_links SET language='und'\
+WHERE  (mlid = '1')
+1644	3	2013-07-03 00:00:00	2013-07-03 00:46:29		\N	SELECT cid, data, created, expire, serialized FROM cache_path WHERE cid IN ('webinars/feed')
+2654	3	2013-07-03 00:00:00	2013-07-03 00:56:44	select  `count` = 272 from `wp_term_taxonomy` where  `term_taxonomy_id` = 268	\N	UPDATE `wp_term_taxonomy` SET `count` = 272 WHERE `term_taxonomy_id` = 268
+2082	3	2013-07-03 00:00:00	2013-07-03 01:00:07	select * from  cache_form \
+WHERE  (expire <> '0') AND (expire < '1372827606')	\N	DELETE FROM cache_form \
+WHERE  (expire <> '0') AND (expire < '1372827606')
+1668	3	2013-07-03 00:00:00	2013-07-03 01:03:23		\N	SELECT comment_approved, COUNT( * ) AS num_comments FROM wp_comments  GROUP BY comment_approved
+2144	3	2013-07-03 00:00:00	2013-07-03 01:06:06	select * from  searchlog\
+ WHERE `dateline` < 1372741566  \
+/**searchlog**/	\N	DELETE FROM searchlog\
+ WHERE `dateline` < 1372741566  \
+/**searchlog**/
+1588	3	2013-07-03 00:00:00	2013-07-03 01:32:54		\N	SELECT * FROM template\
+ WHERE `templateid` IN (675,439,500)
+1595	3	2013-07-03 00:00:00	2013-07-03 04:10:08		\N	SELECT cid, data, created, expire, serialized FROM cache_views WHERE cid IN ('views_data:en')
+2219	3	2013-07-03 00:00:00	2013-07-03 05:10:08		\N	TRUNCATE cache_filter
+1759	3	2013-07-03 00:00:00	2013-07-03 05:10:08		\N	SELECT * FROM languages ORDER BY weight ASC, name ASC
+1593	3	2013-07-03 00:00:00	2013-07-03 05:22:42		\N	SELECT * FROM menu_router WHERE path IN ('register') ORDER BY fit DESC LIMIT 0, 1
+1815	3	2013-07-03 00:00:00	2013-07-03 05:23:43	select  `data`=1372843500,`unserialize`=0 from datastore where  (`title` = 'cron') \
+/**datastore**/	\N	UPDATE datastore SET `data`=1372843500,`unserialize`=0 \
+ WHERE (`title` = 'cron') \
+/**datastore**/
+1671	3	2013-07-03 00:00:00	2013-07-03 05:26:50	select * from  wp_comments WHERE comment_ID = 1938235	\N	DELETE FROM wp_comments WHERE comment_ID = 1938235
+1628	3	2013-07-03 00:00:00	2013-07-03 05:34:43		\N	SELECT 1 FROM blocked_ips WHERE ip = '211.48.102.121'
+1657	3	2013-07-03 00:00:00	2013-07-03 05:56:02		\N	select max(ID) as max_id from wp_yarpp_related_cache where reference_ID = 183
+3138	3	2013-07-03 00:00:00	2013-07-03 10:10:26		\N	show table status like 'search\\_index'
+2130	3	2013-07-03 00:00:00	2013-07-03 10:45:24		\N	SET GLOBAL slow_query_log=ON
+1637	3	2013-07-03 00:00:00	2013-07-03 10:54:30		\N	administrator command: Init DB
+2100	3	2013-07-03 00:00:00	2013-07-03 11:10:03	select * from  cache \
+WHERE  (cid LIKE 'theme\\\\_registry%' ESCAPE '\\\\')	\N	DELETE FROM cache \
+WHERE  (cid LIKE 'theme\\\\_registry%' ESCAPE '\\\\')
+2224	3	2013-07-03 00:00:00	2013-07-03 11:10:07		\N	TRUNCATE cache_image
+2226	3	2013-07-03 00:00:00	2013-07-03 11:10:08		\N	TRUNCATE cache_token
+2233	3	2013-07-03 00:00:00	2013-07-03 11:10:08		\N	TRUNCATE cache_page
+2344	3	2013-07-03 00:00:00	2013-07-03 11:17:40		\N	SELECT * FROM cacheevent\
+ WHERE `event` IN ('userChg_0')
+3833	3	2013-07-03 00:00:00	2013-07-03 11:17:40		\N	SELECT * FROM user\
+ WHERE `email` = 'techline1776@hotmail.com'
+1958	3	2013-07-03 00:00:00	2013-07-03 11:42:54	select * from  semaphore \
+WHERE  (value = '164941880851d4467df0e093.94773889')	\N	DELETE FROM semaphore \
+WHERE  (value = '164941880851d4467df0e093.94773889')
+1601	3	2013-07-03 00:00:00	2013-07-03 14:37:12		\N	show tables
+1824	3	2013-07-03 00:00:00	2013-07-03 18:10:07		\N	SELECT name, value FROM variable
+3444	3	2013-07-03 00:00:00	2013-07-03 19:46:27		\N	SELECT * FROM user\
+ WHERE `fbuserid` = 656160874
+1591	3	2013-07-04 00:00:00	2013-07-03 20:00:23		\N	SELECT cid, data, created, expire, serialized FROM cache_bootstrap WHERE cid IN ('system_list')
+1569	3	2013-07-04 00:00:00	2013-07-03 20:00:48		\N	SELECT option_value FROM wp_options WHERE option_name = 'akismet_comment_nonce' LIMIT 1
+1582	3	2013-07-04 00:00:00	2013-07-03 20:01:21		\N	SELECT * FROM wp_posts WHERE ID in (15298,12606,2524,10440,9041,58,10718,61,600,4495)
+1609	3	2013-07-04 00:00:00	2013-07-03 20:01:57		\N	SELECT * FROM wp_posts WHERE ID = 542 LIMIT 1
+1571	3	2013-07-04 00:00:00	2013-07-03 20:03:42		\N	SELECT wp_users.ID FROM wp_users WHERE 1=1 ORDER BY display_name ASC
+1559	3	2013-07-04 00:00:00	2013-07-03 20:03:43		\N	SELECT user_id, meta_key, meta_value FROM wp_usermeta WHERE user_id IN (1997)
+1560	3	2013-07-04 00:00:00	2013-07-03 20:03:44		\N	SELECT * FROM wp_users WHERE ID = '3467'
+1578	3	2013-07-04 00:00:00	2013-07-03 20:03:45		\N	DESC wp_comments
+1563	3	2013-07-04 00:00:00	2013-07-03 20:04:03		\N	SELECT option_name, option_value FROM wp_options WHERE autoload = 'yes'
+1564	3	2013-07-04 00:00:00	2013-07-03 20:04:03		\N	SHOW /*!50002 GLOBAL */ STATUS
+1575	3	2013-07-04 00:00:00	2013-07-03 20:06:27		\N	SELECT * FROM cache\
+ WHERE `cacheid` IN ('vBPage_1ec2c49042cf5fa9f2300324aec4480c')
+2037	3	2013-07-04 00:00:00	2013-07-03 20:10:06		\N	SELECT 1 AS expression\
+FROM \
+cache cache\
+WHERE ( (cid = 'entity_info:en') ) FOR UPDATE
+1701	3	2013-07-04 00:00:00	2013-07-03 20:15:02		\N	commit
+1603	3	2013-07-04 00:00:00	2013-07-03 20:15:34		\N	SELECT cid, data, created, expire, serialized FROM cache_field WHERE cid IN ('field_info_fields')
+1612	3	2013-07-04 00:00:00	2013-07-03 20:24:26		\N	SELECT meta_id FROM wp_commentmeta WHERE meta_key = 'akismet_result' AND comment_id = 1942426
+1608	3	2013-07-04 00:00:00	2013-07-03 20:32:07		\N	SELECT cid, data, created, expire, serialized FROM cache WHERE cid IN ('theme_registry:percona')
+1611	3	2013-07-04 00:00:00	2013-07-03 20:32:15		\N	SET NAMES utf8
+1595	3	2013-07-04 00:00:00	2013-07-03 20:40:36		\N	SELECT cid, data, created, expire, serialized FROM cache_views WHERE cid IN ('views_data:en')
+1570	3	2013-07-04 00:00:00	2013-07-03 21:01:27		\N	SELECT post_id, meta_key, meta_value FROM wp_postmeta WHERE post_id IN (98,31,93,6,80,65)
+2039	3	2013-07-04 00:00:00	2013-07-03 22:00:07		\N	TRUNCATE cache_admin_menu
+1574	3	2013-07-04 00:00:00	2013-07-03 23:24:01	select  `option_value` = '2042627' from `wp_options` where  `option_name` = 'akismet_spam_count'	\N	UPDATE `wp_options` SET `option_value` = '2042627' WHERE `option_name` = 'akismet_spam_count'
+2221	3	2013-07-04 00:00:00	2013-07-04 00:10:04	select  language='und' from menu_links where   (mlid = '61')	\N	UPDATE menu_links SET language='und'\
+WHERE  (mlid = '61')
+2222	3	2013-07-04 00:00:00	2013-07-04 00:10:05	select  has_children='1' from menu_links where   (mlid = '39')	\N	UPDATE menu_links SET has_children='1'\
+WHERE  (mlid = '39')
+1644	3	2013-07-04 00:00:00	2013-07-04 00:47:57		\N	SELECT cid, data, created, expire, serialized FROM cache_path WHERE cid IN ('ajax/server-version')
+2550	3	2013-07-04 00:00:00	2013-07-04 01:00:51	select * from  captcha_sessions \
+WHERE  (timestamp < '1372827650')	\N	DELETE FROM captcha_sessions \
+WHERE  (timestamp < '1372827650')
+5206	3	2013-07-04 00:00:00	2013-07-04 01:09:31	select * from  cache_page WHERE expire != 0 AND expire < 1372914571	\N	DELETE FROM cache_page WHERE expire != 0 AND expire < 1372914571
+1623	3	2013-07-04 00:00:00	2013-07-04 02:46:07	select * from  wp_commentmeta WHERE meta_id = 3442544	\N	DELETE FROM wp_commentmeta WHERE meta_id = 3442544
+2344	3	2013-07-04 00:00:00	2013-07-04 03:52:56		\N	SELECT * FROM cacheevent\
+ WHERE `event` IN ('userChg_20971')
+1601	3	2013-07-04 00:00:00	2013-07-04 04:07:00		\N	show tables
+1640	3	2013-07-04 00:00:00	2013-07-04 04:25:28		\N	SELECT * FROM user\
+ WHERE `userid` IN (2125)
+1657	3	2013-07-04 00:00:00	2013-07-04 04:50:15		\N	select max(ID) as max_id from wp_yarpp_related_cache where reference_ID = 88
+2083	3	2013-07-04 00:00:00	2013-07-04 05:10:08		\N	SELECT 1 AS expression\
+FROM \
+cache_views cache_views\
+WHERE ( (cid = 'views_data:en') ) FOR UPDATE
+2639	3	2013-07-04 00:00:00	2013-07-04 05:27:35	select  `meta_value` = '1336' from `wp_postmeta` where  `post_id` = 16650 AND `meta_key` = '_edit_last'	\N	UPDATE `wp_postmeta` SET `meta_value` = '1336' WHERE `post_id` = 16650 AND `meta_key` = '_edit_last'
+1671	3	2013-07-04 00:00:00	2013-07-04 05:29:06	select * from  wp_comments WHERE comment_ID = 1944690	\N	DELETE FROM wp_comments WHERE comment_ID = 1944690
+1699	3	2013-07-04 00:00:00	2013-07-04 05:34:25		\N	SELECT comment_ID FROM wp_comments WHERE comment_parent = 1944734
+1668	3	2013-07-04 00:00:00	2013-07-04 05:45:20		\N	SELECT comment_approved, COUNT( * ) AS num_comments FROM wp_comments  GROUP BY comment_approved
+1815	3	2013-07-04 00:00:00	2013-07-04 05:52:51	select  `data`=1372932000,`unserialize`=0 from datastore where  (`title` = 'cron') \
+/**datastore**/	\N	UPDATE datastore SET `data`=1372932000,`unserialize`=0 \
+ WHERE (`title` = 'cron') \
+/**datastore**/
+1593	3	2013-07-04 00:00:00	2013-07-04 06:35:19		\N	SELECT * FROM menu_router WHERE path IN ('node/510','node/%','node') ORDER BY fit DESC LIMIT 0, 1
+1598	3	2013-07-04 00:00:00	2013-07-04 07:55:50		\N	SELECT cid, data, created, expire, serialized FROM cache_menu WHERE cid IN ('menu_custom')
+1665	3	2013-07-04 00:00:00	2013-07-04 09:23:47		\N	SELECT data, created, headers, expire, serialized FROM cache_views WHERE cid = 'views_data:en'
+1721	3	2013-07-04 00:00:00	2013-07-04 09:24:42		\N	SELECT data, created, headers, expire, serialized FROM cache WHERE cid = 'theme_registry:pushbutton'
+4914	3	2013-07-04 00:00:00	2013-07-04 09:41:42		\N	SELECT DISTINCT post_mime_type FROM wp_posts WHERE post_type = 'attachment'
+3444	3	2013-07-04 00:00:00	2013-07-04 12:12:37		\N	SELECT * FROM user\
+ WHERE `fbuserid` = 656160874
+1627	3	2013-07-04 00:00:00	2013-07-04 13:16:21		\N	SELECT * FROM wp_comments WHERE comment_ID in (1281920,6524,696422,357006,806020,1266236)
+1619	3	2013-07-04 00:00:00	2013-07-04 13:22:59		\N	SELECT wp_posts.* FROM wp_posts WHERE ID IN (4504,4501,4495,4488,4486)
+2235	3	2013-07-04 00:00:00	2013-07-04 15:15:54	select * from  cache_menu	\N	DELETE FROM cache_menu
+1824	3	2013-07-04 00:00:00	2013-07-04 16:10:06		\N	SELECT name, value FROM variable
+1591	3	2013-07-05 00:00:00	2013-07-04 20:00:10		\N	SELECT cid, data, created, expire, serialized FROM cache_bootstrap WHERE cid IN ('system_list')
+1560	3	2013-07-05 00:00:00	2013-07-04 20:00:16		\N	SELECT * FROM wp_users WHERE ID = '1903'
+1575	3	2013-07-05 00:00:00	2013-07-04 20:01:00		\N	SELECT * FROM cache\
+ WHERE `cacheid` IN ('vBPage_40cd750bba9870f18aada2478b24840a')
+1578	3	2013-07-05 00:00:00	2013-07-04 20:02:10		\N	DESC wp_comments
+1569	3	2013-07-05 00:00:00	2013-07-04 20:02:31		\N	SELECT option_value FROM wp_options WHERE option_name = 'wpseo_permalinks' LIMIT 1
+1571	3	2013-07-05 00:00:00	2013-07-04 20:02:32		\N	SELECT wp_users.ID FROM wp_users WHERE 1=1 ORDER BY display_name ASC
+1563	3	2013-07-05 00:00:00	2013-07-04 20:03:20		\N	SELECT option_name, option_value FROM wp_options WHERE autoload = 'yes'
+1564	3	2013-07-05 00:00:00	2013-07-04 20:03:49		\N	SHOW /*!50002 GLOBAL */ STATUS
+1559	3	2013-07-05 00:00:00	2013-07-04 20:04:23		\N	SELECT user_id, meta_key, meta_value FROM wp_usermeta WHERE user_id IN (471)
+1609	3	2013-07-05 00:00:00	2013-07-04 20:04:26		\N	SELECT * FROM wp_posts WHERE ID = 542 LIMIT 1
+1612	3	2013-07-05 00:00:00	2013-07-04 20:07:54		\N	SELECT meta_id FROM wp_commentmeta WHERE meta_key = 'akismet_as_submitted' AND comment_id = 1948489
+1701	3	2013-07-05 00:00:00	2013-07-04 20:10:06		\N	commit
+1582	3	2013-07-05 00:00:00	2013-07-04 20:10:07		\N	SELECT * FROM wp_posts WHERE ID in (542,12925)
+1603	3	2013-07-05 00:00:00	2013-07-04 20:18:25		\N	SELECT cid, data, created, expire, serialized FROM cache_field WHERE cid IN ('field_info_fields')
+1574	3	2013-07-05 00:00:00	2013-07-04 20:25:17	select  `option_value` = '2047759' from `wp_options` where  `option_name` = 'akismet_spam_count'	\N	UPDATE `wp_options` SET `option_value` = '2047759' WHERE `option_name` = 'akismet_spam_count'
+1611	3	2013-07-05 00:00:00	2013-07-04 20:39:13		\N	SET NAMES utf8
+1619	3	2013-07-05 00:00:00	2013-07-04 21:01:07		\N	SELECT wp_posts.* FROM wp_posts WHERE ID IN (15944,15819,15862)
+1623	3	2013-07-05 00:00:00	2013-07-04 21:18:56	select * from  wp_commentmeta WHERE meta_id = 3457845	\N	DELETE FROM wp_commentmeta WHERE meta_id = 3457845
+1570	3	2013-07-05 00:00:00	2013-07-04 22:07:37		\N	SELECT post_id, meta_key, meta_value FROM wp_postmeta WHERE post_id IN (72,296)
+2216	3	2013-07-05 00:00:00	2013-07-04 22:10:04		\N	SELECT menu_links.*\
+FROM \
+menu_links menu_links\
+WHERE  (link_path = 'admin') AND (module = 'system')
+1608	3	2013-07-05 00:00:00	2013-07-04 22:10:11		\N	SELECT cid, data, created, expire, serialized FROM cache WHERE cid IN ('theme_registry:percona')
+2039	3	2013-07-05 00:00:00	2013-07-04 22:36:55		\N	TRUNCATE cache_admin_menu
+2827	3	2013-07-05 00:00:00	2013-07-05 00:15:02		\N	FLUSH LOGS
+2836	3	2013-07-05 00:00:00	2013-07-05 00:15:06		\N	FLUSH TABLES WITH READ LOCK
+1904	3	2013-07-05 00:00:00	2013-07-05 00:15:07		\N	SELECT 1 AS expression\
+FROM \
+cache_field cache_field\
+WHERE ( (cid = 'field:node:617') ) FOR UPDATE
+1598	3	2013-07-05 00:00:00	2013-07-05 00:15:07		\N	SELECT cid, data, created, expire, serialized FROM cache_menu WHERE cid IN ('menu_custom')
+1696	3	2013-07-05 00:00:00	2013-07-05 00:57:01		\N	SELECT 1 AS expression\
+FROM \
+cache_path cache_path\
+WHERE ( (cid = 'node/198') ) FOR UPDATE
+1671	3	2013-07-05 00:00:00	2013-07-05 01:04:56	select * from  wp_comments WHERE comment_ID = 1949212	\N	DELETE FROM wp_comments WHERE comment_ID = 1949212
+2233	3	2013-07-05 00:00:00	2013-07-05 01:10:06		\N	TRUNCATE cache_page
+1665	3	2013-07-05 00:00:00	2013-07-05 01:23:15		\N	SELECT data, created, headers, expire, serialized FROM cache_views WHERE cid = 'views_data:en'
+1691	3	2013-07-05 00:00:00	2013-07-05 01:23:15		\N	SELECT f.* FROM files f WHERE f.fid = 151
+1721	3	2013-07-05 00:00:00	2013-07-05 01:39:30		\N	SELECT data, created, headers, expire, serialized FROM cache WHERE cid = 'schema'
+1668	3	2013-07-05 00:00:00	2013-07-05 01:39:40		\N	SELECT comment_approved, COUNT( * ) AS num_comments FROM wp_comments  GROUP BY comment_approved
+1593	3	2013-07-05 00:00:00	2013-07-05 01:58:37		\N	SELECT * FROM menu_router WHERE path IN ('user') ORDER BY fit DESC LIMIT 0, 1
+2037	3	2013-07-05 00:00:00	2013-07-05 04:10:05		\N	SELECT 1 AS expression\
+FROM \
+cache cache\
+WHERE ( (cid = 'entity_info:en') ) FOR UPDATE
+1628	3	2013-07-05 00:00:00	2013-07-05 04:52:20		\N	SELECT 1 FROM blocked_ips WHERE ip = '188.153.134.227'
+1955	3	2013-07-05 00:00:00	2013-07-05 04:58:42	select * from  cache_bootstrap \
+WHERE  (cid = 'bootstrap_modules')	\N	DELETE FROM cache_bootstrap \
+WHERE  (cid = 'bootstrap_modules')
+2070	3	2013-07-05 00:00:00	2013-07-05 05:00:03	select  title='Long', locked='1' from date_format_type where   (type = 'long')	\N	UPDATE date_format_type SET title='Long', locked='1'\
+WHERE  (type = 'long')
+1655	3	2013-07-05 00:00:00	2013-07-05 05:04:39		\N	SELECT comment_id, meta_key, meta_value FROM wp_commentmeta WHERE comment_id IN (1950180)
+2223	3	2013-07-05 00:00:00	2013-07-05 05:10:06		\N	TRUNCATE cache_block
+1943	3	2013-07-05 00:00:00	2013-07-05 05:40:41	select  `nextrun`=1373017800 from cron where  (`cronid` = 14 AND `nextrun` = 1373017200) \
+/**cron**/	\N	UPDATE cron SET `nextrun`=1373017800 \
+ WHERE (`cronid` = 14 AND `nextrun` = 1373017200) \
+/**cron**/
+2344	3	2013-07-05 00:00:00	2013-07-05 05:57:59		\N	SELECT * FROM cacheevent\
+ WHERE `event` IN ('userPerms_20962','userChg_20962')
+2130	3	2013-07-05 00:00:00	2013-07-05 06:00:27		\N	SET GLOBAL slow_query_log=ON
+2228	3	2013-07-05 00:00:00	2013-07-05 06:10:08		\N	TRUNCATE cache_views
+2397	3	2013-07-05 00:00:00	2013-07-05 06:48:44		\N	SELECT f.*, fn.type FROM flags f LEFT JOIN flag_types fn ON fn.fid = f.fid
+1850	3	2013-07-05 00:00:00	2013-07-05 08:10:07		\N	SELECT * FROM custom_breadcrumb WHERE node_type = 'page'
+3833	3	2013-07-05 00:00:00	2013-07-05 08:37:49		\N	SELECT * FROM user\
+ WHERE `email` = 'vivek@csillamvilag.com'
+5206	3	2013-07-05 00:00:00	2013-07-05 08:59:07	select * from  cache_page WHERE expire != 0 AND expire < 1373029147	\N	DELETE FROM cache_page WHERE expire != 0 AND expire < 1373029147
+1644	3	2013-07-05 00:00:00	2013-07-05 10:02:28		\N	SELECT cid, data, created, expire, serialized FROM cache_path WHERE cid IN ('ajax/server-version')
+1595	3	2013-07-05 00:00:00	2013-07-05 10:28:50		\N	SELECT cid, data, created, expire, serialized FROM cache_views WHERE cid IN ('views_data:en')
+1986	3	2013-07-05 00:00:00	2013-07-05 11:10:08		\N	SELECT 1 AS expression\
+FROM \
+variable variable\
+WHERE ( (name = 'javascript_parsed') ) FOR UPDATE
+1588	3	2013-07-05 00:00:00	2013-07-05 11:30:53		\N	SELECT * FROM template\
+ WHERE `templateid` IN (587)
+2221	3	2013-07-05 00:00:00	2013-07-05 17:10:06	select  language='und' from menu_links where   (mlid = '811')	\N	UPDATE menu_links SET language='und'\
+WHERE  (mlid = '811')
+1627	3	2013-07-05 00:00:00	2013-07-05 17:17:27		\N	SELECT * FROM wp_comments WHERE comment_ID in (2473,1502,1647,850128)
+2083	3	2013-07-05 00:00:00	2013-07-05 18:10:03		\N	SELECT 1 AS expression\
+FROM \
+cache_views cache_views\
+WHERE ( (cid = 'views_data:en') ) FOR UPDATE
+1563	3	2013-07-06 00:00:00	2013-07-05 20:00:08		\N	SELECT option_name, option_value FROM wp_options WHERE autoload = 'yes'
+1569	3	2013-07-06 00:00:00	2013-07-05 20:00:32		\N	SELECT option_value FROM wp_options WHERE option_name = 'akismet_comment_nonce' LIMIT 1
+1571	3	2013-07-06 00:00:00	2013-07-05 20:00:32		\N	SELECT wp_users.ID FROM wp_users WHERE 1=1 ORDER BY display_name ASC
+1559	3	2013-07-06 00:00:00	2013-07-05 20:00:36		\N	SELECT user_id, meta_key, meta_value FROM wp_usermeta WHERE user_id IN (2246)
+1575	3	2013-07-06 00:00:00	2013-07-05 20:01:27		\N	SELECT * FROM cache\
+ WHERE `cacheid` IN ('vBPage_b374c5571f93735d436d0cce2d97bdcb')
+1560	3	2013-07-06 00:00:00	2013-07-05 20:02:10		\N	SELECT * FROM wp_users WHERE ID = '2022'
+1582	3	2013-07-06 00:00:00	2013-07-05 20:02:40		\N	SELECT * FROM wp_posts WHERE ID in (98,9645,4377,2241,562,7354,542,6569,6289,4495)
+1609	3	2013-07-06 00:00:00	2013-07-05 20:02:57		\N	SELECT * FROM wp_posts WHERE ID = 13385 LIMIT 1
+1591	3	2013-07-06 00:00:00	2013-07-05 20:03:30		\N	SELECT cid, data, created, expire, serialized FROM cache_bootstrap WHERE cid IN ('system_list')
+1564	3	2013-07-06 00:00:00	2013-07-05 20:04:49		\N	SHOW /*!50002 GLOBAL */ STATUS
+1608	3	2013-07-06 00:00:00	2013-07-05 20:07:14		\N	SELECT cid, data, created, expire, serialized FROM cache WHERE cid IN ('schema')
+1603	3	2013-07-06 00:00:00	2013-07-05 20:09:31		\N	SELECT cid, data, created, expire, serialized FROM cache_field WHERE cid IN ('field_info_fields')
+1701	3	2013-07-06 00:00:00	2013-07-05 20:10:06		\N	commit
+1570	3	2013-07-06 00:00:00	2013-07-05 20:10:07		\N	SELECT post_id, meta_key, meta_value FROM wp_postmeta WHERE post_id IN (11910)
+1578	3	2013-07-06 00:00:00	2013-07-05 20:15:07		\N	DESC wp_comments
+2039	3	2013-07-06 00:00:00	2013-07-05 20:23:17		\N	TRUNCATE cache_admin_menu
+1671	3	2013-07-06 00:00:00	2013-07-05 20:26:24	select * from  wp_comments WHERE comment_ID = 1952866	\N	DELETE FROM wp_comments WHERE comment_ID = 1952866
+1612	3	2013-07-06 00:00:00	2013-07-05 20:28:31		\N	SELECT meta_id FROM wp_commentmeta WHERE meta_key = 'akismet_as_submitted' AND comment_id = 1952890
+1623	3	2013-07-06 00:00:00	2013-07-05 20:28:46	select * from  wp_commentmeta WHERE meta_id = 3470343	\N	DELETE FROM wp_commentmeta WHERE meta_id = 3470343
+2846	3	2013-07-06 00:00:00	2013-07-05 20:54:35		\N	INSERT INTO `wp_usermeta` (`user_id`,`meta_key`,`meta_value`) VALUES (4994,'admin_color','fresh')
+1668	3	2013-07-06 00:00:00	2013-07-05 21:00:24		\N	SELECT comment_approved, COUNT( * ) AS num_comments FROM wp_comments  GROUP BY comment_approved
+2144	3	2013-07-06 00:00:00	2013-07-05 22:05:08	select * from  searchlog\
+ WHERE `dateline` < 1372989908  \
+/**searchlog**/	\N	DELETE FROM searchlog\
+ WHERE `dateline` < 1372989908  \
+/**searchlog**/
+2232	3	2013-07-06 00:00:00	2013-07-05 22:10:06		\N	TRUNCATE cache_bootstrap
+1588	3	2013-07-06 00:00:00	2013-07-05 22:34:56		\N	SELECT * FROM template\
+ WHERE `templateid` IN (369)
+1574	3	2013-07-06 00:00:00	2013-07-05 23:47:19	select  `option_value` = '2052892' from `wp_options` where  `option_name` = 'akismet_spam_count'	\N	UPDATE `wp_options` SET `option_value` = '2052892' WHERE `option_name` = 'akismet_spam_count'
+1637	3	2013-07-06 00:00:00	2013-07-06 00:15:33		\N	administrator command: Init DB
+1598	3	2013-07-06 00:00:00	2013-07-06 00:24:51		\N	SELECT cid, data, created, expire, serialized FROM cache_menu WHERE cid IN ('menu_custom')
+1593	3	2013-07-06 00:00:00	2013-07-06 00:24:51		\N	SELECT * FROM menu_router WHERE path IN ('node/1288', 'node/%', 'node') ORDER BY fit DESC LIMIT 0, 1
+1644	3	2013-07-06 00:00:00	2013-07-06 00:28:29		\N	SELECT cid, data, created, expire, serialized FROM cache_path WHERE cid IN ('webinars/feed')
+1655	3	2013-07-06 00:00:00	2013-07-06 00:59:12		\N	SELECT comment_id, meta_key, meta_value FROM wp_commentmeta WHERE comment_id IN (27432)
+2223	3	2013-07-06 00:00:00	2013-07-06 01:10:06		\N	TRUNCATE cache_block
+1627	3	2013-07-06 00:00:00	2013-07-06 01:16:08		\N	SELECT * FROM wp_comments WHERE comment_ID in (307254,592314,312001,6524,772930,444031,342516)
+2216	3	2013-07-06 00:00:00	2013-07-06 01:20:27		\N	SELECT menu_links.*\
+FROM \
+menu_links menu_links\
+WHERE  (link_path = 'admin') AND (module = 'system')
+2344	3	2013-07-06 00:00:00	2013-07-06 02:22:54		\N	SELECT * FROM cacheevent\
+ WHERE `event` IN ('userChg_20938')
+2221	3	2013-07-06 00:00:00	2013-07-06 03:10:05	select  language='und' from menu_links where   (mlid = '113')	\N	UPDATE menu_links SET language='und'\
+WHERE  (mlid = '113')
+1696	3	2013-07-06 00:00:00	2013-07-06 04:26:34		\N	SELECT 1 AS expression\
+FROM \
+cache_path cache_path\
+WHERE ( (cid = 'node/1259') ) FOR UPDATE
+1690	3	2013-07-06 00:00:00	2013-07-06 04:34:05		\N	SELECT * FROM views_display WHERE vid IN ('4') ORDER BY vid, position
+1611	3	2013-07-06 00:00:00	2013-07-06 04:41:15		\N	SET NAMES utf8
+1695	3	2013-07-06 00:00:00	2013-07-06 04:48:21		\N	SELECT page_title, id FROM page_title WHERE type = 'node' AND id IN ('281')
+1595	3	2013-07-06 00:00:00	2013-07-06 04:55:33		\N	SELECT cid, data, created, expire, serialized FROM cache_views WHERE cid IN ('views_data:en')
+2059	3	2013-07-06 00:00:00	2013-07-06 05:00:02	select * from  watchdog \
+WHERE  (wid < '545131')	\N	DELETE FROM watchdog \
+WHERE  (wid < '545131')
+1707	3	2013-07-06 00:00:00	2013-07-06 05:00:49		\N	SELECT uid, name, picture, data FROM users WHERE uid IN ('1', '1', '1', '1', '1')
+2037	3	2013-07-06 00:00:00	2013-07-06 05:10:05		\N	SELECT 1 AS expression\
+FROM \
+cache cache\
+WHERE ( (cid = 'entity_info:en') ) FOR UPDATE
+2083	3	2013-07-06 00:00:00	2013-07-06 05:10:06		\N	SELECT 1 AS expression\
+FROM \
+cache_views cache_views\
+WHERE ( (cid = 'views_data:en') ) FOR UPDATE
+1904	3	2013-07-06 00:00:00	2013-07-06 05:10:06		\N	SELECT 1 AS expression\
+FROM \
+cache_field cache_field\
+WHERE ( (cid = 'field:node:1244') ) FOR UPDATE
+1943	3	2013-07-06 00:00:00	2013-07-06 05:38:28	select  `nextrun`=1373103600 from cron where  (`cronid` = 17 AND `nextrun` = 1373103000) \
+/**cron**/	\N	UPDATE cron SET `nextrun`=1373103600 \
+ WHERE (`cronid` = 17 AND `nextrun` = 1373103000) \
+/**cron**/
+1657	3	2013-07-06 00:00:00	2013-07-06 06:09:23		\N	select max(ID) as max_id from wp_yarpp_related_cache where reference_ID = 302
+1986	3	2013-07-06 00:00:00	2013-07-06 09:10:07		\N	SELECT 1 AS expression\
+FROM \
+variable variable\
+WHERE ( (name = 'javascript_parsed') ) FOR UPDATE
+2228	3	2013-07-06 00:00:00	2013-07-06 10:10:07		\N	TRUNCATE cache_views
+1689	3	2013-07-06 00:00:00	2013-07-06 10:30:37		\N	SELECT meta_id FROM wp_commentmeta WHERE comment_id = 1917374
+1639	3	2013-07-06 00:00:00	2013-07-06 10:30:40		\N	SELECT * FROM wp_commentmeta WHERE meta_id = 3370402
+1699	3	2013-07-06 00:00:00	2013-07-06 10:30:46		\N	SELECT comment_ID FROM wp_comments WHERE comment_parent = 1926044
+1629	3	2013-07-06 00:00:00	2013-07-06 10:30:59		\N	SELECT * FROM wp_comments WHERE comment_ID = 1950403 LIMIT 1
+1656	3	2013-07-06 00:00:00	2013-07-06 10:31:01		\N	SELECT * FROM wp_comments WHERE comment_ID='1953030' LIMIT 1
+1621	3	2013-07-06 00:00:00	2013-07-06 10:44:06		\N	SELECT FOUND_ROWS()
+1601	3	2013-07-06 00:00:00	2013-07-06 12:02:52		\N	show tables
+2222	3	2013-07-06 00:00:00	2013-07-06 12:10:04	select  has_children='0' from menu_links where   (mlid = '12')	\N	UPDATE menu_links SET has_children='0'\
+WHERE  (mlid = '12')
+2629	3	2013-07-06 00:00:00	2013-07-06 13:24:38		\N	SELECT umeta_id FROM wp_usermeta WHERE meta_key = 'first_name' AND user_id = 3648
+2224	3	2013-07-06 00:00:00	2013-07-06 18:10:06		\N	TRUNCATE cache_image
+2225	3	2013-07-06 00:00:00	2013-07-06 18:10:06		\N	TRUNCATE cache_field
+3833	3	2013-07-06 00:00:00	2013-07-06 19:11:48		\N	SELECT * FROM user\
+ WHERE `email` = 'geoff@sixfriedrice.com'
+1591	3	2013-07-07 00:00:00	2013-07-06 20:00:13		\N	SELECT cid, data, created, expire, serialized FROM cache_bootstrap WHERE cid IN ('system_list')
+1560	3	2013-07-07 00:00:00	2013-07-06 20:00:54		\N	SELECT * FROM wp_users WHERE ID = '3406'
+1575	3	2013-07-07 00:00:00	2013-07-06 20:01:24		\N	SELECT * FROM cache\
+ WHERE `cacheid` IN ('vb_types.types')
+1578	3	2013-07-07 00:00:00	2013-07-06 20:02:38		\N	DESC wp_comments
+1571	3	2013-07-07 00:00:00	2013-07-06 20:02:43		\N	SELECT wp_users.ID FROM wp_users WHERE 1=1 ORDER BY display_name ASC
+1559	3	2013-07-07 00:00:00	2013-07-06 20:02:46		\N	SELECT user_id, meta_key, meta_value FROM wp_usermeta WHERE user_id IN (2968)
+1563	3	2013-07-07 00:00:00	2013-07-06 20:03:20		\N	SELECT option_name, option_value FROM wp_options WHERE autoload = 'yes'
+1569	3	2013-07-07 00:00:00	2013-07-06 20:04:06		\N	SELECT option_value FROM wp_options WHERE option_name = 'akismet_alert_code' LIMIT 1
+1564	3	2013-07-07 00:00:00	2013-07-06 20:04:07		\N	SHOW /*!50002 GLOBAL */ STATUS
+1603	3	2013-07-07 00:00:00	2013-07-06 20:04:19		\N	SELECT cid, data, created, expire, serialized FROM cache_field WHERE cid IN ('field_info_fields')
+1570	3	2013-07-07 00:00:00	2013-07-06 20:09:34		\N	SELECT post_id, meta_key, meta_value FROM wp_postmeta WHERE post_id IN (72)
+1608	3	2013-07-07 00:00:00	2013-07-06 20:10:06		\N	SELECT cid, data, created, expire, serialized FROM cache WHERE cid IN ('filter_list_format')
+1701	3	2013-07-07 00:00:00	2013-07-06 20:10:09		\N	commit
+1609	3	2013-07-07 00:00:00	2013-07-06 20:18:58		\N	SELECT * FROM wp_posts WHERE ID = 16031 LIMIT 1
+1582	3	2013-07-07 00:00:00	2013-07-06 20:41:05		\N	SELECT * FROM wp_posts WHERE ID in (14991,15298,15844,4174,15092,10386,13120,11240,7778,4495)
+1601	3	2013-07-07 00:00:00	2013-07-06 21:30:10		\N	show tables
+1665	3	2013-07-07 00:00:00	2013-07-06 21:36:20		\N	SELECT data, created, headers, expire, serialized FROM cache_views WHERE cid = 'views_data:en'
+1668	3	2013-07-07 00:00:00	2013-07-06 21:43:49		\N	SELECT comment_approved, COUNT( * ) AS num_comments FROM wp_comments  GROUP BY comment_approved
+1691	3	2013-07-07 00:00:00	2013-07-06 21:49:49		\N	SELECT f.* FROM files f WHERE f.fid = 165
+1721	3	2013-07-07 00:00:00	2013-07-06 21:52:20		\N	SELECT data, created, headers, expire, serialized FROM cache WHERE cid = 'schema'
+1612	3	2013-07-07 00:00:00	2013-07-06 21:55:48		\N	SELECT meta_id FROM wp_commentmeta WHERE meta_key = 'akismet_as_submitted' AND comment_id = 1958859
+1611	3	2013-07-07 00:00:00	2013-07-06 21:55:54		\N	SET NAMES utf8
+2039	3	2013-07-07 00:00:00	2013-07-06 22:00:11		\N	TRUNCATE cache_admin_menu
+1595	3	2013-07-07 00:00:00	2013-07-06 22:06:30		\N	SELECT cid, data, created, expire, serialized FROM cache_views WHERE cid IN ('views_data:en')
+2083	3	2013-07-07 00:00:00	2013-07-06 22:10:08		\N	SELECT 1 AS expression\
+FROM \
+cache_views cache_views\
+WHERE ( (cid = 'views_data:en') ) FOR UPDATE
+1623	3	2013-07-07 00:00:00	2013-07-06 23:07:59	select * from  wp_commentmeta WHERE meta_id = 3489176	\N	DELETE FROM wp_commentmeta WHERE meta_id = 3489176
+1574	3	2013-07-07 00:00:00	2013-07-06 23:10:02	select  `option_value` = '2058101' from `wp_options` where  `option_name` = 'akismet_spam_count'	\N	UPDATE `wp_options` SET `option_value` = '2058101' WHERE `option_name` = 'akismet_spam_count'
+2221	3	2013-07-07 00:00:00	2013-07-06 23:10:05	select  language='und' from menu_links where   (mlid = '1106')	\N	UPDATE menu_links SET language='und'\
+WHERE  (mlid = '1106')
+2827	3	2013-07-07 00:00:00	2013-07-07 00:15:02		\N	FLUSH LOGS
+1598	3	2013-07-07 00:00:00	2013-07-07 00:15:05		\N	SELECT cid, data, created, expire, serialized FROM cache_menu WHERE cid IN ('menu_custom')
+2836	3	2013-07-07 00:00:00	2013-07-07 00:15:06		\N	FLUSH TABLES WITH READ LOCK
+2037	3	2013-07-07 00:00:00	2013-07-07 00:15:07		\N	SELECT 1 AS expression\
+FROM \
+cache cache\
+WHERE ( (cid = 'theme_registry:percona_live') ) FOR UPDATE
+1671	3	2013-07-07 00:00:00	2013-07-07 00:23:07	select * from  wp_comments WHERE comment_ID = 1959515	\N	DELETE FROM wp_comments WHERE comment_ID = 1959515
+2828	3	2013-07-07 00:00:00	2013-07-07 00:34:43	select * from  mapiposthash WHERE dateline < 1372998883\
+/**cleanPosthash**/	\N	DELETE FROM mapiposthash WHERE dateline < 1372998883\
+/**cleanPosthash**/
+1621	3	2013-07-07 00:00:00	2013-07-07 01:16:53		\N	SELECT FOUND_ROWS()
+2216	3	2013-07-07 00:00:00	2013-07-07 02:20:27		\N	SELECT menu_links.*\
+FROM \
+menu_links menu_links\
+WHERE  (link_path = 'admin') AND (module = 'system')
+2222	3	2013-07-07 00:00:00	2013-07-07 03:10:05	select  has_children='1' from menu_links where   (mlid = '39')	\N	UPDATE menu_links SET has_children='1'\
+WHERE  (mlid = '39')
+1644	3	2013-07-07 00:00:00	2013-07-07 04:23:32		\N	SELECT cid, data, created, expire, serialized FROM cache_path WHERE cid IN ('site_map')
+1696	3	2013-07-07 00:00:00	2013-07-07 04:34:29		\N	SELECT 1 AS expression\
+FROM \
+cache_path cache_path\
+WHERE ( (cid = 'node/1259') ) FOR UPDATE
+1690	3	2013-07-07 00:00:00	2013-07-07 05:04:07		\N	SELECT * FROM views_display WHERE vid IN ('4') ORDER BY vid, position
+2233	3	2013-07-07 00:00:00	2013-07-07 05:10:07		\N	TRUNCATE cache_page
+2120	3	2013-07-07 00:00:00	2013-07-07 05:30:25	select * from  cache_image \
+WHERE  (expire <> '0') AND (expire < '1373189425')	\N	DELETE FROM cache_image \
+WHERE  (expire <> '0') AND (expire < '1373189425')
+2194	3	2013-07-07 00:00:00	2013-07-07 05:30:26	select * from  cache_filter \
+WHERE  (expire <> '0') AND (expire < '1373189425')	\N	DELETE FROM cache_filter \
+WHERE  (expire <> '0') AND (expire < '1373189425')
+2846	3	2013-07-07 00:00:00	2013-07-07 05:43:23		\N	INSERT INTO `wp_usermeta` (`user_id`,`meta_key`,`meta_value`) VALUES (3649,'first_name','')
+2223	3	2013-07-07 00:00:00	2013-07-07 06:10:06		\N	TRUNCATE cache_block
+2145	3	2013-07-07 00:00:00	2013-07-07 07:30:36	select * from  session\
+ WHERE `lastactivity` < 1371900636  \
+/**session**/	\N	DELETE FROM session\
+ WHERE `lastactivity` < 1371900636  \
+/**session**/
+2144	3	2013-07-07 00:00:00	2013-07-07 11:08:33	select * from  searchlog\
+ WHERE `dateline` < 1373123313  \
+/**searchlog**/	\N	DELETE FROM searchlog\
+ WHERE `dateline` < 1373123313  \
+/**searchlog**/
+2130	3	2013-07-07 00:00:00	2013-07-07 12:00:28		\N	SET GLOBAL slow_query_log=ON
+1588	3	2013-07-07 00:00:00	2013-07-07 12:07:17		\N	SELECT * FROM template\
+ WHERE `templateid` IN (620)
+1986	3	2013-07-07 00:00:00	2013-07-07 17:10:06		\N	SELECT 1 AS expression\
+FROM \
+variable variable\
+WHERE ( (name = 'javascript_parsed') ) FOR UPDATE
+2867	3	2013-07-07 00:00:00	2013-07-07 18:59:10		\N	show databases
+6179	3	2013-07-07 00:00:00	2013-07-07 19:03:53		\N	SELECT time,count FROM QUERY_RESPONSE_TIME

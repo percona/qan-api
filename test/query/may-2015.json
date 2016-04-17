@@ -1,0 +1,28 @@
+{
+  "407C5D658AA2568B": {
+    "Id": "407C5D658AA2568B",
+    "Abstract": "INSERT cache_bootstrap",
+    "Fingerprint": "insert into cache (cid, serialized, created, expire, data) values (?+)",
+    "FirstSeen": "2014-05-01T03:12:09Z",
+    "LastSeen": "2015-06-18T21:36:00Z",
+    "Status": "new"
+  },
+  "92F3B1B361FB0E5B": {
+    "Id": "92F3B1B361FB0E5B",
+    "Abstract": "SELECT wp_options",
+    "Fingerprint": "select option_name, option_value from wp_options where autoload = ?",
+    "Tables": [{"Db":"","Table":"wp_options"}],
+    "FirstSeen": "2014-05-01T03:11:06Z",
+    "LastSeen": "2015-06-18T21:36:00Z",
+    "Status": "new"
+  },
+  "94350EA2AB8AAC34": {
+    "Id": "94350EA2AB8AAC34",
+    "Abstract": "UPDATE wp_options",
+    "Fingerprint": "update `wp_options` set `option_value` = ? where `option_name` = ?",
+    "Tables": [{"Db":"","Table":"wp_options"}],
+    "FirstSeen": "2014-05-01T03:11:06Z",
+    "LastSeen": "2015-06-18T21:36:00Z",
+    "Status": "new"
+  }
+}

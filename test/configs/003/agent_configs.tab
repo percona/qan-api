@@ -1,0 +1,4 @@
+1	agent	0	0	{"Keepalive":76}	1	2014-01-01 00:00:00
+1	qan	2	0	{"Service":"mysql","InstanceId":1,"Collect":60,"Report":60}	1	2014-01-01 00:00:00
+2	agent	0	0	{"Keepalive":76}	0	2014-01-01 00:00:00
+2	qan	2	0	{"Service":"mysql","InstanceId":2,"Collect":60,"Report":60}	0	2014-01-01 00:00:00

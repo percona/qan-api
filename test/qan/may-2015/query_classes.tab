@@ -1,0 +1,3 @@
+141	92F3B1B361FB0E5B	SELECT wp_options	select option_name, option_value from wp_options where autoload = ?	[{"Db":"","Table":"wp_options"}]	2014-05-01 03:11:06	2015-06-18 21:36:00	new
+146	94350EA2AB8AAC34	UPDATE wp_options	update `wp_options` set `option_value` = ? where `option_name` = ?	[{"Db":"","Table":"wp_options"}]	2014-05-01 03:11:06	2015-06-18 21:36:00	new
+328	407C5D658AA2568B	INSERT cache_bootstrap	insert into cache (cid, serialized, created, expire, data) values (?+)	\N	2014-05-01 03:12:09	2015-06-18 21:36:00	new

@@ -1,0 +1,57 @@
+{
+    "Class": [
+        {
+            "Fingerprint": "select c from t where id=1",
+            "Id": "0000000000000001",
+            "Metrics": {
+                "NumberMetrics": {
+                    "Rows_read": {
+                        "Avg": 0,
+                        "Cnt": 1,
+                        "Max": 18446744073709551615,
+                        "Min": 0,
+                        "Sum": 0
+                    }
+                },
+                "TimeMetrics": {
+                    "Query_time": {
+                        "Avg": 1,
+                        "Cnt": 1,
+                        "Max": 1.12,
+                        "Min": 1,
+                        "Sum": 1
+                    }
+                }
+            },
+            "TotalQueries": 1
+        }
+    ],
+    "Global": {
+        "Metrics": {
+            "NumberMetrics": {
+                "Rows_read": {
+                    "Avg": 0,
+                    "Cnt": 1,
+                    "Max": 18446744073709551615,
+                    "Min": 0,
+                    "Sum": 0
+                }
+            },
+            "TimeMetrics": {
+                "Query_time": {
+                    "Avg": 2,
+                    "Cnt": 15,
+                    "Max": 5.54321,
+                    "Min": 0.0001,
+                    "Sum": 7.001001
+                }
+            }
+        },
+        "TotalQueries": 1,
+        "UniqueQueries": 1
+    },
+    "InstanceId": 1,
+    "RunTime": 7.123456,
+    "Service": "mysql",
+    "StopOffset": 524
+}

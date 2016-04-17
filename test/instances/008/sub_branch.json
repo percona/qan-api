@@ -1,0 +1,55 @@
+[
+    {
+        "Created": "2015-04-22T19:22:46Z",
+        "DSN": "user:pass@tcp(127.0.0.1:3307)/",
+        "Deleted": "0001-01-01T00:00:00Z",
+        "Name": "bm-cloud-0001",
+        "ParentUUID": "3d341070b1d74a84bb5f797c3ddbccc4",
+        "Prefix": "db",
+        "Properties": {
+            "key-0004-01": "value-0004-01",
+            "key-0004-02": "value-0004-02",
+            "key-0004-03": "value-0004-03"
+        },
+        "Subsystems": [
+            {
+                "Created": "2015-04-22T19:22:46Z",
+                "DSN": "user:pass@tcp(127.0.0.1:3307)/",
+                "Deleted": "0001-01-01T00:00:00Z",
+                "Name": "table0001",
+                "ParentUUID": "25b4caccb54d433daecedd104ff5c279",
+                "Prefix": "tbl",
+                "Properties": {
+                    "key-0005-01": "value-0005-01",
+                    "key-0005-02": "value-0005-02",
+                    "key-0005-03": "value-0005-03"
+                },
+                "Subsystems": [
+                    {
+                        "Created": "2015-04-22T19:22:46Z",
+                        "DSN": "user:pass@tcp(127.0.0.1:3307)/",
+                        "Deleted": "0001-01-01T00:00:00Z",
+                        "Name": "index0001",
+                        "ParentUUID": "fb06046d8a8342688f9049623798ab2a",
+                        "Prefix": "idx",
+                        "Properties": {
+                            "key-0006-01": "value-0006-01",
+                            "key-0006-02": "value-0006-02",
+                            "key-0006-03": "value-0006-03"
+                        },
+                        "Subsystems": [],
+                        "Type": "Index",
+                        "UUID": "02b3f9dcc0bf487b8089224ecd9b81d8",
+                        "V2": null
+                    }
+                ],
+                "Type": "Table",
+                "UUID": "fb06046d8a8342688f9049623798ab2a",
+                "V2": null
+            }
+        ],
+        "Type": "Database",
+        "UUID": "25b4caccb54d433daecedd104ff5c279",
+        "V2": null
+    }
+]

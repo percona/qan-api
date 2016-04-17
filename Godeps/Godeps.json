@@ -1,0 +1,61 @@
+{
+	"ImportPath": "github.com/percona/qan-api",
+	"GoVersion": "go1.5",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "golang.org/x/net/websocket",
+			"Rev": "e0403b4e005737430c05a57aac078479844f919c"
+		},
+		{
+			"ImportPath": "github.com/go-sql-driver/mysql",
+			"Rev": "6fd058ce0d6b7ee43174e80d5a3e7f483c4dfbe5"
+		},
+		{
+			"ImportPath": "github.com/nu7hatch/gouuid",
+			"Rev": "179d4d0c4d8d407a32af483c2354df1d2c91e6c3"
+		},
+		{
+			"ImportPath": "github.com/robfig/config",
+			"Rev": "09efbd4617d1beb41b72f6668403b1e383b6a4cf"
+		},
+		{
+			"ImportPath": "github.com/revel/cmd/revel",
+			"Rev": "a7b72c9afbff471c8c6c579f3b63780d2c478b12"
+		},
+		{
+			"ImportPath": "github.com/revel/revel",
+			"Rev": "67891f91e7da2e524a8d1d8a27c6f481f021a445"
+		},
+		{
+			"ImportPath": "gopkg.in/check.v1",
+			"Rev": "11d3bc7aa68e238947792f30573146a3231fc0f1"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/go-version",
+			"Rev": "bb92dddfa9792e738a631f04ada52858a139bcf7"
+		},
+		{
+			"ImportPath": "github.com/percona/go-mysql/event",
+			"Rev": "eb77a8a5ff057a594f8e69e8243fa20b84c0be17"
+		},
+		{
+			"ImportPath": "github.com/youtube/vitess/go/sqltypes",
+			"Rev": "8fe2772a39b654fa4e007b1b70fa523cda5b9942"
+		},
+		{
+			"ImportPath": "github.com/go-test/test",
+			"Rev": "d8206cdc307a7a343b78a42cac235e0a002744a7"
+		},
+		{
+			"ImportPath": "github.com/cactus/go-statsd-client/statsd",
+			"Rev": "dc93b8587d799a204e96175505fff9678a8ec3e1"
+		},
+		{
+			"ImportPath": "github.com/daniel-nichter/deep-equal",
+			"Rev": "43f17fc22bc47e53fe1022a82886d880fe579fcd"
+		}
+	]
+}

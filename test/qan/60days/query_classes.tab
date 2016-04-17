@@ -1,0 +1,2 @@
+1	1234567890abcdef	SELECT t	select c from t where id=?	\N	\N	\N	2013-09-06 19:32:25	2013-09-06 19:32:25	new
+2	abc123def456abc7	DELETE t	delete from db.t where id > ?	\N	\N	\N	2013-09-06 19:32:25	2013-09-06 19:32:25	new

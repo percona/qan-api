@@ -1,0 +1,72 @@
+{
+    "Class": [
+        {
+            "Example": {
+                "Db": "test",
+                "Query": "select sleep(2) from test.n",
+                "QueryTime": 2.2,
+                "Ts": "2007-10-15 21:55:55"
+            },
+            "Fingerprint": "select sleep(?) from test.n",
+            "Id": "3A99CC42AEDCCFCD",
+            "Metrics": {
+                "TimeMetrics": {
+                    "Query_time": {
+                        "Avg": 2,
+                        "Cnt": 1,
+                        "Max": 2,
+                        "Med": 2,
+                        "Min": 2,
+                        "Pct95": 2,
+                        "Stddev": 0,
+                        "Sum": 2
+                    }
+                }
+            },
+            "TotalQueries": 1
+        },
+        {
+            "Example": {
+                "Query": "select sleep(2) from n",
+                "QueryTime": 2,
+                "Ts": "2007-10-15 21:55:55"
+            },
+            "Fingerprint": "select sleep(?) from n",
+            "Id": "7F7D57ACDD8A346E",
+            "Metrics": {
+                "TimeMetrics": {
+                    "Query_time": {
+                        "Avg": 2,
+                        "Cnt": 1,
+                        "Max": 2,
+                        "Med": 2,
+                        "Min": 2,
+                        "Pct95": 2,
+                        "Stddev": 0,
+                        "Sum": 2
+                    }
+                }
+            },
+            "TotalQueries": 1
+        }
+    ],
+    "Global": {
+        "Metrics": {
+            "TimeMetrics": {
+                "Query_time": {
+                    "Avg": 2,
+                    "Cnt": 2,
+                    "Max": 2,
+                    "Med": 2,
+                    "Min": 2,
+                    "Pct95": 2,
+                    "Stddev": 0,
+                    "Sum": 4
+                }
+            }
+        },
+        "TotalQueries": 2,
+        "UniqueQueries": 2
+    },
+    "UUID": "313"
+}
