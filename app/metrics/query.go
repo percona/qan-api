@@ -23,10 +23,10 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/percona/pmm/proto/metrics"
 	"github.com/percona/qan-api/app/db"
 	"github.com/percona/qan-api/app/db/mysql"
 	"github.com/percona/qan-api/stats"
-	"github.com/percona/pmm/proto/metrics"
 )
 
 var basicMetrics []string      // four universal metrics
@@ -97,10 +97,11 @@ func NewQueryMetricsHandler(dbm db.Manager, stats *stats.Stats) *QueryMetricsHan
 	return h
 }
 
-func (h *QueryMetricsHandler) Get(instanceId, classId uint, begin, end time.Time) (map[string]metrics.Stats, error) {
+func (h *QueryMetricsHandler) Get(instanceId uint, classId interface{}, begin, end time.Time) (map[string]metrics.Stats, error) {
 	// First determine which group of query metrics exist, if any: basic (the
 	// four universal in all distros and versions), Percona Server, or
 	// Performance Schema.
+
 	basic, ps, perfSchema, err := h.checkMetricGroups(instanceId, begin, end)
 	if err != nil {
 		return nil, err
@@ -118,7 +119,7 @@ func (h *QueryMetricsHandler) Get(instanceId, classId uint, begin, end time.Time
 		return h.getPerfSchema(instanceId, classId, begin, end)
 	}
 
-	// The Percona Server metrics are a superset of the the four universal slow
+	// The Percona Server metrics are a superset of the four universal slow
 	// log metrics. The list is long so we handle them in a separate func.
 	if ps {
 		return h.getPerconaServer(instanceId, classId, begin, end)
@@ -126,56 +127,64 @@ func (h *QueryMetricsHandler) Get(instanceId, classId uint, begin, end time.Time
 
 	// We have only the four universal slow log metrics.
 	var cnt uint64
-	query_time := metrics.Stats{}
-	lock_time := metrics.Stats{}
-	rows_sent := metrics.Stats{}
-	rows_examined := metrics.Stats{}
+	queryTime := metrics.Stats{}
+	lockTime := metrics.Stats{}
+	rowsSent := metrics.Stats{}
+	rowsExamined := metrics.Stats{}
 
 	// todo: handle no results, cnt will be null
-	q := "SELECT SUM(query_count), " + strings.Join(basicMetrics, ", ") +
+	query := "SELECT SUM(query_count), " + strings.Join(basicMetrics, ", ") +
 		" FROM query_class_metrics" +
-		" WHERE query_class_id = ? AND instance_id = ? AND (start_ts >= ? AND start_ts < ?)"
-	err = h.dbm.DB().QueryRow(q, classId, instanceId, begin, end).Scan(
+		" WHERE instance_id = ? AND (start_ts >= ? AND start_ts < ?)"
+	var queryParams = []interface{}{instanceId, begin, end, classId}
+
+	switch classId.(type) {
+	case uint:
+		query += " AND query_class_id = ?"
+	default:
+		queryParams = queryParams[:3]
+	}
+	err = h.dbm.DB().QueryRow(query, queryParams...).Scan(
 		&cnt,
-		&query_time.Sum,
-		&query_time.Min,
-		&query_time.Avg,
-		&query_time.Med,
-		&query_time.P95,
-		&query_time.Max,
-		&lock_time.Sum,
-		&lock_time.Min,
-		&lock_time.Avg,
-		&lock_time.Med,
-		&lock_time.P95,
-		&lock_time.Max,
-		&rows_sent.Sum,
-		&rows_sent.Min,
-		&rows_sent.Avg,
-		&rows_sent.Med,
-		&rows_sent.P95,
-		&rows_sent.Max,
-		&rows_examined.Sum,
-		&rows_examined.Min,
-		&rows_examined.Avg,
-		&rows_examined.Med,
-		&rows_examined.P95,
-		&rows_examined.Max,
+		&queryTime.Sum,
+		&queryTime.Min,
+		&queryTime.Avg,
+		&queryTime.Med,
+		&queryTime.P95,
+		&queryTime.Max,
+		&lockTime.Sum,
+		&lockTime.Min,
+		&lockTime.Avg,
+		&lockTime.Med,
+		&lockTime.P95,
+		&lockTime.Max,
+		&rowsSent.Sum,
+		&rowsSent.Min,
+		&rowsSent.Avg,
+		&rowsSent.Med,
+		&rowsSent.P95,
+		&rowsSent.Max,
+		&rowsExamined.Sum,
+		&rowsExamined.Min,
+		&rowsExamined.Avg,
+		&rowsExamined.Med,
+		&rowsExamined.P95,
+		&rowsExamined.Max,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	query_time.Cnt = cnt
-	lock_time.Cnt = cnt
-	rows_sent.Cnt = cnt
-	rows_examined.Cnt = cnt
+	queryTime.Cnt = cnt
+	lockTime.Cnt = cnt
+	rowsSent.Cnt = cnt
+	rowsExamined.Cnt = cnt
 
 	s := map[string]metrics.Stats{
-		"Query_time":    query_time,
-		"Lock_time":     lock_time,
-		"Rows_sent":     rows_sent,
-		"Rows_examined": rows_examined,
+		"Query_time":    queryTime,
+		"Lock_time":     lockTime,
+		"Rows_sent":     rowsSent,
+		"Rows_examined": rowsExamined,
 	}
 
 	return s, nil
@@ -223,11 +232,11 @@ func (h *QueryMetricsHandler) checkMetricGroups(instanceId uint, begin, end time
 	return basic, ps, perfSchema, nil
 }
 
-func (h *QueryMetricsHandler) getPerfSchema(instanceId, classId uint, begin, end time.Time) (map[string]metrics.Stats, error) {
+func (h *QueryMetricsHandler) getPerfSchema(instanceId uint, classId interface{}, begin, end time.Time) (map[string]metrics.Stats, error) {
 	return nil, nil
 }
 
-func (h *QueryMetricsHandler) getPerconaServer(instanceId, classId uint, begin, end time.Time) (map[string]metrics.Stats, error) {
+func (h *QueryMetricsHandler) getPerconaServer(instanceId uint, classId interface{}, begin, end time.Time) (map[string]metrics.Stats, error) {
 	var cnt uint64
 	query_time := metrics.Stats{}
 	lock_time := metrics.Stats{}

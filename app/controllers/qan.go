@@ -20,6 +20,7 @@ package controllers
 import (
 	"fmt"
 
+	qp "github.com/percona/pmm/proto/qan"
 	"github.com/percona/qan-api/app/config"
 	"github.com/percona/qan-api/app/db"
 	"github.com/percona/qan-api/app/metrics"
@@ -27,7 +28,6 @@ import (
 	"github.com/percona/qan-api/app/query"
 	"github.com/percona/qan-api/app/shared"
 	"github.com/percona/qan-api/stats"
-	qp "github.com/percona/pmm/proto/qan"
 	"github.com/revel/revel"
 )
 
@@ -123,6 +123,41 @@ func (c QAN) QueryReport(uuid, queryId string) revel.Result {
 	report.Metrics = metrics
 
 	return c.RenderJson(report)
+}
+
+func (c QAN) QuerySummary(uuid string) revel.Result {
+	instanceId := c.Args["instanceId"].(uint)
+
+	// Convert and validate the time range.
+	var beginTs, endTs string
+	c.Params.Bind(&beginTs, "begin")
+	c.Params.Bind(&endTs, "end")
+	begin, end, err := shared.ValidateTimeRange(beginTs, endTs)
+	if err != nil {
+		return c.BadRequest(err, "invalid time range")
+	}
+
+	// Get the full query info: abstract, example, first/last seen, etc.
+	dbm := c.Args["dbm"].(db.Manager)
+
+	// Init the report. This info is a little redundant because the caller
+	// already knows what query and time range it requested, but it makes
+	// the report stateless in case the caller passes the data to other code.
+	summary := qp.Summary{
+		InstanceId: uuid,
+		Begin:      begin,
+		End:        end,
+	}
+
+	// Get the query metrics to finish the report.
+	mh := metrics.NewQueryMetricsHandler(dbm, stats.NullStats())
+	metrics, err := mh.Get(instanceId, nil, begin, end)
+	if err != nil {
+		return c.Error(err, "mh.Get")
+	}
+	summary.Metrics = metrics
+
+	return c.RenderJson(summary)
 }
 
 func (c QAN) Config(uuid string) revel.Result {
