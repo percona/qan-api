@@ -151,7 +151,7 @@ func (c QAN) QuerySummary(uuid string) revel.Result {
 
 	// Get the query metrics to finish the report.
 	mh := metrics.NewQueryMetricsHandler(dbm, stats.NullStats())
-	metrics, err := mh.Get(instanceId, nil, begin, end)
+	metrics, err := mh.Summary(instanceId, begin, end)
 	if err != nil {
 		return c.Error(err, "mh.Get")
 	}
