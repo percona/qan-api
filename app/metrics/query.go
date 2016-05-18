@@ -33,6 +33,10 @@ var basicMetrics []string      // four universal metrics
 var psMetrics []string         // basic + Percona Server
 var perfSchemaMetrics []string // some basic + Performance Schema
 
+var basicMetricsSummary []string
+var psMetricsSummary []string
+var perfSchemaMetricsSummary []string
+
 var (
 	ErrNoMetrics = errors.New("no metrics exist")
 )
@@ -40,6 +44,9 @@ var (
 func init() {
 	basicMetrics = []string{}
 	psMetrics = []string{}
+
+	basicMetricsSummary = []string{}
+	psMetricsSummary = []string{}
 	for _, metric := range metrics.Query {
 		// Universal metrics
 		if (metric.Flags & metrics.UNIVERSAL) != 0 {
@@ -48,7 +55,9 @@ func init() {
 					continue // no 5th percentile for query metrics
 				}
 				basicMetrics = append(basicMetrics, metrics.AggregateFunction(metric.Name, stat, "query_count"))
+				basicMetricsSummary = append(basicMetricsSummary, metrics.AggregateFunction(metric.Name, stat, "total_query_count"))
 				psMetrics = append(psMetrics, metrics.AggregateFunction(metric.Name, stat, "query_count"))
+				psMetricsSummary = append(psMetricsSummary, metrics.AggregateFunction(metric.Name, stat, "total_query_count"))
 			}
 		}
 
@@ -57,12 +66,14 @@ func init() {
 			if (metric.Flags & metrics.COUNTER) != 0 {
 				// Counter metrics have only sum.
 				psMetrics = append(psMetrics, metrics.AggregateFunction(metric.Name, "sum", "query_count"))
+				psMetricsSummary = append(psMetricsSummary, metrics.AggregateFunction(metric.Name, "sum", "total_query_count"))
 			} else {
 				for _, stat := range metrics.StatNames {
 					if stat == "p5" {
 						continue // no 5th percentile for query metrics
 					}
 					psMetrics = append(psMetrics, metrics.AggregateFunction(metric.Name, stat, "query_count"))
+					psMetricsSummary = append(psMetricsSummary, metrics.AggregateFunction(metric.Name, stat, "total_query_count"))
 				}
 			}
 		}
@@ -78,8 +89,14 @@ func init() {
 			perfSchemaMetrics = append(perfSchemaMetrics, metrics.AggregateFunction(metric.Name, "min", "query_count"))
 			perfSchemaMetrics = append(perfSchemaMetrics, metrics.AggregateFunction(metric.Name, "avg", "query_count"))
 			perfSchemaMetrics = append(perfSchemaMetrics, metrics.AggregateFunction(metric.Name, "max", "query_count"))
+
+			perfSchemaMetricsSummary = append(perfSchemaMetricsSummary, metrics.AggregateFunction(metric.Name, "sum", "total_query_count"))
+			perfSchemaMetricsSummary = append(perfSchemaMetricsSummary, metrics.AggregateFunction(metric.Name, "min", "total_query_count"))
+			perfSchemaMetricsSummary = append(perfSchemaMetricsSummary, metrics.AggregateFunction(metric.Name, "avg", "total_query_count"))
+			perfSchemaMetricsSummary = append(perfSchemaMetricsSummary, metrics.AggregateFunction(metric.Name, "max", "total_query_count"))
 		} else {
 			perfSchemaMetrics = append(perfSchemaMetrics, metrics.AggregateFunction(metric.Name, "sum", "query_count"))
+			perfSchemaMetricsSummary = append(perfSchemaMetricsSummary, metrics.AggregateFunction(metric.Name, "sum", "total_query_count"))
 		}
 	}
 }
@@ -219,8 +236,8 @@ func (h *QueryMetricsHandler) Summary(instanceId uint, begin, end time.Time) (ma
 	rowsExamined := metrics.Stats{}
 
 	// todo: handle no results, cnt will be null
-	query := "SELECT SUM(query_count), " + strings.Join(basicMetrics, ", ") +
-		" FROM query_class_metrics" +
+	query := "SELECT SUM(total_query_count), " + strings.Join(basicMetricsSummary, ", ") +
+		" FROM query_global_metrics" +
 		" WHERE instance_id = ? AND (start_ts >= ? AND start_ts < ?)"
 
 	err = h.dbm.DB().QueryRow(query, instanceId, begin, end).Scan(
@@ -579,8 +596,8 @@ func (h *QueryMetricsHandler) getPerconaServerSummary(instanceId uint, begin, en
 	innodb_pages_distinct := metrics.Stats{}
 
 	// todo: handle no results, cnt will be null
-	q := "SELECT SUM(query_count), " + strings.Join(psMetrics, ", ") +
-		" FROM query_class_metrics" +
+	q := "SELECT SUM(total_query_count), " + strings.Join(psMetricsSummary, ", ") +
+		" FROM query_global_metrics" +
 		" WHERE instance_id = ? AND (start_ts >= ? AND start_ts < ?)"
 	err := h.dbm.DB().QueryRow(q, instanceId, begin, end).Scan(
 		&cnt,
