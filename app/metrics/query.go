@@ -56,6 +56,7 @@ func init() {
 				}
 				basicMetrics = append(basicMetrics, metrics.AggregateFunction(metric.Name, stat, "query_count"))
 				basicMetricsSummary = append(basicMetricsSummary, metrics.AggregateFunction(metric.Name, stat, "total_query_count"))
+
 				psMetrics = append(psMetrics, metrics.AggregateFunction(metric.Name, stat, "query_count"))
 				psMetricsSummary = append(psMetricsSummary, metrics.AggregateFunction(metric.Name, stat, "total_query_count"))
 			}
@@ -84,7 +85,7 @@ func init() {
 		if ((metric.Flags & metrics.UNIVERSAL) == 0) && ((metric.Flags & metrics.PERF_SCHEMA) == 0) {
 			continue
 		}
-		if metric.Name == "Quey_time" {
+		if metric.Name == "Query_time" {
 			perfSchemaMetrics = append(perfSchemaMetrics, metrics.AggregateFunction(metric.Name, "sum", "query_count"))
 			perfSchemaMetrics = append(perfSchemaMetrics, metrics.AggregateFunction(metric.Name, "min", "query_count"))
 			perfSchemaMetrics = append(perfSchemaMetrics, metrics.AggregateFunction(metric.Name, "avg", "query_count"))
@@ -200,7 +201,7 @@ func (h *QueryMetricsHandler) Get(instanceId, classId uint, begin, end time.Time
 	return s, nil
 }
 
-func (h *QueryMetricsHandler) Summary(instanceId uint, begin, end time.Time) (map[string]metrics.Stats, error) {
+func (h *QueryMetricsHandler) ServerSummary(instanceId uint, begin, end time.Time) (map[string]metrics.Stats, error) {
 	// First determine which group of query metrics exist, if any: basic (the
 	// four universal in all distros and versions), Percona Server, or
 	// Performance Schema.
@@ -333,7 +334,158 @@ func (h *QueryMetricsHandler) getPerfSchema(instanceId, classId uint, begin, end
 }
 
 func (h *QueryMetricsHandler) getPerfSchemaSummary(instanceId uint, begin, end time.Time) (map[string]metrics.Stats, error) {
-	return nil, nil
+
+	// We have such Performance Schema metrics.
+	var cnt uint64
+	queryTime := metrics.Stats{}
+	lockTime := metrics.Stats{}
+	rowsSent := metrics.Stats{}
+	rowsExamined := metrics.Stats{}
+	rowsAffected := metrics.Stats{}
+	fullScan := metrics.Stats{}
+	fullJoin := metrics.Stats{}
+	tmpTable := metrics.Stats{}
+	tmpTableOnDisk := metrics.Stats{}
+	mergePasses := metrics.Stats{}
+	errors := metrics.Stats{}
+	warnings := metrics.Stats{}
+	selectFullRangeJoin := metrics.Stats{}
+	selectRange := metrics.Stats{}
+	selectRangeCheck := metrics.Stats{}
+	sortRange := metrics.Stats{}
+	sortRows := metrics.Stats{}
+	sortScan := metrics.Stats{}
+	noIndexUsed := metrics.Stats{}
+	noGoodIndexUsed := metrics.Stats{}
+
+	query := "SELECT SUM(total_query_count), " + strings.Join(perfSchemaMetricsSummary, ", ") +
+		" FROM query_global_metrics" +
+		" WHERE instance_id = ? AND (start_ts >= ? AND start_ts < ?)"
+
+	err := h.dbm.DB().QueryRow(query, instanceId, begin, end).Scan(
+		&cnt,
+		&queryTime.Sum,
+		&queryTime.Min,
+		&queryTime.Avg,
+		&queryTime.Max,
+		&lockTime.Sum,
+		&rowsSent.Sum,
+		&rowsExamined.Sum,
+		&rowsAffected.Sum,
+		&fullScan.Sum,
+		&fullJoin.Sum,
+		&tmpTable.Sum,
+		&tmpTableOnDisk.Sum,
+		&mergePasses.Sum,
+		&errors.Sum,
+		&warnings.Sum,
+		&selectFullRangeJoin.Sum,
+		&selectRange.Sum,
+		&selectRangeCheck.Sum,
+		&sortRange.Sum,
+		&sortRows.Sum,
+		&sortScan.Sum,
+		&noIndexUsed.Sum,
+		&noGoodIndexUsed.Sum,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// We always have the four universal metrics.
+	queryTime.Cnt = cnt
+	lockTime.Cnt = cnt
+	rowsSent.Cnt = cnt
+	rowsExamined.Cnt = cnt
+	summary := map[string]metrics.Stats{
+		"Query_time":    queryTime,
+		"Lock_time":     lockTime,
+		"Rows_sent":     rowsSent,
+		"Rows_examined": rowsExamined,
+	}
+
+	// Include Performance Schema metrics that aren't NULL.
+	if rowsAffected.Sum.Valid {
+		rowsAffected.Cnt = cnt
+		summary["Rows_affected"] = rowsAffected
+	}
+
+	if fullScan.Sum.Valid {
+		fullScan.Cnt = cnt
+		summary["Full_scan"] = fullScan
+	}
+
+	if fullJoin.Sum.Valid {
+		fullJoin.Cnt = cnt
+		summary["Full_join"] = fullJoin
+	}
+
+	if tmpTable.Sum.Valid {
+		tmpTable.Cnt = cnt
+		summary["Tmp_table"] = tmpTable
+	}
+
+	if tmpTableOnDisk.Sum.Valid {
+		tmpTableOnDisk.Cnt = cnt
+		summary["Tmp_table_on_disk"] = tmpTableOnDisk
+	}
+
+	if mergePasses.Sum.Valid {
+		mergePasses.Cnt = cnt
+		summary["Merge_passes"] = mergePasses
+	}
+
+	if errors.Sum.Valid {
+		errors.Cnt = cnt
+		summary["Errors"] = errors
+	}
+
+	if warnings.Sum.Valid {
+		warnings.Cnt = cnt
+		summary["Warnings"] = warnings
+	}
+
+	if selectFullRangeJoin.Sum.Valid {
+		selectFullRangeJoin.Cnt = cnt
+		summary["Select_full_range_join"] = selectFullRangeJoin
+	}
+
+	if selectRange.Sum.Valid {
+		selectRange.Cnt = cnt
+		summary["Select_range"] = selectRange
+	}
+
+	if selectRangeCheck.Sum.Valid {
+		selectRangeCheck.Cnt = cnt
+		summary["Select_range_check"] = selectRangeCheck
+	}
+
+	if sortRange.Sum.Valid {
+		sortRange.Cnt = cnt
+		summary["Sort_range"] = sortRange
+	}
+
+	if sortRows.Sum.Valid {
+		sortRows.Cnt = cnt
+		summary["Sort_rows"] = sortRows
+	}
+
+	if sortScan.Sum.Valid {
+		sortScan.Cnt = cnt
+		summary["Sort_scan"] = sortScan
+	}
+
+	if noIndexUsed.Sum.Valid {
+		noIndexUsed.Cnt = cnt
+		summary["No_index_used"] = noIndexUsed
+	}
+
+	if noGoodIndexUsed.Sum.Valid {
+		noGoodIndexUsed.Cnt = cnt
+		summary["No_good_index_used"] = noGoodIndexUsed
+	}
+
+	return summary, nil
 }
 
 func (h *QueryMetricsHandler) getPerconaServer(instanceId, classId uint, begin, end time.Time) (map[string]metrics.Stats, error) {
@@ -709,7 +861,7 @@ func (h *QueryMetricsHandler) getPerconaServerSummary(instanceId uint, begin, en
 		return nil, err
 	}
 
-	// We always have the four universal metircs.
+	// We always have the four universal metrics.
 	query_time.Cnt = cnt
 	lock_time.Cnt = cnt
 	rows_sent.Cnt = cnt

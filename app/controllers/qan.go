@@ -125,7 +125,7 @@ func (c QAN) QueryReport(uuid, queryId string) revel.Result {
 	return c.RenderJson(report)
 }
 
-func (c QAN) QuerySummary(uuid string) revel.Result {
+func (c QAN) ServerSummary(uuid string) revel.Result {
 	instanceId := c.Args["instanceId"].(uint)
 
 	// Convert and validate the time range.
@@ -151,7 +151,7 @@ func (c QAN) QuerySummary(uuid string) revel.Result {
 
 	// Get the query metrics to finish the report.
 	mh := metrics.NewQueryMetricsHandler(dbm, stats.NullStats())
-	metrics, err := mh.Summary(instanceId, begin, end)
+	metrics, err := mh.ServerSummary(instanceId, begin, end)
 	if err != nil {
 		return c.Error(err, "mh.Get")
 	}
