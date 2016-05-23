@@ -49,5 +49,6 @@ PUT	/queries/:id/tables	Query.UpdateTables
 # Query Analytics
 # ###########################################################################
 GET	/qan/profile/:uuid			QAN.Profile
+GET	/qan/report/:uuid/server-summary        QAN.ServerSummary
 GET	/qan/report/:uuid/query/:queryId	QAN.QueryReport
 GET	/qan/config/:uuid			QAN.Config
