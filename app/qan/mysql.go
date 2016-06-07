@@ -27,14 +27,14 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/percona/go-mysql/event"
+	"github.com/percona/pmm/proto/metrics"
+	qp "github.com/percona/pmm/proto/qan"
 	"github.com/percona/qan-api/app/db"
 	"github.com/percona/qan-api/app/db/mysql"
 	"github.com/percona/qan-api/app/instance"
 	"github.com/percona/qan-api/app/shared"
 	"github.com/percona/qan-api/service/query"
 	"github.com/percona/qan-api/stats"
-	"github.com/percona/pmm/proto/metrics"
-	qp "github.com/percona/pmm/proto/qan"
 )
 
 const (
@@ -276,6 +276,7 @@ func (h *MySQLMetricWriter) newClass(instanceId uint, class *event.Class, lastSe
 	if class.Example != nil {
 		defaultDb = class.Example.Db
 	}
+
 	query, err := h.m.Parse(class.Fingerprint, defaultDb)
 	h.stats.TimingDuration(h.stats.System("abstract-fingerprint"), time.Now().Sub(t), h.stats.SampleRate)
 	if err != nil {
@@ -304,6 +305,7 @@ func (h *MySQLMetricWriter) newClass(instanceId uint, class *event.Class, lastSe
 	// Since this is the first time we've seen the query, firstSeen=lastSeen.
 	t = time.Now()
 	res, err := h.stmtInsertQueryClass.Exec(class.Id, query.Abstract, query.Query, tables, lastSeen, lastSeen)
+
 	h.stats.TimingDuration(h.stats.System("insert-query-class"), time.Now().Sub(t), h.stats.SampleRate)
 	if err != nil {
 		if mysql.ErrorCode(err) == mysql.ER_DUP_ENTRY {

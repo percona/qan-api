@@ -24,11 +24,11 @@ import (
 	"log"
 	"time"
 
+	"github.com/percona/pmm/proto"
+	qp "github.com/percona/pmm/proto/qan"
 	"github.com/percona/qan-api/app/shared"
 	"github.com/percona/qan-api/app/ws"
 	"github.com/percona/qan-api/stats"
-	"github.com/percona/pmm/proto"
-	qp "github.com/percona/pmm/proto/qan"
 )
 
 const (
@@ -140,6 +140,7 @@ func decode(bytes []byte) (proto.Data, qp.Report, error) {
 	// because there's nothing else we can do about bad data. Usually these
 	// errors are random and one-off, but if they become frequent then maybe
 	// there's a system bug.
+
 	if err := json.Unmarshal(bytes, &data); err != nil {
 		return data, report, fmt.Errorf("json.Unmarshal(data): %s", err)
 	}
