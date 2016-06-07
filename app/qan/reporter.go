@@ -23,12 +23,12 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/percona/pmm/proto/metrics"
+	qp "github.com/percona/pmm/proto/qan"
 	"github.com/percona/qan-api/app/db"
 	"github.com/percona/qan-api/app/db/mysql"
 	"github.com/percona/qan-api/app/shared"
 	"github.com/percona/qan-api/stats"
-	"github.com/percona/pmm/proto/metrics"
-	qp "github.com/percona/pmm/proto/qan"
 )
 
 type Reporter struct {
@@ -56,9 +56,10 @@ func (qr *Reporter) Profile(instanceId uint, begin, end time.Time, r qp.RankBy) 
 		stats[i] = metrics.AggregateFunction(r.Metric, stat, "total_query_count")
 		i++
 	}
-	q := "SELECT COALESCE(SUM(TIMESTAMPDIFF(SECOND, start_ts, end_ts)), 0), COALESCE(SUM(total_query_count), 0), " + strings.Join(stats, ", ") +
-		" FROM query_global_metrics" +
-		" WHERE instance_id = ? AND (start_ts >= ? AND start_ts < ?)"
+
+	countUnique := "SELECT COUNT(DISTINCT query_class_id) " +
+		"FROM query_class_metrics WHERE instance_id = ? " +
+		"AND (start_ts >= ? AND start_ts < ?);"
 
 	p := qp.Profile{
 		// caller sets InstanceId (MySQL instance UUID)
@@ -66,8 +67,20 @@ func (qr *Reporter) Profile(instanceId uint, begin, end time.Time, r qp.RankBy) 
 		End:    end,
 		RankBy: r,
 	}
+
+	err := qr.dbm.DB().QueryRow(countUnique, instanceId, begin, end).Scan(
+		&p.TotalQueries,
+	)
+	if err != nil {
+		return p, mysql.Error(err, "Reporter.Profile: SELECT COUNT(DISTINCT query_class_id)")
+	}
+
+	q := "SELECT COALESCE(SUM(TIMESTAMPDIFF(SECOND, start_ts, end_ts)), 0), COALESCE(SUM(total_query_count), 0), " + strings.Join(stats, ", ") +
+		" FROM query_global_metrics" +
+		" WHERE instance_id = ? AND (start_ts >= ? AND start_ts < ?)"
+
 	s := metrics.Stats{}
-	err := qr.dbm.DB().QueryRow(q, instanceId, begin, end).Scan(
+	err = qr.dbm.DB().QueryRow(q, instanceId, begin, end).Scan(
 		&p.TotalTime,
 		&s.Cnt,
 		&s.Sum,
