@@ -94,6 +94,28 @@ func (qr *Reporter) Profile(instanceId uint, begin, end time.Time, r qp.RankBy) 
 		return p, mysql.Error(err, "Reporter.Profile: SELECT query_global_metrics")
 	}
 
+	// get data for spark-lines at query profile
+	sparkLinesQueryGlobal := "SELECT start_ts, total_query_count, Query_time_sum " +
+		" FROM query_global_metrics " +
+		" WHERE instance_id = ? AND (start_ts >= ? AND start_ts < ?) LIMIT 180"
+
+	sparkLinesRows, sparkLinesErr := qr.dbm.DB().Query(sparkLinesQueryGlobal, instanceId, begin, end)
+	if sparkLinesErr != nil {
+		return p, mysql.Error(err, "Reporter.Profile: SELECT query_global_metrics")
+	}
+
+	defer sparkLinesRows.Close()
+	queryLogArr := []qp.QueryLog{}
+	for sparkLinesRows.Next() {
+		ql := qp.QueryLog{}
+		sparkLinesRows.Scan(
+			&ql.Start_ts,
+			&ql.Query_count,
+			&ql.Query_time_sum,
+		)
+		queryLogArr = append(queryLogArr, ql)
+	}
+
 	// There's always a row because of the aggregate functions, but if there's
 	// no data then COALESCE will cause zero time. In this case, return an empty
 	// profile so client knows that there's no problem on our end, there's just
@@ -109,6 +131,7 @@ func (qr *Reporter) Profile(instanceId uint, begin, end time.Time, r qp.RankBy) 
 	p.Query[0].Stats = s
 	p.Query[0].QPS = float64(s.Cnt) / totalTime
 	p.Query[0].Load = s.Sum.Float64 / intervalTime
+	p.Query[0].Log = queryLogArr
 
 	i = 0
 	for _, stat := range metrics.StatNames {
@@ -135,6 +158,11 @@ func (qr *Reporter) Profile(instanceId uint, begin, end time.Time, r qp.RankBy) 
 	}
 	defer rows.Close()
 
+	// get data for spark-lines at query profile
+	sparkLinesQueryClass := "SELECT start_ts, query_count, Query_time_sum " +
+		" FROM query_class_metrics " +
+		" WHERE query_class_id = ? and instance_id = ? AND (start_ts >= ? AND start_ts < ?) LIMIT 180"
+
 	var queryClassId uint
 	query := map[uint]int{}
 	queryClassIds := []interface{}{}
@@ -160,9 +188,28 @@ func (qr *Reporter) Profile(instanceId uint, begin, end time.Time, r qp.RankBy) 
 		r.Percentage = r.Stats.Sum.Float64 / globalSum
 		r.QPS = float64(r.Stats.Cnt) / totalTime
 		r.Load = r.Stats.Sum.Float64 / intervalTime
+
+		sparkLinesRows, sparkLinesErr := qr.dbm.DB().Query(sparkLinesQueryClass, queryClassId, instanceId, begin, end)
+		if sparkLinesErr != nil {
+			return p, mysql.Error(err, "Reporter.Profile: SELECT query_class_metrics")
+		}
+		defer sparkLinesRows.Close()
+		queryLogArr := []qp.QueryLog{}
+		for sparkLinesRows.Next() {
+			ql := qp.QueryLog{}
+			sparkLinesRows.Scan(
+				&ql.Start_ts,
+				&ql.Query_count,
+				&ql.Query_time_sum,
+			)
+			queryLogArr = append(queryLogArr, ql)
+		}
+
+		r.Log = queryLogArr
 		p.Query[rank] = r
 		query[queryClassId] = rank
 		queryClassIds = append(queryClassIds, queryClassId)
+
 		rank++
 	}
 

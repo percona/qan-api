@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS instances (
   distro        VARCHAR(100) CHARSET 'utf8' NULL,
   version       VARCHAR(50)  CHARSET 'utf8' NULL,
   created       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  deleted       TIMESTAMP NULL DEFAULT '0000-00-00 00:00:00',
+  deleted       TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (instance_id),
   UNIQUE INDEX (uuid),
   UNIQUE INDEX (name, subsystem_id, deleted)
@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS query_examples (
 CREATE TABLE IF NOT EXISTS query_global_metrics (
   instance_id              INT UNSIGNED NOT NULL, -- PK
   start_ts                 TIMESTAMP NOT NULL,    -- PK
-  end_ts                   TIMESTAMP NOT NULL,
+  end_ts                   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   run_time                 FLOAT,
   total_query_count        INT UNSIGNED NOT NULL,
   unique_query_count       INT UNSIGNED NOT NULL,  -- number of query classes
@@ -236,7 +236,7 @@ CREATE TABLE IF NOT EXISTS query_class_metrics (
   query_class_id           INT UNSIGNED NOT NULL, -- PK
   instance_id              INT UNSIGNED NOT NULL, -- PK
   start_ts                 TIMESTAMP NOT NULL,    -- PK
-  end_ts                   TIMESTAMP NOT NULL,
+  end_ts                   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   query_count              INT UNSIGNED NOT NULL,
   lrq_count                INT UNSIGNED NOT NULL DEFAULT 0,  -- Low-ranking Queries
   -- Metrics
