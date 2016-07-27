@@ -23,9 +23,11 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/cactus/go-statsd-client/statsd"
+	"github.com/percona/pmm/proto"
 	"github.com/percona/qan-api/app/agent"
 	"github.com/percona/qan-api/app/auth"
 	"github.com/percona/qan-api/app/controllers"
@@ -37,7 +39,6 @@ import (
 	"github.com/percona/qan-api/config"
 	queryService "github.com/percona/qan-api/service/query"
 	"github.com/percona/qan-api/stats"
-	"github.com/percona/pmm/proto"
 	"github.com/revel/revel"
 )
 
@@ -153,8 +154,17 @@ func beforeController(c *revel.Controller) revel.Result {
 	c.Args["dbm"] = db.NewMySQLManager()
 
 	// Args for various controllers/routes.
-	c.Args["wsBase"] = config.Get("api.base.ws")
-	c.Args["httpBase"] = config.Get("api.base.http")
+	apiBasePath := os.Getenv("BASE_PATH")
+	if apiBasePath == "" {
+		apiBasePath = config.Get("api.base.path")
+	}
+	schema := "http"
+	if strings.Contains(strings.ToLower(c.Request.Request.Proto), "https") {
+		schema = "https"
+	}
+	c.Args["wsBase"] = "ws://" + c.Request.Request.Host + apiBasePath
+	c.Args["httpBase"] = schema + "://" + c.Request.Request.Host + apiBasePath
+
 	agentVersion := c.Request.Header.Get("X-Percona-QAN-Agent-Version")
 	if agentVersion == "" {
 		agentVersion = "0.0.9"

@@ -65,10 +65,6 @@ func Get(name string) string {
 		switch name {
 		case "hostname":
 			return hostname
-		case "api.base.ws":
-			return "ws://" + hostname
-		case "api.base.http":
-			return "http://" + hostname
 		}
 	}
 	value, err := gConfig.RawStringDefault(name)

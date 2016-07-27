@@ -120,7 +120,8 @@ func (h *MySQLHandler) GetByName(subsystem, name string) (uint, *proto.Instance,
 
 func (h *MySQLHandler) GetAll() ([]proto.Instance, error) {
 	query := "SELECT subsystem_id, instance_id, parent_uuid, uuid, dsn, name, distro, version, created, deleted" +
-		" FROM instances" +
+		" FROM instances " +
+                " WHERE deleted IS NULL " +
 		" ORDER BY name"
 	rows, err := h.dbm.DB().Query(query)
 	if err != nil {

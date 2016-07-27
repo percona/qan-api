@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS instances (
   distro        VARCHAR(100) CHARSET 'utf8' NULL,
   version       VARCHAR(50)  CHARSET 'utf8' NULL,
   created       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  deleted       TIMESTAMP NULL DEFAULT '0000-00-00 00:00:00',
+  deleted       TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (instance_id),
   UNIQUE INDEX (uuid),
   UNIQUE INDEX (name, subsystem_id, deleted)
@@ -41,8 +41,8 @@ CREATE TABLE IF NOT EXISTS query_classes (
   abstract           VARCHAR(100) DEFAULT NULL, -- SELECT t
   fingerprint        VARCHAR(5000) NOT NULL,    -- select * from t where id=?
   tables             TEXT DEFAULT NULL,
-  first_seen         TIMESTAMP NOT NULL DEFAULT 0,
-  last_seen          TIMESTAMP NOT NULL DEFAULT 0,
+  first_seen         TIMESTAMP NULL DEFAULT NULL,
+  last_seen          TIMESTAMP NULL DEFAULT NULL,
   status             CHAR(3) NOT NULL DEFAULT 'new',
   --
   PRIMARY KEY (query_class_id),
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS query_examples (
   query_class_id  INT UNSIGNED NOT NULL,           -- PK
   instance_id     INT UNSIGNED NOT NULL DEFAULT 0, -- PK
   period          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- PK
-  ts              TIMESTAMP NOT NULL DEFAULT 0,
+  ts              TIMESTAMP NULL DEFAULT NULL,
   db              VARCHAR(255) NOT NULL DEFAULT "",
   Query_time      FLOAT NOT NULL DEFAULT 0,
   query           TEXT NOT NULL,
@@ -63,8 +63,8 @@ CREATE TABLE IF NOT EXISTS query_examples (
 
 CREATE TABLE IF NOT EXISTS query_global_metrics (
   instance_id              INT UNSIGNED NOT NULL, -- PK
-  start_ts                 TIMESTAMP NOT NULL,    -- PK
-  end_ts                   TIMESTAMP NOT NULL,
+  start_ts                 TIMESTAMP  NULL DEFAULT NULL,    -- PK
+  end_ts                   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   run_time                 FLOAT,
   total_query_count        INT UNSIGNED NOT NULL,
   unique_query_count       INT UNSIGNED NOT NULL,  -- number of query classes
@@ -235,8 +235,8 @@ CREATE TABLE IF NOT EXISTS query_global_metrics (
 CREATE TABLE IF NOT EXISTS query_class_metrics (
   query_class_id           INT UNSIGNED NOT NULL, -- PK
   instance_id              INT UNSIGNED NOT NULL, -- PK
-  start_ts                 TIMESTAMP NOT NULL,    -- PK
-  end_ts                   TIMESTAMP NOT NULL,
+  start_ts                 TIMESTAMP NULL DEFAULT NULL,    -- PK
+  end_ts                   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   query_count              INT UNSIGNED NOT NULL,
   lrq_count                INT UNSIGNED NOT NULL DEFAULT 0,  -- Low-ranking Queries
   -- Metrics
