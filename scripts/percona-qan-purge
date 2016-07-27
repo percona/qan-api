@@ -24,9 +24,9 @@ ts() {
 }
 
 set_deleted_ids() {
-   delagent="$(mysql $DB -ss -e "SELECT instance_id FROM instances WHERE subsystem_id = 2 AND deleted != 0" | tr "\n" "," | sed -e 's/,$//')"
+   delagent="$(mysql $DB -ss -e "SELECT instance_id FROM instances WHERE subsystem_id = 2 AND deleted IS NOT NULL" | tr "\n" "," | sed -e 's/,$//')"
    [ "$delagent" ] && echo "Deleted agent IDs: $delagent"
-   delmysql="$(mysql $DB -ss -e "SELECT instance_id FROM instances WHERE subsystem_id = 3 AND deleted != 0" | tr "\n" "," | sed -e 's/,$//')"
+   delmysql="$(mysql $DB -ss -e "SELECT instance_id FROM instances WHERE subsystem_id = 3 AND deleted IS NOT NULL" | tr "\n" "," | sed -e 's/,$//')"
    [ "$delmysql" ] && echo "Deleted MySQL IDs: $delmysql"
    return 0
 }

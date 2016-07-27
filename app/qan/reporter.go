@@ -44,7 +44,7 @@ func NewReporter(dbm db.Manager, stats *stats.Stats) *Reporter {
 	return qr
 }
 
-func (qr *Reporter) Profile(instanceId uint, begin, end time.Time, r qp.RankBy) (qp.Profile, error) {
+func (qr *Reporter) Profile(instanceId uint, begin, end time.Time, r qp.RankBy, offset int) (qp.Profile, error) {
 	intervalTime := end.Sub(begin).Seconds()
 
 	stats := make([]string, len(metrics.StatNames)-1)
@@ -147,9 +147,10 @@ func (qr *Reporter) Profile(instanceId uint, begin, end time.Time, r qp.RankBy) 
 			" WHERE instance_id = ? AND (start_ts >= ? AND start_ts < ?)"+
 			" GROUP BY query_class_id"+
 			" ORDER BY %s DESC"+
-			" LIMIT %d",
+			" LIMIT %d OFFSET %d ",
 		metrics.AggregateFunction(r.Metric, r.Stat, "query_count"),
 		r.Limit,
+		offset,
 	)
 
 	rows, err := qr.dbm.DB().Query(q, instanceId, begin, end)
