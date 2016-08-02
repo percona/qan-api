@@ -105,7 +105,7 @@ is(
 
 is(
    Percona::Query::Mini::mini("select foo_1 from foo_2_3"),
-   'SELECT foo_?_?',
+   'SELECT foo_2_3',
    'distills numeric table names',
 );
 
@@ -172,7 +172,7 @@ is (
 REPLACE DELAYED INTO
 `db1`.`tbl2`(`col1`,col2)
 VALUES ('617653','2007-09-11')}),
-   'REPLACE db?.tbl?',
+   'REPLACE db1.tbl2',
    'distills replace-delayed',
 );
 
@@ -198,7 +198,7 @@ update db2.tbl1 as p
    ) as chosen on chosen.col1 = p.col1
       and chosen.col2 = p.col2
    set p.col4 = 149945'),
-   'UPDATE SELECT db?.tbl?',
+   'UPDATE SELECT db2.tbl1 db2.tbl3',
    'distills complex subquery',
 );
 
@@ -538,13 +538,13 @@ is(
 
 is(
 	Percona::Query::Mini::mini("select c from (tbl1 JOIN tbl2 on (id)) where x=y"),
-	'SELECT tbl?',
+	'SELECT tbl1 tbl2',
 	'distills SELECT (t1 JOIN t2)'
 );
 
 is(
 	Percona::Query::Mini::mini("insert into (t1) value('a')"),
-	'INSERT t?',
+	'INSERT t1',
 	'distills INSERT (tbl)'
 );
 
