@@ -307,7 +307,8 @@ sub distill_tables {
    # "Fingerprint" the tables.
    my @tables = map {
       $_ =~ s/`//g;
-      $_ =~ s/(_?)[0-9]+/$1?/g;
+      # Don't replace numbers in table names to match Vitess fingerprinting method.
+      #$_ =~ s/(_?)[0-9]+/$1?/g;
       $_;
    } grep { defined $_ } get_tables($query);
 
