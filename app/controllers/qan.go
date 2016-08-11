@@ -19,6 +19,7 @@ package controllers
 
 import (
 	"fmt"
+	"strings"
 
 	qp "github.com/percona/pmm/proto/qan"
 	"github.com/percona/qan-api/app/config"
@@ -74,9 +75,11 @@ func (c QAN) QueryReport(uuid, queryId string) revel.Result {
 	instanceId := c.Args["instanceId"].(uint)
 
 	// Convert and validate the time range.
-	var beginTs, endTs string
+	var beginTs, endTs, include string
 	c.Params.Bind(&beginTs, "begin")
 	c.Params.Bind(&endTs, "end")
+	c.Params.Bind(&include, "include")
+
 	begin, end, err := shared.ValidateTimeRange(beginTs, endTs)
 	if err != nil {
 		return c.BadRequest(err, "invalid time range")
@@ -124,6 +127,10 @@ func (c QAN) QueryReport(uuid, queryId string) revel.Result {
 	}
 	report.Metrics = metrics
 
+	if strings.Contains(include, "sparklines") {
+		report.Sparks, _ = mh.GetMetricsSparklines(classId, instanceId, begin, end)
+	}
+
 	return c.RenderJson(report)
 }
 
@@ -131,9 +138,11 @@ func (c QAN) ServerSummary(uuid string) revel.Result {
 	instanceId := c.Args["instanceId"].(uint)
 
 	// Convert and validate the time range.
-	var beginTs, endTs string
+	var beginTs, endTs, include string
 	c.Params.Bind(&beginTs, "begin")
 	c.Params.Bind(&endTs, "end")
+	c.Params.Bind(&include, "include")
+
 	begin, end, err := shared.ValidateTimeRange(beginTs, endTs)
 	if err != nil {
 		return c.BadRequest(err, "invalid time range")
@@ -157,7 +166,13 @@ func (c QAN) ServerSummary(uuid string) revel.Result {
 	if err != nil {
 		return c.Error(err, "mh.Get")
 	}
+
 	summary.Metrics = metrics
+
+	if strings.Contains(include, "sparklines") {
+		// if classId = 0 - get server global metrics
+		summary.Sparks, _ = mh.GetMetricsSparklines(0, instanceId, begin, end)
+	}
 
 	return c.RenderJson(summary)
 }

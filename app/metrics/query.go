@@ -19,6 +19,7 @@ package metrics
 
 import (
 	"errors"
+	"strconv"
 	"strings"
 	"time"
 
@@ -952,4 +953,185 @@ func (h *QueryMetricsHandler) getPerconaServerSummary(instanceId uint, begin, en
 	}
 
 	return s, nil
+}
+
+const queryClassMetrics = `
+SELECT
+    (? - UNIX_TIMESTAMP(start_ts)) DIV ? as point,
+    FROM_UNIXTIME(? - (SELECT point) * ?) as ts,
+    SUM(query_count),
+    SUM(Query_time_sum),
+    AVG(Query_time_avg),
+    SUM(Lock_time_sum),
+    AVG(Lock_time_avg),
+    SUM(Rows_sent_sum),
+    AVG(Rows_sent_avg),
+    SUM(Rows_examined_sum),
+    AVG(Rows_examined_avg),
+    SUM(Rows_affected_sum),
+    AVG(Rows_affected_avg),
+    SUM(Rows_read_sum),
+    AVG(Rows_read_avg),
+    SUM(Merge_passes_sum),
+    AVG(Merge_passes_avg),
+    SUM(InnoDB_IO_r_ops_sum),
+    AVG(InnoDB_IO_r_ops_avg),
+    SUM(InnoDB_IO_r_bytes_sum),
+    AVG(InnoDB_IO_r_bytes_avg),
+    SUM(InnoDB_IO_r_wait_sum),
+    AVG(InnoDB_IO_r_wait_avg),
+    SUM(Filesort_sum),
+    SUM(Filesort_on_disk_sum),
+    SUM(Query_length_sum),
+    AVG(Query_length_avg),
+    SUM(Bytes_sent_sum),
+    AVG(Bytes_sent_avg),
+    SUM(Tmp_tables_sum),
+    AVG(Tmp_tables_avg),
+    SUM(Tmp_disk_tables_sum),
+    AVG(Tmp_disk_tables_avg),
+    SUM(Tmp_table_sizes_sum),
+    AVG(Tmp_table_sizes_avg),
+    SUM(Errors_sum),
+    SUM(Warnings_sum),
+    SUM(Select_full_range_join_sum),
+    SUM(Select_range_sum),
+    SUM(Select_range_check_sum),
+    SUM(Sort_range_sum),
+    SUM(Sort_rows_sum),
+    SUM(Sort_scan_sum),
+    SUM(No_index_used_sum),
+    SUM(No_good_index_used_sum)
+FROM query_class_metrics
+WHERE
+    query_class_id = ? and instance_id = ? AND (start_ts >= ? AND start_ts < ?)
+GROUP BY point;
+`
+
+const queryGlobalMetrics = `
+SELECT
+    (? - UNIX_TIMESTAMP(start_ts)) DIV ? as point,
+    FROM_UNIXTIME(? - (SELECT point) * ?) as ts,
+    SUM(total_query_count) as query_count,
+    SUM(Query_time_sum),
+    AVG(Query_time_avg),
+    SUM(Lock_time_sum),
+    AVG(Lock_time_avg),
+    SUM(Rows_sent_sum),
+    AVG(Rows_sent_avg),
+    SUM(Rows_examined_sum),
+    AVG(Rows_examined_avg),
+    SUM(Rows_affected_sum),
+    AVG(Rows_affected_avg),
+    SUM(Rows_read_sum),
+    AVG(Rows_read_avg),
+    SUM(Merge_passes_sum),
+    AVG(Merge_passes_avg),
+    SUM(InnoDB_IO_r_ops_sum),
+    AVG(InnoDB_IO_r_ops_avg),
+    SUM(InnoDB_IO_r_bytes_sum),
+    SUM(Filesort_sum),
+    SUM(Filesort_on_disk_sum),
+    SUM(Query_length_sum),
+    AVG(Query_length_avg),
+    SUM(Bytes_sent_sum),
+    AVG(Bytes_sent_avg),
+    SUM(Tmp_tables_sum),
+    AVG(Tmp_tables_avg),
+    SUM(Tmp_disk_tables_sum),
+    AVG(Tmp_disk_tables_avg),
+    SUM(Tmp_table_sizes_sum),
+    AVG(Tmp_table_sizes_avg),
+    SUM(Errors_sum),
+    SUM(Warnings_sum),
+    SUM(Select_full_range_join_sum),
+    SUM(Select_range_sum),
+    SUM(Select_range_check_sum),
+    SUM(Sort_range_sum),
+    SUM(Sort_rows_sum),
+    SUM(Sort_scan_sum),
+    SUM(No_index_used_sum),
+    SUM(No_good_index_used_sum)
+FROM query_global_metrics
+WHERE
+    instance_id = ? AND (start_ts >= ? AND start_ts < ?)
+GROUP BY point;
+`
+
+const amountOfPoints = 60
+
+func (h *QueryMetricsHandler) GetMetricsSparklines(classId uint, instanceId uint, begin, end time.Time) ([]interface{}, error) {
+	endTs := end.Unix()
+	intervalTs := (endTs - begin.Unix()) / (amountOfPoints - 1)
+
+	var args = []interface{}{endTs, intervalTs, endTs, intervalTs, classId, instanceId, begin, end}
+	var query string = queryClassMetrics
+	if classId == 0 {
+		// pop queryClassId
+		args = append(args[:4], args[5:]...)
+		query = queryGlobalMetrics
+	}
+	rows, _ := h.dbm.DB().Query(query, args...)
+
+	columns, _ := rows.Columns()
+	for i, c := range columns {
+		c = strings.TrimPrefix(c, "AVG(")
+		c = strings.TrimPrefix(c, "SUM(")
+		c = strings.TrimSuffix(c, ")")
+		columns[i] = c
+	}
+	count := len(columns)
+	values := make([]interface{}, count)
+	valuePtrs := make([]interface{}, count)
+
+	metricLogRaw := make(map[int64]interface{})
+	var metricLog []interface{}
+
+	for rows.Next() {
+		for i, _ := range columns {
+			valuePtrs[i] = &values[i]
+		}
+
+		rows.Scan(valuePtrs...)
+		namedRow := make(map[string]interface{})
+		for i, col := range columns {
+			var v interface{}
+			val := values[i]
+
+			b, ok := val.([]byte)
+			if ok {
+				a := string(b[:])
+				v, _ = strconv.ParseFloat(a, 64)
+			} else {
+				v = val
+			}
+			namedRow[col] = v
+
+		}
+		key := (namedRow["ts"].(time.Time)).Unix()
+		metricLogRaw[key] = namedRow
+	}
+
+	var pointN int64
+	for pointN = 0; pointN < amountOfPoints; pointN++ {
+		ts := endTs - pointN*intervalTs
+		if val, ok := metricLogRaw[ts]; ok {
+			metricLog = append(metricLog, val)
+		} else {
+			val := getEmptyRow(pointN, ts, columns)
+			metricLog = append(metricLog, val)
+		}
+	}
+
+	return metricLog, nil
+}
+
+func getEmptyRow(pointN, ts int64, columns []string) map[string]interface{} {
+	emptyRow := make(map[string]interface{})
+	for _, col := range columns {
+		emptyRow[col] = 0
+	}
+	emptyRow["ts"] = time.Unix(ts, 0)
+	emptyRow["point"] = pointN
+	return emptyRow
 }

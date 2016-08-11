@@ -31,6 +31,19 @@ import (
 	"github.com/percona/qan-api/stats"
 )
 
+const amountOfPoints = 60
+
+// get data for spark-lines at query profile
+const sparkLinesQueryClass = "SELECT (? - UNIX_TIMESTAMP(start_ts)) DIV ? as point," +
+	" FROM_UNIXTIME(? - (SELECT point) * ?) as start_ts, AVG(query_count/60), AVG(Query_time_sum/60)" +
+	" FROM query_class_metrics" +
+	" WHERE query_class_id = ? and instance_id = ? AND (start_ts >= ? AND start_ts < ?) GROUP BY point;"
+
+const sparkLinesQueryGlobal = "SELECT (? - UNIX_TIMESTAMP(start_ts)) DIV ? as point," +
+	" FROM_UNIXTIME(? - (SELECT point) * ?) as start_ts, AVG(total_query_count/60), AVG(Query_time_sum/60)" +
+	" FROM query_global_metrics " +
+	" WHERE instance_id = ? AND (start_ts >= ? AND start_ts < ?) GROUP BY point;"
+
 type Reporter struct {
 	dbm   db.Manager
 	stats *stats.Stats
@@ -44,10 +57,55 @@ func NewReporter(dbm db.Manager, stats *stats.Stats) *Reporter {
 	return qr
 }
 
+// get data for spark-lines at query profile
+func SparklineData(qr *Reporter, endTs int64, intervalTs int64, queryClassId uint, instanceId uint, begin, end time.Time) []qp.QueryLog {
+
+	queryLogArrRaw := make(map[int64]qp.QueryLog)
+	queryLogArr := []qp.QueryLog{}
+
+	var args = []interface{}{endTs, intervalTs, endTs, intervalTs, queryClassId, instanceId, begin, end}
+	var query string = sparkLinesQueryClass
+	if queryClassId == 0 {
+		// pop queryClassId
+		args = append(args[:4], args[5:]...)
+		query = sparkLinesQueryGlobal
+	}
+	sparkLinesRows, err := qr.dbm.DB().Query(query, args...)
+	if err != nil {
+		fmt.Println("Reporter.Profile: Sparkline error")
+	}
+	defer sparkLinesRows.Close()
+	for sparkLinesRows.Next() {
+		ql := qp.QueryLog{}
+		sparkLinesRows.Scan(
+			&ql.Point,
+			&ql.Start_ts,
+			&ql.Query_count,
+			&ql.Query_time_sum,
+		)
+		queryLogArrRaw[(ql.Start_ts).Unix()] = ql
+	}
+
+	var i int64
+	for i = 0; i < amountOfPoints; i++ {
+		ts := endTs - i*intervalTs
+		if val, ok := queryLogArrRaw[ts]; ok {
+			queryLogArr = append(queryLogArr, val)
+		} else {
+			queryLogArr = append(queryLogArr, qp.QueryLog{uint(i), time.Unix(ts, 0), 0, 0})
+		}
+	}
+	return queryLogArr
+}
+
 func (qr *Reporter) Profile(instanceId uint, begin, end time.Time, r qp.RankBy, offset int) (qp.Profile, error) {
 	intervalTime := end.Sub(begin).Seconds()
 
+	endTs := end.Unix()
+	intervalTs := (endTs - begin.Unix()) / (amountOfPoints - 1)
+
 	stats := make([]string, len(metrics.StatNames)-1)
+
 	i := 0
 	for _, stat := range metrics.StatNames {
 		if stat == "p5" {
@@ -94,28 +152,6 @@ func (qr *Reporter) Profile(instanceId uint, begin, end time.Time, r qp.RankBy, 
 		return p, mysql.Error(err, "Reporter.Profile: SELECT query_global_metrics")
 	}
 
-	// get data for spark-lines at query profile
-	sparkLinesQueryGlobal := "SELECT start_ts, total_query_count, Query_time_sum " +
-		" FROM query_global_metrics " +
-		" WHERE instance_id = ? AND (start_ts >= ? AND start_ts < ?) LIMIT 180"
-
-	sparkLinesRows, sparkLinesErr := qr.dbm.DB().Query(sparkLinesQueryGlobal, instanceId, begin, end)
-	if sparkLinesErr != nil {
-		return p, mysql.Error(err, "Reporter.Profile: SELECT query_global_metrics")
-	}
-
-	defer sparkLinesRows.Close()
-	queryLogArr := []qp.QueryLog{}
-	for sparkLinesRows.Next() {
-		ql := qp.QueryLog{}
-		sparkLinesRows.Scan(
-			&ql.Start_ts,
-			&ql.Query_count,
-			&ql.Query_time_sum,
-		)
-		queryLogArr = append(queryLogArr, ql)
-	}
-
 	// There's always a row because of the aggregate functions, but if there's
 	// no data then COALESCE will cause zero time. In this case, return an empty
 	// profile so client knows that there's no problem on our end, there's just
@@ -124,14 +160,14 @@ func (qr *Reporter) Profile(instanceId uint, begin, end time.Time, r qp.RankBy, 
 		return p, nil
 	}
 
-	totalTime := float64(p.TotalTime) // to calculate QPS
-	globalSum := s.Sum.Float64        // to calculate Percentage
+	// totalTime := float64(p.TotalTime) // to calculate QPS
+	globalSum := s.Sum.Float64 // to calculate Percentage
 
 	p.Query = make([]qp.QueryRank, int64(r.Limit)+1)
 	p.Query[0].Stats = s
-	p.Query[0].QPS = float64(s.Cnt) / totalTime
+	p.Query[0].QPS = float64(s.Cnt) / intervalTime
 	p.Query[0].Load = s.Sum.Float64 / intervalTime
-	p.Query[0].Log = queryLogArr
+	p.Query[0].Log = SparklineData(qr, endTs, intervalTs, 0, instanceId, begin, end)
 
 	i = 0
 	for _, stat := range metrics.StatNames {
@@ -159,11 +195,6 @@ func (qr *Reporter) Profile(instanceId uint, begin, end time.Time, r qp.RankBy, 
 	}
 	defer rows.Close()
 
-	// get data for spark-lines at query profile
-	sparkLinesQueryClass := "SELECT start_ts, query_count, Query_time_sum " +
-		" FROM query_class_metrics " +
-		" WHERE query_class_id = ? and instance_id = ? AND (start_ts >= ? AND start_ts < ?) LIMIT 180"
-
 	var queryClassId uint
 	query := map[uint]int{}
 	queryClassIds := []interface{}{}
@@ -187,26 +218,10 @@ func (qr *Reporter) Profile(instanceId uint, begin, end time.Time, r qp.RankBy, 
 			return p, mysql.Error(err, "Reporter.Profile: SELECT query_class_metrics")
 		}
 		r.Percentage = r.Stats.Sum.Float64 / globalSum
-		r.QPS = float64(r.Stats.Cnt) / totalTime
+		r.QPS = float64(r.Stats.Cnt) / intervalTime
 		r.Load = r.Stats.Sum.Float64 / intervalTime
 
-		sparkLinesRows, sparkLinesErr := qr.dbm.DB().Query(sparkLinesQueryClass, queryClassId, instanceId, begin, end)
-		if sparkLinesErr != nil {
-			return p, mysql.Error(err, "Reporter.Profile: SELECT query_class_metrics")
-		}
-		defer sparkLinesRows.Close()
-		queryLogArr := []qp.QueryLog{}
-		for sparkLinesRows.Next() {
-			ql := qp.QueryLog{}
-			sparkLinesRows.Scan(
-				&ql.Start_ts,
-				&ql.Query_count,
-				&ql.Query_time_sum,
-			)
-			queryLogArr = append(queryLogArr, ql)
-		}
-
-		r.Log = queryLogArr
+		r.Log = SparklineData(qr, endTs, intervalTs, queryClassId, instanceId, begin, end)
 		p.Query[rank] = r
 		query[queryClassId] = rank
 		queryClassIds = append(queryClassIds, queryClassId)
@@ -227,7 +242,7 @@ func (qr *Reporter) Profile(instanceId uint, begin, end time.Time, r qp.RankBy, 
 
 	p.Query = p.Query[0:rank] // remove unused ranks, if any
 
-	q = "SELECT query_class_id, checksum, abstract" +
+	q = "SELECT query_class_id, checksum, abstract, fingerprint" +
 		" FROM query_classes" +
 		" WHERE query_class_id IN (" + shared.Placeholders(len(queryClassIds)) + ")"
 
@@ -237,12 +252,13 @@ func (qr *Reporter) Profile(instanceId uint, begin, end time.Time, r qp.RankBy, 
 	}
 	defer rows.Close()
 
-	var checksum, abstract string
+	var checksum, abstract, fingerprint string
 	for rows.Next() {
 		err := rows.Scan(
 			&queryClassId,
 			&checksum,
 			&abstract,
+			&fingerprint,
 		)
 		if err != nil {
 			return p, mysql.Error(err, "Reporter.Profile: SELECT query_classes")
@@ -250,6 +266,7 @@ func (qr *Reporter) Profile(instanceId uint, begin, end time.Time, r qp.RankBy, 
 		rank := query[queryClassId]
 		p.Query[rank].Id = checksum
 		p.Query[rank].Abstract = abstract
+		p.Query[rank].Fingerprint = fingerprint
 	}
 
 	return p, nil
