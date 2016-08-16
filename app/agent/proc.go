@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/nu7hatch/gouuid"
 	"github.com/percona/pmm/proto"
 )
@@ -169,7 +170,7 @@ func (p *Processor) updateConfig(change string, cmd *proto.Cmd, reply *proto.Rep
 
 	switch change {
 	case "set":
-		if err := p.dbh.SetConfig(p.agentId, service, otherUUID, setConfig, runningConfig); err != nil {
+		if err := p.dbh.SetConfig(p.agentId, service, otherUUID, sanitizeConfig(setConfig), runningConfig); err != nil {
 			return err
 		}
 	case "remove":
@@ -212,4 +213,23 @@ func (p *Processor) handleGetAllConfigs(cmd *proto.Cmd, reply *proto.Reply) erro
 	}
 
 	return nil
+}
+
+func sanitizeConfig(config []byte) []byte {
+	configSet := map[string]string{}
+	err := json.Unmarshal(config, &configSet)
+	if err != nil {
+		return config
+	}
+	if configDSN, ok := configSet["DSN"]; ok {
+		dsn, err := mysql.ParseDSN(configDSN)
+		if err != nil {
+			return config
+		}
+		dsn.Passwd = "****"
+		configSet["DSN"] = dsn.FormatDSN()
+	}
+
+	buf, _ := json.Marshal(configSet)
+	return buf
 }
