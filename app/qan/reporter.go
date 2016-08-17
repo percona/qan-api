@@ -35,12 +35,12 @@ const amountOfPoints = 60
 
 // get data for spark-lines at query profile
 const sparkLinesQueryClass = "SELECT (? - UNIX_TIMESTAMP(start_ts)) DIV ? as point," +
-	" FROM_UNIXTIME(? - (SELECT point) * ?) as start_ts, AVG(query_count/60), AVG(Query_time_sum/60)" +
+	" FROM_UNIXTIME(? - (SELECT point) * ?) as start_ts, SUM(query_count)/?, SUM(Query_time_sum)/?" +
 	" FROM query_class_metrics" +
 	" WHERE query_class_id = ? and instance_id = ? AND (start_ts >= ? AND start_ts < ?) GROUP BY point;"
 
 const sparkLinesQueryGlobal = "SELECT (? - UNIX_TIMESTAMP(start_ts)) DIV ? as point," +
-	" FROM_UNIXTIME(? - (SELECT point) * ?) as start_ts, AVG(total_query_count/60), AVG(Query_time_sum/60)" +
+	" FROM_UNIXTIME(? - (SELECT point) * ?) as start_ts, SUM(total_query_count)/?, SUM(Query_time_sum)/?" +
 	" FROM query_global_metrics " +
 	" WHERE instance_id = ? AND (start_ts >= ? AND start_ts < ?) GROUP BY point;"
 
@@ -63,11 +63,11 @@ func SparklineData(qr *Reporter, endTs int64, intervalTs int64, queryClassId uin
 	queryLogArrRaw := make(map[int64]qp.QueryLog)
 	queryLogArr := []qp.QueryLog{}
 
-	var args = []interface{}{endTs, intervalTs, endTs, intervalTs, queryClassId, instanceId, begin, end}
+	var args = []interface{}{endTs, intervalTs, endTs, intervalTs, intervalTs, intervalTs, queryClassId, instanceId, begin, end}
 	var query string = sparkLinesQueryClass
 	if queryClassId == 0 {
 		// pop queryClassId
-		args = append(args[:4], args[5:]...)
+		args = append(args[:6], args[7:]...)
 		query = sparkLinesQueryGlobal
 	}
 	sparkLinesRows, err := qr.dbm.DB().Query(query, args...)
