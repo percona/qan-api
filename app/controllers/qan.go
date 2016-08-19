@@ -20,6 +20,7 @@ package controllers
 import (
 	"fmt"
 	"strings"
+        "encoding/base64"
 
 	qp "github.com/percona/pmm/proto/qan"
 	"github.com/percona/qan-api/app/config"
@@ -40,11 +41,20 @@ func (c QAN) Profile(uuid string) revel.Result {
 	instanceId := c.Args["instanceId"].(uint)
 
 	// Convert and validate the time range.
-	var beginTs, endTs string
+	var beginTs, endTs, search, searchB64 string
 	var offset int
 	c.Params.Bind(&beginTs, "begin")
 	c.Params.Bind(&endTs, "end")
+	c.Params.Bind(&searchB64, "search")
 	c.Params.Bind(&offset, "offset")
+        searchB, err := base64.StdEncoding.DecodeString(searchB64)
+        if err != nil {
+            fmt.Println("error decoding base64 search :", err)
+        }
+        search = string(searchB)
+
+        print(search)
+
 	begin, end, err := shared.ValidateTimeRange(beginTs, endTs)
 	if err != nil {
 		return c.BadRequest(err, "invalid time range")
@@ -63,7 +73,7 @@ func (c QAN) Profile(uuid string) revel.Result {
 		return c.Error(err, "QAN.Profile: dbm.Open")
 	}
 	qh := qan.NewReporter(dbm, stats.NullStats())
-	profile, err := qh.Profile(instanceId, begin, end, r, offset)
+	profile, err := qh.Profile(instanceId, begin, end, r, offset, search)
 	if err != nil {
 		return c.Error(err, "qh.Profile")
 	}
