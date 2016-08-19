@@ -19,6 +19,7 @@ package qan
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -98,7 +99,31 @@ func SparklineData(qr *Reporter, endTs int64, intervalTs int64, queryClassId uin
 	return queryLogArr
 }
 
-func (qr *Reporter) Profile(instanceId uint, begin, end time.Time, r qp.RankBy, offset int) (qp.Profile, error) {
+func (qr *Reporter) Profile(instanceId uint, begin, end time.Time, r qp.RankBy, offset int, search string) (qp.Profile, error) {
+
+	p := qp.Profile{
+		// caller sets InstanceId (MySQL instance UUID)
+		Begin:  begin,
+		End:    end,
+		RankBy: r,
+	}
+
+	var filterQueryClassIds []uint
+	var searchIn string
+	if search != "" {
+		valuesText := []string{}
+		filterQueryClassIds, _ = qr.filterByFingerprint(instanceId, begin, end, search)
+		if len(filterQueryClassIds) == 0 {
+			return p, mysql.Error(nil, "None of the queries, in selected time range, do not contain this substring.")
+		}
+		for i := range filterQueryClassIds {
+			number := uint64(filterQueryClassIds[i])
+			text := strconv.FormatUint(number, 10)
+			valuesText = append(valuesText, text)
+		}
+		searchIn = " AND query_class_id IN (" + strings.Join(valuesText, ", ") + ") "
+	}
+
 	intervalTime := end.Sub(begin).Seconds()
 
 	endTs := end.Unix()
@@ -116,14 +141,11 @@ func (qr *Reporter) Profile(instanceId uint, begin, end time.Time, r qp.RankBy, 
 	}
 
 	countUnique := "SELECT COUNT(DISTINCT query_class_id) " +
-		"FROM query_class_metrics WHERE instance_id = ? " +
-		"AND (start_ts >= ? AND start_ts < ?);"
+		" FROM query_class_metrics WHERE instance_id = ? " +
+		" AND (start_ts >= ? AND start_ts < ?) "
 
-	p := qp.Profile{
-		// caller sets InstanceId (MySQL instance UUID)
-		Begin:  begin,
-		End:    end,
-		RankBy: r,
+	if searchIn != "" {
+		countUnique += searchIn
 	}
 
 	err := qr.dbm.DB().QueryRow(countUnique, instanceId, begin, end).Scan(
@@ -148,6 +170,7 @@ func (qr *Reporter) Profile(instanceId uint, begin, end time.Time, r qp.RankBy, 
 		&s.P95,
 		&s.Max,
 	)
+
 	if err != nil {
 		return p, mysql.Error(err, "Reporter.Profile: SELECT query_global_metrics")
 	}
@@ -164,6 +187,7 @@ func (qr *Reporter) Profile(instanceId uint, begin, end time.Time, r qp.RankBy, 
 	globalSum := s.Sum.Float64 // to calculate Percentage
 
 	p.Query = make([]qp.QueryRank, int64(r.Limit)+1)
+	p.Query[0].Percentage = 1 // 100%
 	p.Query[0].Stats = s
 	p.Query[0].QPS = float64(s.Cnt) / intervalTime
 	p.Query[0].Load = s.Sum.Float64 / intervalTime
@@ -177,13 +201,16 @@ func (qr *Reporter) Profile(instanceId uint, begin, end time.Time, r qp.RankBy, 
 		stats[i] = metrics.AggregateFunction(r.Metric, stat, "query_count")
 		i++
 	}
+
 	q = fmt.Sprintf(
 		"SELECT query_class_id, SUM(query_count), "+strings.Join(stats, ", ")+
 			" FROM query_class_metrics"+
 			" WHERE instance_id = ? AND (start_ts >= ? AND start_ts < ?)"+
+			" %s "+
 			" GROUP BY query_class_id"+
 			" ORDER BY %s DESC"+
 			" LIMIT %d OFFSET %d ",
+		searchIn,
 		metrics.AggregateFunction(r.Metric, r.Stat, "query_count"),
 		r.Limit,
 		offset,
@@ -270,4 +297,44 @@ func (qr *Reporter) Profile(instanceId uint, begin, end time.Time, r qp.RankBy, 
 	}
 
 	return p, nil
+}
+
+func (qr *Reporter) filterByFingerprint(instanceId uint, begin, end time.Time, search string) ([]uint, error) {
+
+	var queryClassId uint
+	queryClassIds := []uint{}
+
+	query := `
+        SELECT
+            qc.query_class_id
+        FROM
+            query_classes AS qc, query_examples AS qe
+        WHERE
+                qc.query_class_id = qe.query_class_id
+            AND qe.instance_id = ?
+            AND qc.last_seen > ?
+                AND qc.last_seen <= ?
+            AND qc.fingerprint LIKE ?;
+    `
+	rows, err := qr.dbm.DB().Query(query, instanceId, begin, end, "%"+search+"%")
+	print("fjalsfsdjlfjsdlfsdjflk", search)
+	if err != nil {
+		return queryClassIds, mysql.Error(err, "Reporter.filterByFingerprint: SELECT query_classes AS qc, query_examples AS qe LIKE")
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		err := rows.Scan(
+			&queryClassId,
+		)
+		if err != nil {
+			return queryClassIds, mysql.Error(err, "Reporter.filterByFingerprint: SELECT query_classes AS qc LIKE")
+		}
+		queryClassIds = append(queryClassIds, queryClassId)
+
+	}
+
+	print("\nhhh queryClassIds: ", queryClassIds)
+
+	return queryClassIds, nil
 }
