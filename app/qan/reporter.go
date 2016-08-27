@@ -308,16 +308,15 @@ func (qr *Reporter) filterByFingerprint(instanceId uint, begin, end time.Time, s
         SELECT
             qc.query_class_id
         FROM
-            query_classes AS qc, query_examples AS qe
+            query_classes AS qc, query_class_metrics AS qcm
         WHERE
-                qc.query_class_id = qe.query_class_id
-            AND qe.instance_id = ?
+                qc.query_class_id = qcm.query_class_id
+            AND qcm.instance_id = ?
             AND qc.last_seen > ?
                 AND qc.last_seen <= ?
             AND qc.fingerprint LIKE ?;
     `
 	rows, err := qr.dbm.DB().Query(query, instanceId, begin, end, "%"+search+"%")
-	print("fjalsfsdjlfjsdlfsdjflk", search)
 	if err != nil {
 		return queryClassIds, mysql.Error(err, "Reporter.filterByFingerprint: SELECT query_classes AS qc, query_examples AS qe LIKE")
 	}
@@ -333,8 +332,6 @@ func (qr *Reporter) filterByFingerprint(instanceId uint, begin, end time.Time, s
 		queryClassIds = append(queryClassIds, queryClassId)
 
 	}
-
-	print("\nhhh queryClassIds: ", queryClassIds)
 
 	return queryClassIds, nil
 }

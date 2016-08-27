@@ -53,8 +53,6 @@ func (c QAN) Profile(uuid string) revel.Result {
         }
         search = string(searchB)
 
-        print(search)
-
 	begin, end, err := shared.ValidateTimeRange(beginTs, endTs)
 	if err != nil {
 		return c.BadRequest(err, "invalid time range")

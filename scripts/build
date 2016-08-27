@@ -40,7 +40,7 @@ if [ -f "build" -a "install" -a "manage" ]; then
    cd ..
 fi
 
-if [ -d "app" -a -d "conf" -a -d "Godeps" ]; then
+if [ -d "app" -a -d "conf" -a -d "vendor" ]; then
    ROOT_DIR="$PWD"
 else
    err "Run this script from the percona/qan-api root directory."

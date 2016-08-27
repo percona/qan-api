@@ -111,7 +111,7 @@ func (p *Processor) AfterRecv(bytes []byte) (string, interface{}, error) {
 	// so don't worry about ordering--it's FIFO with the agent and here.
 	var err error
 	switch cmd.Cmd {
-	case "StartService", "StartTool", "SetConfig":
+	case "StartService", "StartTool", "SetConfig", "RestartTool":
 		err = p.handleSetConfig(cmd, reply)
 	case "StopService", "StopTool":
 		err = p.handleRemoveConfig(cmd, reply)
@@ -156,7 +156,7 @@ func (p *Processor) updateConfig(change string, cmd *proto.Cmd, reply *proto.Rep
 		}
 		service = s.Name
 		setConfig = s.Config
-	case "StartTool":
+	case "StartTool", "RestartTool":
 		var h configHeader
 		if err := json.Unmarshal(cmd.Data, &h); err != nil {
 			return err
