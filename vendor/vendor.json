@@ -69,6 +69,18 @@
 			"revisionTime": "2016-07-25T21:20:58Z"
 		},
 		{
+			"checksumSHA1": "yXsk/xCzEV0g+e4SpJsoYsYAkls=",
+			"path": "github.com/jmoiron/sqlx",
+			"revision": "7396209bbeada6a4fcc28aa9408f89b2e71cac39",
+			"revisionTime": "2016-07-29T03:07:26Z"
+		},
+		{
+			"checksumSHA1": "8VhxM121vOBDDQktLirYuEIei8s=",
+			"path": "github.com/jmoiron/sqlx/reflectx",
+			"revision": "7396209bbeada6a4fcc28aa9408f89b2e71cac39",
+			"revisionTime": "2016-07-29T03:07:26Z"
+		},
+		{
 			"checksumSHA1": "co2ewt/AR52wp8+aosY4rP69mLo=",
 			"path": "github.com/klauspost/compress/flate",
 			"revision": "14eb9c4951195779ecfbec34431a976de7335b0a",
@@ -97,6 +109,30 @@
 			"path": "github.com/klauspost/crc32",
 			"revision": "19b0b332c9e4516a6370a0456e6182c3b5036720",
 			"revisionTime": "2016-02-19T14:26:09Z"
+		},
+		{
+			"checksumSHA1": "p5H6CMOaQMFpmEGaiLPvhIq+0pM=",
+			"path": "github.com/lib/pq",
+			"revision": "50761b0867bd1d9d069276790bcd4a3bccf2324a",
+			"revisionTime": "2016-08-31T22:25:20Z"
+		},
+		{
+			"checksumSHA1": "xppHi82MLqVx1eyQmbhTesAEjx8=",
+			"path": "github.com/lib/pq/oid",
+			"revision": "50761b0867bd1d9d069276790bcd4a3bccf2324a",
+			"revisionTime": "2016-08-31T22:25:20Z"
+		},
+		{
+			"checksumSHA1": "+Q4ES3lJVAIyCcVVRXAfAJ57910=",
+			"path": "github.com/mattn/go-sqlite3",
+			"revision": "3fb7a0e792edd47bf0cf1e919dfc14e2be412e15",
+			"revisionTime": "2016-09-07T16:20:43Z"
+		},
+		{
+			"checksumSHA1": "vUcHzx0aV5Vid+r3FyGE1Y7QkHs=",
+			"path": "github.com/mattn/go-sqlite3/sqlite3_test",
+			"revision": "3fb7a0e792edd47bf0cf1e919dfc14e2be412e15",
+			"revisionTime": "2016-09-07T16:20:43Z"
 		},
 		{
 			"checksumSHA1": "XC6s8JOUHX9AIr23WWeuu9VoH+8=",

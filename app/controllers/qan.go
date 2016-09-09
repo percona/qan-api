@@ -18,14 +18,13 @@
 package controllers
 
 import (
+	"encoding/base64"
 	"fmt"
-	"strings"
-        "encoding/base64"
 
 	qp "github.com/percona/pmm/proto/qan"
 	"github.com/percona/qan-api/app/config"
 	"github.com/percona/qan-api/app/db"
-	"github.com/percona/qan-api/app/metrics"
+	"github.com/percona/qan-api/app/models"
 	"github.com/percona/qan-api/app/qan"
 	"github.com/percona/qan-api/app/query"
 	"github.com/percona/qan-api/app/shared"
@@ -47,11 +46,11 @@ func (c QAN) Profile(uuid string) revel.Result {
 	c.Params.Bind(&endTs, "end")
 	c.Params.Bind(&searchB64, "search")
 	c.Params.Bind(&offset, "offset")
-        searchB, err := base64.StdEncoding.DecodeString(searchB64)
-        if err != nil {
-            fmt.Println("error decoding base64 search :", err)
-        }
-        search = string(searchB)
+	searchB, err := base64.StdEncoding.DecodeString(searchB64)
+	if err != nil {
+		fmt.Println("error decoding base64 search :", err)
+	}
+	search = string(searchB)
 
 	begin, end, err := shared.ValidateTimeRange(beginTs, endTs)
 	if err != nil {
@@ -83,10 +82,9 @@ func (c QAN) QueryReport(uuid, queryId string) revel.Result {
 	instanceId := c.Args["instanceId"].(uint)
 
 	// Convert and validate the time range.
-	var beginTs, endTs, include string
+	var beginTs, endTs string
 	c.Params.Bind(&beginTs, "begin")
 	c.Params.Bind(&endTs, "end")
-	c.Params.Bind(&include, "include")
 
 	begin, end, err := shared.ValidateTimeRange(beginTs, endTs)
 	if err != nil {
@@ -127,17 +125,9 @@ func (c QAN) QueryReport(uuid, queryId string) revel.Result {
 		Example:    s,
 	}
 
-	// Get the query metrics to finish the report.
-	mh := metrics.NewQueryMetricsHandler(dbm, stats.NullStats())
-	metrics, err := mh.Get(instanceId, classId, begin, end)
-	if err != nil {
-		return c.Error(err, "mh.Get")
-	}
-	report.Metrics = metrics
-
-	if strings.Contains(include, "sparklines") {
-		report.Sparks, _ = mh.GetMetricsSparklines(classId, instanceId, begin, end)
-	}
+	metrics2, sparks2 := models.Metrics.GetClassMetrics(classId, instanceId, begin, end)
+	report.Metrics2 = metrics2
+	report.Sparks2 = sparks2
 
 	return c.RenderJson(report)
 }
@@ -146,18 +136,14 @@ func (c QAN) ServerSummary(uuid string) revel.Result {
 	instanceId := c.Args["instanceId"].(uint)
 
 	// Convert and validate the time range.
-	var beginTs, endTs, include string
+	var beginTs, endTs string
 	c.Params.Bind(&beginTs, "begin")
 	c.Params.Bind(&endTs, "end")
-	c.Params.Bind(&include, "include")
 
 	begin, end, err := shared.ValidateTimeRange(beginTs, endTs)
 	if err != nil {
 		return c.BadRequest(err, "invalid time range")
 	}
-
-	// Get the full query info: abstract, example, first/last seen, etc.
-	dbm := c.Args["dbm"].(db.Manager)
 
 	// Init the report. This info is a little redundant because the caller
 	// already knows what query and time range it requested, but it makes
@@ -168,19 +154,9 @@ func (c QAN) ServerSummary(uuid string) revel.Result {
 		End:        end,
 	}
 
-	// Get the query metrics to finish the report.
-	mh := metrics.NewQueryMetricsHandler(dbm, stats.NullStats())
-	metrics, err := mh.ServerSummary(instanceId, begin, end)
-	if err != nil {
-		return c.Error(err, "mh.Get")
-	}
-
-	summary.Metrics = metrics
-
-	if strings.Contains(include, "sparklines") {
-		// if classId = 0 - get server global metrics
-		summary.Sparks, _ = mh.GetMetricsSparklines(0, instanceId, begin, end)
-	}
+	metrics2, sparks2 := models.Metrics.GetGlobalMetrics(instanceId, begin, end)
+	summary.Metrics2 = metrics2
+	summary.Sparks2 = sparks2
 
 	return c.RenderJson(summary)
 }
