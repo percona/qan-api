@@ -258,13 +258,15 @@ func (qr *Reporter) Profile(instanceId uint, begin, end time.Time, r qp.RankBy, 
 
 	// https://jira.percona.com/browse/PPL-109
 	if len(queryClassIds) == 0 {
-		return p, fmt.Errorf("bug PPL-109: no query classes for selected instance and time range: %d %s %s %s %d",
-			instanceId,
-			begin,
-			end,
-			metrics.AggregateFunction(r.Metric, r.Stat, "query_count"),
-			r.Limit,
-		)
+		// fmt.Printf("bug PPL-109: no query classes for selected instance and time range: %d %s %s %s %d",
+		// 	instanceId,
+		// 	begin,
+		// 	end,
+		// 	metrics.AggregateFunction(r.Metric, r.Stat, "query_count"),
+		// 	r.Limit,
+		// )
+		return p, fmt.Errorf("No query classes for selected instance and time range. " +
+			"Please check whether your MySQL settings match the recommended.")
 	}
 
 	p.Query = p.Query[0:rank] // remove unused ranks, if any
