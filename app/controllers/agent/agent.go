@@ -89,7 +89,7 @@ func (c Agent) Create() revel.Result {
 			ih := instance.NewMySQLHandler(dbm)
 			id, _ := instance.GetInstanceId(dbm.DB(), newAgent.UUID)
 			if id == 0 {
-				_, in, err := ih.GetByName("agent", newAgent.Hostname)
+				_, in, err := ih.GetByName("agent", newAgent.Hostname, "")
 				if err != nil {
 					return c.Error(err, "Agent.Create: ih.GetByName")
 				}
