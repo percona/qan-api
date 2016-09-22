@@ -105,7 +105,7 @@ func (h *MySQLHandler) Get(uuid string) (uint, *proto.Instance, error) {
 	return h.getInstance(query, uuid)
 }
 
-func (h *MySQLHandler) GetByName(subsystem, name string) (uint, *proto.Instance, error) {
+func (h *MySQLHandler) GetByName(subsystem, name, parentUUID string) (uint, *proto.Instance, error) {
 	s, err := GetSubsystemByName(subsystem)
 	if err != nil {
 		return 0, nil, err
@@ -115,13 +115,18 @@ func (h *MySQLHandler) GetByName(subsystem, name string) (uint, *proto.Instance,
 		" FROM instances" +
 		" WHERE subsystem_id = ? AND name = ?"
 
+	if parentUUID != "" {
+		query = query + " AND parent_uuid = ?"
+		return h.getInstance(query, s.Id, name, parentUUID)
+	}
+
 	return h.getInstance(query, s.Id, name)
 }
 
 func (h *MySQLHandler) GetAll() ([]proto.Instance, error) {
 	query := "SELECT subsystem_id, instance_id, parent_uuid, uuid, dsn, name, distro, version, created, deleted" +
 		" FROM instances " +
-                " WHERE deleted IS NULL " +
+                " WHERE deleted IS NULL OR deleted = '0000-00-00 00:00:00' " +
 		" ORDER BY name"
 	rows, err := h.dbm.DB().Query(query)
 	if err != nil {
@@ -220,8 +225,8 @@ func (h *MySQLHandler) Update(in proto.Instance) error {
 	}
 
 	_, err := h.dbm.DB().Exec(
-		"UPDATE instances SET parent_uuid = ?, dsn = ?, name = ?, distro = ?, version = ? WHERE uuid = ?",
-		in.ParentUUID, in.DSN, in.Name, in.Distro, in.Version, in.UUID)
+		"UPDATE instances SET parent_uuid = ?, dsn = ?, name = ?, distro = ?, version = ?, deleted = ? WHERE uuid = ?",
+		in.ParentUUID, in.DSN, in.Name, in.Distro, in.Version, in.Deleted, in.UUID)
 	if err != nil {
 		return mysql.Error(err, "MySQLHandler.Update UPDATE instances")
 	}

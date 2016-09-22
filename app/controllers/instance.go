@@ -42,11 +42,12 @@ func (c *Instance) List() revel.Result {
 	}
 	instanceHandler := instance.NewMySQLHandler(dbm)
 
-	var instanceType, instanceName string
+	var instanceType, instanceName, parentUUID string
 	c.Params.Bind(&instanceType, "type")
 	c.Params.Bind(&instanceName, "name")
+	c.Params.Bind(&parentUUID, "parent_uuid")
 	if instanceType != "" && instanceName != "" {
-		_, in, err := instanceHandler.GetByName(instanceType, instanceName)
+		_, in, err := instanceHandler.GetByName(instanceType, instanceName, parentUUID)
 		if err != nil {
 			return c.Error(err, "Instance.List: ih.GetByName")
 		}
@@ -93,7 +94,7 @@ func (c *Instance) Create() revel.Result {
 		if err == shared.ErrDuplicateEntry {
 			id, _ := instance.GetInstanceId(dbm.DB(), in.UUID)
 			if id == 0 {
-				_, in2, err := ih.GetByName(in.Subsystem, in.Name)
+				_, in2, err := ih.GetByName(in.Subsystem, in.Name, "")
 				if err != nil {
 					return c.Error(err, "Instance.Create: ih.GetByName")
 				}
