@@ -126,7 +126,7 @@ func (h *MySQLHandler) GetByName(subsystem, name, parentUUID string) (uint, *pro
 func (h *MySQLHandler) GetAll() ([]proto.Instance, error) {
 	query := "SELECT subsystem_id, instance_id, parent_uuid, uuid, dsn, name, distro, version, created, deleted" +
 		" FROM instances " +
-                " WHERE deleted IS NULL OR deleted = '0000-00-00 00:00:00' " +
+                " WHERE deleted IS NULL OR YEAR(deleted)=1970 " +
 		" ORDER BY name"
 	rows, err := h.dbm.DB().Query(query)
 	if err != nil {
