@@ -619,7 +619,7 @@ SELECT
  COALESCE(MAX(InnoDB_IO_r_wait_max), 0) AS innodb_io_r_wait_max,
  COALESCE(SUM(InnoDB_rec_lock_wait_sum), 0) AS innodb_rec_lock_wait_sum,
  COALESCE(MIN(InnoDB_rec_lock_wait_min), 0) AS innodb_rec_lock_wait_min,
- COALESCE(SUM(InnoDB_rec_lock_wait_sum)/SUM({{ .CountField }}), 0) AS innodb_rec_lock_wait_sum,
+ COALESCE(SUM(InnoDB_rec_lock_wait_sum)/SUM({{ .CountField }}), 0) AS innodb_rec_lock_wait_avg,
  COALESCE(AVG(InnoDB_rec_lock_wait_med), 0) AS innodb_rec_lock_wait_med,
  COALESCE(AVG(InnoDB_rec_lock_wait_p95), 0) AS innodb_rec_lock_wait_p95,
  COALESCE(MAX(InnoDB_rec_lock_wait_max), 0) AS innodb_rec_lock_wait_max,

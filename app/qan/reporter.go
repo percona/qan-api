@@ -316,9 +316,9 @@ func (qr *Reporter) filterByFingerprint(instanceId uint, begin, end time.Time, s
             AND qcm.instance_id = ?
             AND qc.last_seen > ?
                 AND qc.last_seen <= ?
-            AND qc.fingerprint LIKE ?;
+            AND (qc.checksum = ? OR qc.fingerprint LIKE ?);
     `
-	rows, err := qr.dbm.DB().Query(query, instanceId, begin, end, "%"+search+"%")
+	rows, err := qr.dbm.DB().Query(query, instanceId, begin, end, search, "%"+search+"%")
 	if err != nil {
 		return queryClassIds, mysql.Error(err, "Reporter.filterByFingerprint: SELECT query_classes AS qc, query_examples AS qe LIKE")
 	}

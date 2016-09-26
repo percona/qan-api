@@ -20,11 +20,12 @@ package instance
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	mysqlDriver "github.com/go-sql-driver/mysql"
+	"github.com/percona/pmm/proto"
 	"github.com/percona/qan-api/app/db"
 	"github.com/percona/qan-api/app/db/mysql"
-	"github.com/percona/pmm/proto"
 )
 
 type DbHandler interface {
@@ -126,7 +127,7 @@ func (h *MySQLHandler) GetByName(subsystem, name, parentUUID string) (uint, *pro
 func (h *MySQLHandler) GetAll() ([]proto.Instance, error) {
 	query := "SELECT subsystem_id, instance_id, parent_uuid, uuid, dsn, name, distro, version, created, deleted" +
 		" FROM instances " +
-                " WHERE deleted IS NULL OR YEAR(deleted)=1970 " +
+		" WHERE deleted IS NULL OR YEAR(deleted)=1970 " +
 		" ORDER BY name"
 	rows, err := h.dbm.DB().Query(query)
 	if err != nil {
@@ -224,6 +225,10 @@ func (h *MySQLHandler) Update(in proto.Instance) error {
 		}
 	}
 
+	// If deleted was NULL in db, go turns it into “0001-01-01 00:00:00 +0000 UTC" and MySQL doesn’t like it.
+	if in.Deleted.IsZero() {
+		in.Deleted = time.Unix(1, 0)
+	}
 	_, err := h.dbm.DB().Exec(
 		"UPDATE instances SET parent_uuid = ?, dsn = ?, name = ?, distro = ?, version = ?, deleted = ? WHERE uuid = ?",
 		in.ParentUUID, in.DSN, in.Name, in.Distro, in.Version, in.Deleted, in.UUID)
