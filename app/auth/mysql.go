@@ -41,7 +41,7 @@ func (h *MySQLHandler) GetAgentId(uuid string) (uint, error) {
 		return 0, mysql.Error(err, "auth.MySQLHandler.GetAgentId: dbm.Open")
 	}
 	err := h.dbm.DB().QueryRow(
-		"SELECT instance_id FROM instances WHERE uuid = ? AND subsystem_id = 2 AND deleted IS NULL OR YEAR(deleted)=1970 ",
+		"SELECT instance_id FROM instances WHERE uuid = ? AND subsystem_id = 2 AND (deleted IS NULL OR YEAR(deleted)=1970) ",
 		uuid).Scan(&instanceId)
 	return instanceId, mysql.Error(err, "auth.MySQLHandler.GetAgentId: SELECT instances")
 }
