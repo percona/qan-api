@@ -119,7 +119,7 @@ if [ "$DEPS" = "yes" ]; then
    export GOPATH="$VENDOR_DIR:$GOPATH"
    [ ! -d "$VENDOR_DIR" ] && mkdir "$VENDOR_DIR"
    echo "Cloning deps into $VENDOR_DIR..."
-   godep restore
+   govendor sync
 fi
 
 # Build binaries

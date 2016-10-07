@@ -183,10 +183,10 @@
 			"revisionTime": "2016-09-12T08:31:53Z"
 		},
 		{
-			"checksumSHA1": "k5xUq7lfqdJ0T50D6IwiGNRsG+I=",
+			"checksumSHA1": "NtI4FFrtbNAqoxQ7mbWQEWeJ0gs=",
 			"path": "github.com/percona/pmm/proto/qan",
-			"revision": "4c4a6093bdbca2317314dbacf99e7f6cc1dae0e3",
-			"revisionTime": "2016-09-12T08:31:53Z"
+			"revision": "71d78e0723f833d4978266471106834cf3da9a73",
+			"revisionTime": "2016-10-07T14:38:09Z"
 		},
 		{
 			"checksumSHA1": "NYT5k+COkroAVjbNidTIN1hntJc=",
