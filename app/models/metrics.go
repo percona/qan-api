@@ -234,13 +234,18 @@ func (m metrics) computeAdditionalMetrics(gMetrics generalMetrics, begin, end ti
 
 	for i := 0; i < reflectionAdittionalMetrics.NumField(); i++ {
 		fieldName := reflectionAdittionalMetrics.Type().Field(i).Name
-		if !strings.HasSuffix(fieldName, "_per_sec") {
-			continue
-		}
-		generalFieldName := strings.TrimSuffix(fieldName, "_per_sec")
-		metricVal := reflectionGeneralMetrics.FieldByName(generalFieldName).Float()
+		if strings.HasSuffix(fieldName, "_load") {
+                    generalFieldName := strings.TrimSuffix(fieldName, "_load")
+                    metricVal := reflectionGeneralMetrics.FieldByName(generalFieldName).Float()
 
-		reflectionAdittionalMetrics.FieldByName(fieldName).SetFloat(metricVal / duration)
+                    reflectionAdittionalMetrics.FieldByName(fieldName).SetFloat(metricVal)
+                }
+		if strings.HasSuffix(fieldName, "_per_sec") {
+                    generalFieldName := strings.TrimSuffix(fieldName, "_per_sec")
+                    metricVal := reflectionGeneralMetrics.FieldByName(generalFieldName).Float()
+
+                    reflectionAdittionalMetrics.FieldByName(fieldName).SetFloat(metricVal / duration)
+                }
 	}
 	return aMetrics
 }
@@ -292,12 +297,12 @@ type additionalMetrics struct {
 	Query_count_per_sec              float32 `json:",omitempty"`
 	Query_time_sum_per_sec           float32 `json:",omitempty"`
 	Lock_time_sum_per_sec            float32 `json:",omitempty"`
-	Lock_time_avg_per_sec            float32 `json:",omitempty"` // added
-	InnoDB_rec_lock_wait_avg_per_sec float32 `json:",omitempty"`
-	InnoDB_IO_r_wait_avg_per_sec     float32 `json:",omitempty"` // added
+	Lock_time_avg_load            float32 `json:",omitempty"` // added
+	InnoDB_rec_lock_wait_avg_load float32 `json:",omitempty"`
+	InnoDB_IO_r_wait_avg_load     float32 `json:",omitempty"` // added
 	InnoDB_IO_r_ops_sum_per_sec      float32 `json:",omitempty"`
 	InnoDB_IO_r_bytes_sum_per_sec    float32 `json:",omitempty"`
-	InnoDB_queue_wait_avg_per_sec    float32 `json:",omitempty"` // added
+	InnoDB_queue_wait_avg_load    float32 `json:",omitempty"` // added
 
 	QC_Hit_sum_per_sec            float32 `json:",omitempty"`
 	Rows_sent_sum_per_sec         float32 `json:",omitempty"`
@@ -516,25 +521,25 @@ SELECT
  COALESCE(SUM({{ .CountField }}), 0) AS query_count,
  COALESCE(SUM(Query_time_sum), 0) AS query_time_sum,
  COALESCE(MIN(Query_time_min), 0) AS query_time_min,
- COALESCE(SUM(Query_time_sum)/SUM({{ .CountField }}), 0) AS query_time_avg,
+ COALESCE(AVG(Query_time_avg), 0) AS query_time_avg,
  COALESCE(AVG(Query_time_med), 0) AS query_time_med,
  COALESCE(AVG(Query_time_p95), 0) AS query_time_p95,
  COALESCE(MAX(Query_time_max), 0) AS query_time_max,
  COALESCE(SUM(Lock_time_sum), 0) AS lock_time_sum,
  COALESCE(MIN(Lock_time_min), 0) AS lock_time_min,
- COALESCE(SUM(Lock_time_sum)/SUM({{ .CountField }}), 0) AS lock_time_avg,
+ COALESCE(AVG(Lock_time_avg), 0) AS lock_time_avg,
  COALESCE(AVG(Lock_time_med), 0) AS lock_time_med,
  COALESCE(AVG(Lock_time_p95), 0) AS lock_time_p95,
  COALESCE(MAX(Lock_time_max), 0) AS lock_time_max,
  COALESCE(SUM(Rows_sent_sum), 0) AS rows_sent_sum,
  COALESCE(MIN(Rows_sent_min), 0) AS rows_sent_min,
- COALESCE(SUM(Rows_sent_sum)/SUM({{ .CountField }}), 0) AS rows_sent_avg,
+ COALESCE(AVG(Rows_sent_avg), 0) AS rows_sent_avg,
  COALESCE(AVG(Rows_sent_med), 0) AS rows_sent_med,
  COALESCE(AVG(Rows_sent_p95), 0) AS rows_sent_p95,
  COALESCE(MAX(Rows_sent_max), 0) AS rows_sent_max,
  COALESCE(SUM(Rows_examined_sum), 0) AS rows_examined_sum,
  COALESCE(MIN(Rows_examined_min), 0) AS rows_examined_min,
- COALESCE(SUM(Rows_examined_sum)/SUM({{ .CountField }}), 0) AS rows_examined_avg,
+ COALESCE(AVG(Rows_examined_avg), 0) AS rows_examined_avg,
  COALESCE(AVG(Rows_examined_med), 0) AS rows_examined_med,
  COALESCE(AVG(Rows_examined_p95), 0) AS rows_examined_p95,
  COALESCE(MAX(Rows_examined_max), 0) AS rows_examined_max
@@ -548,7 +553,7 @@ SELECT
 
  COALESCE(SUM(Rows_affected_sum), 0) AS rows_affected_sum,
  COALESCE(MIN(Rows_affected_min), 0) AS rows_affected_min,
- COALESCE(SUM(Rows_affected_sum)/SUM({{ .CountField }}), 0) AS rows_affected_avg,
+ COALESCE(AVG(Rows_affected_avg), 0) AS rows_affected_avg,
  COALESCE(AVG(Rows_affected_med), 0) AS rows_affected_med,
  COALESCE(AVG(Rows_affected_p95), 0) AS rows_affected_p95,
  COALESCE(MAX(Rows_affected_max), 0) AS rows_affected_max,
@@ -560,7 +565,7 @@ SELECT
 
  COALESCE(SUM(Merge_passes_sum), 0) AS merge_passes_sum,
  COALESCE(MIN(Merge_passes_min), 0) AS merge_passes_min,
- COALESCE(SUM(Merge_passes_sum)/SUM({{ .CountField }}), 0) AS merge_passes_avg,
+ COALESCE(AVG(Merge_passes_avg), 0) AS merge_passes_avg,
  COALESCE(AVG(Merge_passes_med), 0) AS merge_passes_med,
  COALESCE(AVG(Merge_passes_p95), 0) AS merge_passes_p95,
  COALESCE(MAX(Merge_passes_max), 0) AS merge_passes_max,
@@ -572,25 +577,25 @@ SELECT
 
  COALESCE(SUM(Bytes_sent_sum), 0) AS bytes_sent_sum,
  COALESCE(MIN(Bytes_sent_min), 0) AS bytes_sent_min,
- COALESCE(SUM(Bytes_sent_sum)/SUM({{ .CountField }}), 0) AS bytes_sent_avg,
+ COALESCE(AVG(Bytes_sent_avg), 0) AS bytes_sent_avg,
  COALESCE(AVG(Bytes_sent_med), 0) AS bytes_sent_med,
  COALESCE(AVG(Bytes_sent_p95), 0) AS bytes_sent_p95,
  COALESCE(MAX(Bytes_sent_max), 0) AS bytes_sent_max,
  COALESCE(SUM(Tmp_tables_sum), 0) AS tmp_tables_sum,
  COALESCE(MIN(Tmp_tables_min), 0) AS tmp_tables_min,
- COALESCE(SUM(Tmp_tables_sum)/SUM({{ .CountField }}), 0) AS tmp_tables_avg,
+ COALESCE(AVG(Tmp_tables_avg), 0) AS tmp_tables_avg,
  COALESCE(AVG(Tmp_tables_med), 0) AS tmp_tables_med,
  COALESCE(AVG(Tmp_tables_p95), 0) AS tmp_tables_p95,
  COALESCE(MAX(Tmp_tables_max), 0) AS tmp_tables_max,
  COALESCE(SUM(Tmp_disk_tables_sum), 0) AS tmp_disk_tables_sum,
  COALESCE(MIN(Tmp_disk_tables_min), 0) AS tmp_disk_tables_min,
- COALESCE(SUM(Tmp_disk_tables_sum)/SUM({{ .CountField }}), 0) AS tmp_disk_tables_avg,
+ COALESCE(AVG(Tmp_disk_tables_avg), 0) AS tmp_disk_tables_avg,
  COALESCE(AVG(Tmp_disk_tables_med), 0) AS tmp_disk_tables_med,
  COALESCE(AVG(Tmp_disk_tables_p95), 0) AS tmp_disk_tables_p95,
  COALESCE(MAX(Tmp_disk_tables_max), 0) AS tmp_disk_tables_max,
  COALESCE(SUM(Tmp_table_sizes_sum), 0) AS tmp_table_sizes_sum,
  COALESCE(MIN(Tmp_table_sizes_min), 0) AS tmp_table_sizes_min,
- COALESCE(SUM(Tmp_table_sizes_sum)/SUM({{ .CountField }}), 0) AS tmp_table_sizes_avg,
+ COALESCE(AVG(Tmp_table_sizes_avg), 0) AS tmp_table_sizes_avg,
  COALESCE(AVG(Tmp_table_sizes_med), 0) AS tmp_table_sizes_med,
  COALESCE(AVG(Tmp_table_sizes_p95), 0) AS tmp_table_sizes_p95,
  COALESCE(MAX(Tmp_table_sizes_max), 0) AS tmp_table_sizes_max,
@@ -601,37 +606,37 @@ SELECT
  COALESCE(SUM(Filesort_on_disk_sum), 0) AS filesort_on_disk_sum,
  COALESCE(SUM(InnoDB_IO_r_ops_sum), 0) AS innodb_io_r_ops_sum,
  COALESCE(MIN(InnoDB_IO_r_ops_min), 0) AS innodb_io_r_ops_min,
- COALESCE(SUM(InnoDB_IO_r_ops_sum)/SUM({{ .CountField }}), 0) AS innodb_io_r_ops_avg,
+ COALESCE(AVG(InnoDB_IO_r_ops_avg), 0) AS innodb_io_r_ops_avg,
  COALESCE(AVG(InnoDB_IO_r_ops_med), 0) AS innodb_io_r_ops_med,
  COALESCE(AVG(InnoDB_IO_r_ops_p95), 0) AS innodb_io_r_ops_p95,
  COALESCE(MAX(InnoDB_IO_r_ops_max), 0) AS innodb_io_r_ops_max,
  COALESCE(SUM(InnoDB_IO_r_bytes_sum), 0) AS innodb_io_r_bytes_sum,
  COALESCE(MIN(InnoDB_IO_r_bytes_min), 0) AS innodb_io_r_bytes_min,
- COALESCE(SUM(InnoDB_IO_r_bytes_sum)/SUM({{ .CountField }}), 0) AS innodb_io_r_bytes_avg,
+ COALESCE(AVG(InnoDB_IO_r_bytes_avg), 0) AS innodb_io_r_bytes_avg,
  COALESCE(AVG(InnoDB_IO_r_bytes_med), 0) AS innodb_io_r_bytes_med,
  COALESCE(AVG(InnoDB_IO_r_bytes_p95), 0) AS innodb_io_r_bytes_p95,
  COALESCE(MAX(InnoDB_IO_r_bytes_max), 0) AS innodb_io_r_bytes_max,
  COALESCE(SUM(InnoDB_IO_r_wait_sum), 0) AS innodb_io_r_wait_sum,
  COALESCE(MIN(InnoDB_IO_r_wait_min), 0) AS innodb_io_r_wait_min,
- COALESCE(SUM(InnoDB_IO_r_wait_sum)/SUM({{ .CountField }}), 0) AS innodb_io_r_wait_avg,
+ COALESCE(AVG(InnoDB_IO_r_wait_avg), 0) AS innodb_io_r_wait_avg,
  COALESCE(AVG(InnoDB_IO_r_wait_med), 0) AS innodb_io_r_wait_med,
  COALESCE(AVG(InnoDB_IO_r_wait_p95), 0) AS innodb_io_r_wait_p95,
  COALESCE(MAX(InnoDB_IO_r_wait_max), 0) AS innodb_io_r_wait_max,
  COALESCE(SUM(InnoDB_rec_lock_wait_sum), 0) AS innodb_rec_lock_wait_sum,
  COALESCE(MIN(InnoDB_rec_lock_wait_min), 0) AS innodb_rec_lock_wait_min,
- COALESCE(SUM(InnoDB_rec_lock_wait_sum)/SUM({{ .CountField }}), 0) AS innodb_rec_lock_wait_avg,
+ COALESCE(AVG(InnoDB_rec_lock_wait_avg), 0) AS innodb_rec_lock_wait_avg,
  COALESCE(AVG(InnoDB_rec_lock_wait_med), 0) AS innodb_rec_lock_wait_med,
  COALESCE(AVG(InnoDB_rec_lock_wait_p95), 0) AS innodb_rec_lock_wait_p95,
  COALESCE(MAX(InnoDB_rec_lock_wait_max), 0) AS innodb_rec_lock_wait_max,
  COALESCE(SUM(InnoDB_queue_wait_sum), 0) AS innodb_queue_wait_sum,
  COALESCE(MIN(InnoDB_queue_wait_min), 0) AS innodb_queue_wait_min,
- COALESCE(SUM(InnoDB_queue_wait_sum)/SUM({{ .CountField }}), 0) AS innodb_queue_wait_avg,
+ COALESCE(AVG(InnoDB_queue_wait_avg), 0) AS innodb_queue_wait_avg,
  COALESCE(AVG(InnoDB_queue_wait_med), 0) AS innodb_queue_wait_med,
  COALESCE(AVG(InnoDB_queue_wait_p95), 0) AS innodb_queue_wait_p95,
  COALESCE(MAX(InnoDB_queue_wait_max), 0) AS innodb_queue_wait_max,
  COALESCE(SUM(InnoDB_pages_distinct_sum), 0) AS innodb_pages_distinct_sum,
  COALESCE(MIN(InnoDB_pages_distinct_min), 0) AS innodb_pages_distinct_min,
- COALESCE(SUM(InnoDB_pages_distinct_sum)/SUM({{ .CountField }}), 0) AS innodb_pages_distinct_avg,
+ COALESCE(AVG(InnoDB_pages_distinct_avg), 0) AS innodb_pages_distinct_avg,
  COALESCE(AVG(InnoDB_pages_distinct_med), 0) AS innodb_pages_distinct_med,
  COALESCE(AVG(InnoDB_pages_distinct_p95), 0) AS innodb_pages_distinct_p95,
  COALESCE(MAX(InnoDB_pages_distinct_max), 0) AS innodb_pages_distinct_max
@@ -666,7 +671,7 @@ SELECT
     COALESCE(SUM({{ .CountField }}), 0) / :interval_ts AS query_count_per_sec,
     COALESCE(SUM(Query_time_sum), 0) / :interval_ts AS query_time_sum_per_sec,
 	COALESCE(SUM(Lock_time_sum), 0) / :interval_ts AS lock_time_sum_per_sec,
-	COALESCE(AVG(Lock_time_avg), 0) / :interval_ts AS lock_time_avg_per_sec,
+	COALESCE(AVG(Lock_time_avg), 0) AS lock_time_avg_load,
 	COALESCE(SUM(Rows_sent_sum), 0) / :interval_ts AS rows_sent_sum_per_sec,
 	COALESCE(SUM(Rows_examined_sum), 0) / :interval_ts AS rows_examined_sum_per_sec
 	{{ end }}
@@ -685,9 +690,9 @@ SELECT
 	COALESCE(SUM(Bytes_sent_sum), 0) / :interval_ts AS bytes_sent_sum_per_sec,
 	COALESCE(SUM(InnoDB_IO_r_ops_sum), 0) / :interval_ts AS innodb_io_r_ops_sum_per_sec,
 
-	COALESCE(AVG(InnoDB_IO_r_wait_avg), 0) / :interval_ts AS innodb_io_r_wait_avg_per_sec,
-	COALESCE(AVG(InnoDB_rec_lock_wait_avg), 0) / :interval_ts AS innodb_rec_lock_wait_avg_per_sec,
-	COALESCE(AVG(InnoDB_queue_wait_avg), 0) / :interval_ts AS innodb_queue_wait_avg_per_sec,
+	COALESCE(AVG(InnoDB_IO_r_wait_avg), 0) AS innodb_io_r_wait_avg_load,
+	COALESCE(AVG(InnoDB_rec_lock_wait_avg), 0) AS innodb_rec_lock_wait_avg_load,
+	COALESCE(AVG(InnoDB_queue_wait_avg), 0) AS innodb_queue_wait_avg_load,
 
 	COALESCE(SUM(InnoDB_IO_r_bytes_sum), 0) / :interval_ts AS innodb_io_r_bytes_sum_per_sec,
 	COALESCE(SUM(QC_Hit_sum), 0) / :interval_ts AS qc_hit_sum_per_sec,
