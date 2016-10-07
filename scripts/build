@@ -149,9 +149,9 @@ mv qan-api bin/$BIN
 
 # Check that binary was compiled with pkgs from vendor dir.
 if [ "$DEPS" = "yes" ]; then
-   strings bin/$BIN | grep -q "vendor/src/github.com/go-sql-driver/mysql" \
+   strings bin/$BIN | grep -q "vendor/github.com/go-sql-driver/mysql" \
       || err "$BIN not built with vendor deps (vendor)"
-   strings bin/$BIN | grep -q "vendor/src/github.com/revel/revel" \
+   strings bin/$BIN | grep -q "vendor/github.com/revel/revel" \
       || err "$BIN not built with vendor deps (vendor)"
 fi
 
