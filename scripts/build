@@ -149,10 +149,10 @@ mv qan-api bin/$BIN
 
 # Check that binary was compiled with pkgs from vendor dir.
 if [ "$DEPS" = "yes" ]; then
-   strings bin/$BIN | grep -q "$VENDOR_DIR/src/github.com/go-sql-driver/mysql" \
-      || err "$BIN not built with vendor deps ($VENDOR_DIR)"
-   strings bin/$BIN | grep -q "$VENDOR_DIR/src/github.com/revel/revel" \
-      || err "$BIN not built with vendor deps ($VENDOR_DIR)"
+   strings bin/$BIN | grep -q "vendor/src/github.com/go-sql-driver/mysql" \
+      || err "$BIN not built with vendor deps (vendor)"
+   strings bin/$BIN | grep -q "vendor/src/github.com/revel/revel" \
+      || err "$BIN not built with vendor deps (vendor)"
 fi
 
 # Clean up the crap that Revel puts in the distro, i.e. the entire source tree. :-(
