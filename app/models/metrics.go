@@ -235,17 +235,18 @@ func (m metrics) computeAdditionalMetrics(gMetrics generalMetrics, begin, end ti
 	for i := 0; i < reflectionAdittionalMetrics.NumField(); i++ {
 		fieldName := reflectionAdittionalMetrics.Type().Field(i).Name
 		if strings.HasSuffix(fieldName, "_load") {
-                    generalFieldName := strings.TrimSuffix(fieldName, "_load")
-                    metricVal := reflectionGeneralMetrics.FieldByName(generalFieldName).Float()
+			generalFieldName := strings.TrimSuffix(fieldName, "_load")
+			queryTimeAvg := reflectionGeneralMetrics.FieldByName("Query_time_avg").Float()
+			metricVal := reflectionGeneralMetrics.FieldByName(generalFieldName).Float()
 
-                    reflectionAdittionalMetrics.FieldByName(fieldName).SetFloat(metricVal)
-                }
+			reflectionAdittionalMetrics.FieldByName(fieldName).SetFloat(metricVal / queryTimeAvg)
+		}
 		if strings.HasSuffix(fieldName, "_per_sec") {
-                    generalFieldName := strings.TrimSuffix(fieldName, "_per_sec")
-                    metricVal := reflectionGeneralMetrics.FieldByName(generalFieldName).Float()
+			generalFieldName := strings.TrimSuffix(fieldName, "_per_sec")
+			metricVal := reflectionGeneralMetrics.FieldByName(generalFieldName).Float()
 
-                    reflectionAdittionalMetrics.FieldByName(fieldName).SetFloat(metricVal / duration)
-                }
+			reflectionAdittionalMetrics.FieldByName(fieldName).SetFloat(metricVal / duration)
+		}
 	}
 	return aMetrics
 }
@@ -292,17 +293,17 @@ type specialMetrics struct {
 }
 
 type additionalMetrics struct {
-	Point                            int64
-	Ts                               time.Time
-	Query_count_per_sec              float32 `json:",omitempty"`
-	Query_time_sum_per_sec           float32 `json:",omitempty"`
-	Lock_time_sum_per_sec            float32 `json:",omitempty"`
-	Lock_time_avg_load            float32 `json:",omitempty"` // added
-	InnoDB_rec_lock_wait_avg_load float32 `json:",omitempty"`
-	InnoDB_IO_r_wait_avg_load     float32 `json:",omitempty"` // added
-	InnoDB_IO_r_ops_sum_per_sec      float32 `json:",omitempty"`
-	InnoDB_IO_r_bytes_sum_per_sec    float32 `json:",omitempty"`
-	InnoDB_queue_wait_avg_load    float32 `json:",omitempty"` // added
+	Point                         int64
+	Ts                            time.Time
+	Query_count_per_sec           float32 `json:",omitempty"`
+	Query_time_sum_per_sec        float32 `json:",omitempty"`
+	Lock_time_sum_per_sec         float32 `json:",omitempty"`
+        Lock_time_avg_load            float32 `json:",omitempty"` // load - divider: Query_time_avg
+	InnoDB_rec_lock_wait_avg_load float32 `json:",omitempty"` // load - divider: Query_time_avg
+	InnoDB_IO_r_wait_avg_load     float32 `json:",omitempty"` // load - divider: Query_time_avg
+	InnoDB_IO_r_ops_sum_per_sec   float32 `json:",omitempty"`
+	InnoDB_IO_r_bytes_sum_per_sec float32 `json:",omitempty"`
+	InnoDB_queue_wait_avg_load    float32 `json:",omitempty"` // load - divider: Query_time_avg
 
 	QC_Hit_sum_per_sec            float32 `json:",omitempty"`
 	Rows_sent_sum_per_sec         float32 `json:",omitempty"`
@@ -671,7 +672,7 @@ SELECT
     COALESCE(SUM({{ .CountField }}), 0) / :interval_ts AS query_count_per_sec,
     COALESCE(SUM(Query_time_sum), 0) / :interval_ts AS query_time_sum_per_sec,
 	COALESCE(SUM(Lock_time_sum), 0) / :interval_ts AS lock_time_sum_per_sec,
-	COALESCE(AVG(Lock_time_avg), 0) AS lock_time_avg_load,
+	COALESCE(AVG(Lock_time_avg)/AVG(Lock_time_avg), 0) AS lock_time_avg_load,
 	COALESCE(SUM(Rows_sent_sum), 0) / :interval_ts AS rows_sent_sum_per_sec,
 	COALESCE(SUM(Rows_examined_sum), 0) / :interval_ts AS rows_examined_sum_per_sec
 	{{ end }}
@@ -690,9 +691,9 @@ SELECT
 	COALESCE(SUM(Bytes_sent_sum), 0) / :interval_ts AS bytes_sent_sum_per_sec,
 	COALESCE(SUM(InnoDB_IO_r_ops_sum), 0) / :interval_ts AS innodb_io_r_ops_sum_per_sec,
 
-	COALESCE(AVG(InnoDB_IO_r_wait_avg), 0) AS innodb_io_r_wait_avg_load,
-	COALESCE(AVG(InnoDB_rec_lock_wait_avg), 0) AS innodb_rec_lock_wait_avg_load,
-	COALESCE(AVG(InnoDB_queue_wait_avg), 0) AS innodb_queue_wait_avg_load,
+	COALESCE(AVG(InnoDB_IO_r_wait_avg)/AVG(Lock_time_avg), 0) AS innodb_io_r_wait_avg_load,
+	COALESCE(AVG(InnoDB_rec_lock_wait_avg)/AVG(Lock_time_avg), 0) AS innodb_rec_lock_wait_avg_load,
+	COALESCE(AVG(InnoDB_queue_wait_avg)/AVG(Lock_time_avg), 0) AS innodb_queue_wait_avg_load,
 
 	COALESCE(SUM(InnoDB_IO_r_bytes_sum), 0) / :interval_ts AS innodb_io_r_bytes_sum_per_sec,
 	COALESCE(SUM(QC_Hit_sum), 0) / :interval_ts AS qc_hit_sum_per_sec,

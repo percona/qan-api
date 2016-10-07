@@ -36,12 +36,12 @@ const amountOfPoints = 60
 
 // get data for spark-lines at query profile
 const sparkLinesQueryClass = "SELECT (? - UNIX_TIMESTAMP(start_ts)) DIV ? as point," +
-	" FROM_UNIXTIME(? - (SELECT point) * ?) as start_ts, SUM(query_count)/?, SUM(Query_time_sum)/?" +
+	" FROM_UNIXTIME(? - (SELECT point) * ?) as start_ts, SUM(query_count)/?, SUM(Query_time_sum)/?, AVG(Query_time_avg) " +
 	" FROM query_class_metrics" +
 	" WHERE query_class_id = ? and instance_id = ? AND (start_ts >= ? AND start_ts < ?) GROUP BY point;"
 
 const sparkLinesQueryGlobal = "SELECT (? - UNIX_TIMESTAMP(start_ts)) DIV ? as point," +
-	" FROM_UNIXTIME(? - (SELECT point) * ?) as start_ts, SUM(total_query_count)/?, SUM(Query_time_sum)/?" +
+	" FROM_UNIXTIME(? - (SELECT point) * ?) as start_ts, SUM(total_query_count)/?, SUM(Query_time_sum)/?, AVG(Query_time_avg) " +
 	" FROM query_global_metrics " +
 	" WHERE instance_id = ? AND (start_ts >= ? AND start_ts < ?) GROUP BY point;"
 
@@ -83,6 +83,7 @@ func SparklineData(qr *Reporter, endTs int64, intervalTs int64, queryClassId uin
 			&ql.Start_ts,
 			&ql.Query_count,
 			&ql.Query_time_sum,
+			&ql.Query_time_avg,
 		)
 		queryLogArrRaw[(ql.Start_ts).Unix()] = ql
 	}
@@ -93,7 +94,7 @@ func SparklineData(qr *Reporter, endTs int64, intervalTs int64, queryClassId uin
 		if val, ok := queryLogArrRaw[ts]; ok {
 			queryLogArr = append(queryLogArr, val)
 		} else {
-			queryLogArr = append(queryLogArr, qp.QueryLog{uint(i), time.Unix(ts, 0), 0, 0})
+			queryLogArr = append(queryLogArr, qp.QueryLog{uint(i), time.Unix(ts, 0), 0, 0, 0})
 		}
 	}
 	return queryLogArr
