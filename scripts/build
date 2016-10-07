@@ -115,10 +115,6 @@ fi
 
 # Install/update deps (vendoring)
 if [ "$DEPS" = "yes" ]; then
-   VENDOR_DIR="$ROOT_DIR/vendor"
-   export GOPATH="$VENDOR_DIR:$GOPATH"
-   [ ! -d "$VENDOR_DIR" ] && mkdir "$VENDOR_DIR"
-   echo "Cloning deps into $VENDOR_DIR..."
    govendor sync
 fi
 

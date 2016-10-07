@@ -672,7 +672,7 @@ SELECT
     COALESCE(SUM({{ .CountField }}), 0) / :interval_ts AS query_count_per_sec,
     COALESCE(SUM(Query_time_sum), 0) / :interval_ts AS query_time_sum_per_sec,
 	COALESCE(SUM(Lock_time_sum), 0) / :interval_ts AS lock_time_sum_per_sec,
-	COALESCE(AVG(Lock_time_avg)/AVG(Lock_time_avg), 0) AS lock_time_avg_load,
+	COALESCE(AVG(Lock_time_avg)/AVG(Query_time_avg), 0) AS lock_time_avg_load,
 	COALESCE(SUM(Rows_sent_sum), 0) / :interval_ts AS rows_sent_sum_per_sec,
 	COALESCE(SUM(Rows_examined_sum), 0) / :interval_ts AS rows_examined_sum_per_sec
 	{{ end }}
@@ -691,9 +691,9 @@ SELECT
 	COALESCE(SUM(Bytes_sent_sum), 0) / :interval_ts AS bytes_sent_sum_per_sec,
 	COALESCE(SUM(InnoDB_IO_r_ops_sum), 0) / :interval_ts AS innodb_io_r_ops_sum_per_sec,
 
-	COALESCE(AVG(InnoDB_IO_r_wait_avg)/AVG(Lock_time_avg), 0) AS innodb_io_r_wait_avg_load,
-	COALESCE(AVG(InnoDB_rec_lock_wait_avg)/AVG(Lock_time_avg), 0) AS innodb_rec_lock_wait_avg_load,
-	COALESCE(AVG(InnoDB_queue_wait_avg)/AVG(Lock_time_avg), 0) AS innodb_queue_wait_avg_load,
+	COALESCE(AVG(InnoDB_IO_r_wait_avg)/AVG(Query_time_avg), 0) AS innodb_io_r_wait_avg_load,
+	COALESCE(AVG(InnoDB_rec_lock_wait_avg)/AVG(Query_time_avg), 0) AS innodb_rec_lock_wait_avg_load,
+	COALESCE(AVG(InnoDB_queue_wait_avg)/AVG(Query_time_avg), 0) AS innodb_queue_wait_avg_load,
 
 	COALESCE(SUM(InnoDB_IO_r_bytes_sum), 0) / :interval_ts AS innodb_io_r_bytes_sum_per_sec,
 	COALESCE(SUM(QC_Hit_sum), 0) / :interval_ts AS qc_hit_sum_per_sec,
