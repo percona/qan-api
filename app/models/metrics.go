@@ -73,12 +73,12 @@ func (m metrics) identifyMetricGroup(instanceID uint, begin, end time.Time) metr
 type classMetrics struct {
 	generalMetrics
 	metricsPercentOfTotal
-	additionalMetrics
+	rateMetrics
 	specialMetrics
 }
 
 // GetClassMetrics return metrics for given instance and query class
-func (m metrics) GetClassMetrics(classID, instanceID uint, begin, end time.Time) (classMetrics, []additionalMetrics) {
+func (m metrics) GetClassMetrics(classID, instanceID uint, begin, end time.Time) (classMetrics, []rateMetrics) {
 	currentMetricGroup := m.identifyMetricGroup(instanceID, begin, end)
 	currentMetricGroup.CountField = "query_count"
 	endTs := end.Unix()
@@ -101,13 +101,13 @@ func (m metrics) GetClassMetrics(classID, instanceID uint, begin, end time.Time)
 	generalGlobalMetrics := m.getMetrics(currentMetricGroup, args)
 
 	classMetricsOfTotal := m.computeOfTotal(generalClassMetrics, generalGlobalMetrics)
-	aMetrics := m.computeAdditionalMetrics(generalClassMetrics, begin, end)
+	aMetrics := m.computeRateMetrics(generalClassMetrics, begin, end)
 	sMetrics := m.computeSpecialMetrics(generalClassMetrics)
 
 	classMetrics := classMetrics{
 		generalMetrics:        generalClassMetrics,
 		metricsPercentOfTotal: classMetricsOfTotal,
-		additionalMetrics:     aMetrics,
+		rateMetrics:           aMetrics,
 		specialMetrics:        sMetrics,
 	}
 	return classMetrics, sparks
@@ -115,12 +115,12 @@ func (m metrics) GetClassMetrics(classID, instanceID uint, begin, end time.Time)
 
 type globalMetrics struct {
 	generalMetrics
-	additionalMetrics
+	rateMetrics
 	specialMetrics
 }
 
 // GetGlobalMetrics return metrics for given instance
-func (m metrics) GetGlobalMetrics(instanceID uint, begin, end time.Time) (globalMetrics, []additionalMetrics) {
+func (m metrics) GetGlobalMetrics(instanceID uint, begin, end time.Time) (globalMetrics, []rateMetrics) {
 	currentMetricGroup := m.identifyMetricGroup(instanceID, begin, end)
 	currentMetricGroup.ServerSummary = true
 	currentMetricGroup.CountField = "total_query_count"
@@ -138,7 +138,7 @@ func (m metrics) GetGlobalMetrics(instanceID uint, begin, end time.Time) (global
 	generalGlobalMetrics := m.getMetrics(currentMetricGroup, args)
 	sparks := m.getSparklines(currentMetricGroup, args)
 
-	aMetrics := m.computeAdditionalMetrics(generalGlobalMetrics, begin, end)
+	aMetrics := m.computeRateMetrics(generalGlobalMetrics, begin, end)
 	sMetrics := m.computeSpecialMetrics(generalGlobalMetrics)
 	globalMetrics := globalMetrics{
 		generalGlobalMetrics,
@@ -169,7 +169,7 @@ func (m metrics) getMetrics(group metricGroup, args args) generalMetrics {
 
 const amountOfPoints = 60
 
-func (m metrics) getSparklines(group metricGroup, args args) []additionalMetrics {
+func (m metrics) getSparklines(group metricGroup, args args) []rateMetrics {
 	var querySparklinesBuffer bytes.Buffer
 	if tmpl, err := template.New("querySparklinesSQL").Parse(querySparklinesTemplate); err != nil {
 		log.Fatalln(err)
@@ -178,14 +178,14 @@ func (m metrics) getSparklines(group metricGroup, args args) []additionalMetrics
 	}
 
 	querySparklinesSQL := querySparklinesBuffer.String()
-	var sparksWithGaps []additionalMetrics
+	var sparksWithGaps []rateMetrics
 	if nstmt, err := db.PrepareNamed(querySparklinesSQL); err != nil {
 		log.Fatalln(err)
 	} else if err = nstmt.Select(&sparksWithGaps, args); err != nil {
 		log.Fatalln(err)
 	}
 
-	metricLogRaw := make(map[int64]additionalMetrics)
+	metricLogRaw := make(map[int64]rateMetrics)
 
 	for i := range sparksWithGaps {
 		key := sparksWithGaps[i].Ts.Unix()
@@ -193,14 +193,14 @@ func (m metrics) getSparklines(group metricGroup, args args) []additionalMetrics
 	}
 
 	// fills up gaps in sparklines by zero values
-	var sparks []additionalMetrics
+	var sparks []rateMetrics
 	var pointN int64
 	for pointN = 0; pointN < amountOfPoints; pointN++ {
 		ts := args.EndTS - pointN*args.IntervalTS
 		if val, ok := metricLogRaw[ts]; ok {
 			sparks = append(sparks, val)
 		} else {
-			val := additionalMetrics{Point: pointN, Ts: time.Unix(ts, 0).UTC()}
+			val := rateMetrics{Point: pointN, Ts: time.Unix(ts, 0).UTC()}
 			sparks = append(sparks, val)
 		}
 	}
@@ -226,21 +226,14 @@ func (m metrics) computeOfTotal(classMetrics, globalMetrics generalMetrics) metr
 	return mPercentOfTotal
 }
 
-func (m metrics) computeAdditionalMetrics(gMetrics generalMetrics, begin, end time.Time) additionalMetrics {
+func (m metrics) computeRateMetrics(gMetrics generalMetrics, begin, end time.Time) rateMetrics {
 	duration := end.Sub(begin).Seconds()
-	aMetrics := additionalMetrics{}
+	aMetrics := rateMetrics{}
 	reflectionAdittionalMetrics := reflect.ValueOf(&aMetrics).Elem()
 	reflectionGeneralMetrics := reflect.ValueOf(&gMetrics).Elem()
 
 	for i := 0; i < reflectionAdittionalMetrics.NumField(); i++ {
 		fieldName := reflectionAdittionalMetrics.Type().Field(i).Name
-		if strings.HasSuffix(fieldName, "_load") {
-			generalFieldName := strings.TrimSuffix(fieldName, "_load")
-			queryTimeAvg := reflectionGeneralMetrics.FieldByName("Query_time_avg").Float()
-			metricVal := reflectionGeneralMetrics.FieldByName(generalFieldName).Float()
-
-			reflectionAdittionalMetrics.FieldByName(fieldName).SetFloat(metricVal / queryTimeAvg)
-		}
 		if strings.HasSuffix(fieldName, "_per_sec") {
 			generalFieldName := strings.TrimSuffix(fieldName, "_per_sec")
 			metricVal := reflectionGeneralMetrics.FieldByName(generalFieldName).Float()
@@ -292,18 +285,17 @@ type specialMetrics struct {
 	Tmp_table_sizes_sum_per_query                float32 `json:",omitempty" divider:"Query_count"`
 }
 
-type additionalMetrics struct {
-	Point                         int64
-	Ts                            time.Time
-	Query_count_per_sec           float32 `json:",omitempty"`
-	Query_time_sum_per_sec        float32 `json:",omitempty"`
-	Lock_time_sum_per_sec         float32 `json:",omitempty"`
-        Lock_time_avg_load            float32 `json:",omitempty"` // load - divider: Query_time_avg
-	InnoDB_rec_lock_wait_avg_load float32 `json:",omitempty"` // load - divider: Query_time_avg
-	InnoDB_IO_r_wait_avg_load     float32 `json:",omitempty"` // load - divider: Query_time_avg
-	InnoDB_IO_r_ops_sum_per_sec   float32 `json:",omitempty"`
-	InnoDB_IO_r_bytes_sum_per_sec float32 `json:",omitempty"`
-	InnoDB_queue_wait_avg_load    float32 `json:",omitempty"` // load - divider: Query_time_avg
+type rateMetrics struct {
+	Point                            int64
+	Ts                               time.Time
+	Query_count_per_sec              float32 `json:",omitempty"`
+	Query_time_sum_per_sec           float32 `json:",omitempty"`
+	Lock_time_sum_per_sec            float32 `json:",omitempty"` // load
+	InnoDB_rec_lock_wait_sum_per_sec float32 `json:",omitempty"` // load
+	InnoDB_IO_r_wait_sum_per_sec     float32 `json:",omitempty"` // load
+	InnoDB_IO_r_ops_sum_per_sec      float32 `json:",omitempty"`
+	InnoDB_IO_r_bytes_sum_per_sec    float32 `json:",omitempty"`
+	InnoDB_queue_wait_sum_per_sec    float32 `json:",omitempty"` // load
 
 	QC_Hit_sum_per_sec            float32 `json:",omitempty"`
 	Rows_sent_sum_per_sec         float32 `json:",omitempty"`
@@ -669,10 +661,9 @@ SELECT
     FROM_UNIXTIME(:end_ts - (SELECT point) * :interval_ts) AS ts,
 	{{ if .Basic }}
 	/*  Basic metrics */
-    COALESCE(SUM({{ .CountField }}), 0) / :interval_ts AS query_count_per_sec,
-    COALESCE(SUM(Query_time_sum), 0) / :interval_ts AS query_time_sum_per_sec,
+        COALESCE(SUM({{ .CountField }}), 0) / :interval_ts AS query_count_per_sec,
+        COALESCE(SUM(Query_time_sum), 0) / :interval_ts AS query_time_sum_per_sec,
 	COALESCE(SUM(Lock_time_sum), 0) / :interval_ts AS lock_time_sum_per_sec,
-	COALESCE(AVG(Lock_time_avg)/AVG(Query_time_avg), 0) AS lock_time_avg_load,
 	COALESCE(SUM(Rows_sent_sum), 0) / :interval_ts AS rows_sent_sum_per_sec,
 	COALESCE(SUM(Rows_examined_sum), 0) / :interval_ts AS rows_examined_sum_per_sec
 	{{ end }}
@@ -691,9 +682,9 @@ SELECT
 	COALESCE(SUM(Bytes_sent_sum), 0) / :interval_ts AS bytes_sent_sum_per_sec,
 	COALESCE(SUM(InnoDB_IO_r_ops_sum), 0) / :interval_ts AS innodb_io_r_ops_sum_per_sec,
 
-	COALESCE(AVG(InnoDB_IO_r_wait_avg)/AVG(Query_time_avg), 0) AS innodb_io_r_wait_avg_load,
-	COALESCE(AVG(InnoDB_rec_lock_wait_avg)/AVG(Query_time_avg), 0) AS innodb_rec_lock_wait_avg_load,
-	COALESCE(AVG(InnoDB_queue_wait_avg)/AVG(Query_time_avg), 0) AS innodb_queue_wait_avg_load,
+        COALESCE(SUM(InnoDB_IO_r_wait_sum), 0) / :interval_ts AS innodb_io_r_wait_sum_per_sec,
+	COALESCE(SUM(InnoDB_rec_lock_wait_sum), 0) / :interval_ts AS innodb_rec_lock_wait_sum_per_sec,
+	COALESCE(SUM(InnoDB_queue_wait_sum), 0) / :interval_ts AS innodb_queue_wait_sum_per_sec,
 
 	COALESCE(SUM(InnoDB_IO_r_bytes_sum), 0) / :interval_ts AS innodb_io_r_bytes_sum_per_sec,
 	COALESCE(SUM(QC_Hit_sum), 0) / :interval_ts AS qc_hit_sum_per_sec,
