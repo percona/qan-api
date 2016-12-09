@@ -49,8 +49,6 @@ func (m *Manager) Open() error {
 	if err != nil {
 		return err
 	}
-	defer db.Close()
-
 	if err := db.Ping(); err != nil {
 		return err
 	}
