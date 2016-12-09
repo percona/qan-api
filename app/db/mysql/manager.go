@@ -20,6 +20,7 @@ package mysql
 import (
 	"database/sql"
 	"sync"
+	"time"
 
 	"github.com/percona/qan-api/config"
 )
@@ -58,6 +59,8 @@ func (m *Manager) Open() error {
 	// some other queries (e.g. get an instance ID given its UUID).
 	db.SetMaxIdleConns(2)
 	db.SetMaxOpenConns(2)
+	// it should autoclose lost descriptors
+	db.SetConnMaxLifetime(time.Duration(30) * time.Second)
 
 	// fixme: this should be a DSN param (&time_zone=%2B0%3A00), but that breaks
 	//        something in tests/setup/db/ which parses DSNs
