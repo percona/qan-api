@@ -314,10 +314,10 @@ func (qr *Reporter) filterByFingerprint(instanceId uint, begin, end time.Time, s
             AND qcm.instance_id = ?
             AND qcm.start_ts > ?
             AND qcm.end_ts <= ?
-            AND (qc.checksum = ? OR qc.fingerprint LIKE ? OR qc.abstract LIKE ?)
+            AND (qc.checksum = ? OR qc.abstract LIKE ? OR qc.fingerprint LIKE ?)
         GROUP BY qc.query_class_id;
         `
-	rows, err := qr.dbm.DB().Query(query, instanceId, begin, end, search, search+"%", search+"%")
+	rows, err := qr.dbm.DB().Query(query, instanceId, begin, end, search, search+"%", "%"+search+"%")
 	if err != nil {
 		return queryClassIds, mysql.Error(err, "Reporter.filterByFingerprint: SELECT query_classes AS qc, query_examples AS qe LIKE")
 	}
