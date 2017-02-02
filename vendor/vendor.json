@@ -195,10 +195,28 @@
 			"revisionTime": "2016-09-12T08:31:53Z"
 		},
 		{
+			"checksumSHA1": "TDm4LE4+iymJjcGVKfmee6MszFs=",
+			"path": "github.com/revel/cmd/harness",
+			"revision": "62fc677f3a4043183ad83ccb9cc32165e91dc72e",
+			"revisionTime": "2016-07-22T00:24:26Z"
+		},
+		{
+			"checksumSHA1": "9YFWngSdTTg55vxnhuEfJHSFMHI=",
+			"path": "github.com/revel/cmd/revel",
+			"revision": "62fc677f3a4043183ad83ccb9cc32165e91dc72e",
+			"revisionTime": "2016-07-22T00:24:26Z"
+		},
+		{
 			"checksumSHA1": "qRRxBOu3BegSBjPScCrZRjmhflg=",
 			"path": "github.com/revel/config",
 			"revision": "75f5ee659b5338d1ce823536fe9b9e50b4de01b4",
 			"revisionTime": "2016-06-06T01:28:00Z"
+		},
+		{
+			"checksumSHA1": "nbQJPUZ3VigASmU3puNnliEpjzE=",
+			"path": "github.com/revel/modules/testrunner/app/controllers",
+			"revision": "c3a4c48d9f199a6f1a77a198d38f6aee3b48b4d9",
+			"revisionTime": "2016-06-07T00:01:32Z"
 		},
 		{
 			"checksumSHA1": "xLCeg6RxgLn8JzC4nqt0A0SIf0w=",
