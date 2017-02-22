@@ -22,11 +22,11 @@ import (
 	"fmt"
 	"log"
 
-	_ "github.com/go-sql-driver/mysql"
+	mysqlDriver "github.com/go-sql-driver/mysql"
+	"github.com/percona/pmm/proto"
 	"github.com/percona/qan-api/app/db"
 	"github.com/percona/qan-api/app/db/mysql"
 	"github.com/percona/qan-api/app/instance"
-	"github.com/percona/pmm/proto"
 )
 
 type MySQLHandler struct {
@@ -89,6 +89,7 @@ func (h *MySQLHandler) GetAll() ([]proto.Agent, error) {
 
 	agents := []proto.Agent{}
 	var version sql.NullString
+	var deleted mysqlDriver.NullTime
 	for rows.Next() {
 		agent := proto.Agent{}
 		err = rows.Scan(
@@ -97,12 +98,13 @@ func (h *MySQLHandler) GetAll() ([]proto.Agent, error) {
 			&agent.Hostname,
 			&version,
 			&agent.Created,
-			&agent.Deleted,
+			&deleted,
 		)
 		if err != nil {
 			return nil, err
 		}
 		agent.Version = version.String
+		agent.Deleted = deleted.Time
 		agents = append(agents, agent)
 	}
 	if err := rows.Err(); err != nil {

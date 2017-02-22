@@ -22,9 +22,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/percona/pmm/proto"
 	"github.com/percona/qan-api/app/shared"
 	"github.com/percona/qan-api/app/ws"
-	"github.com/percona/pmm/proto"
 )
 
 // A LocalAgent is a Communicator for an agent connected to this API. It uses a

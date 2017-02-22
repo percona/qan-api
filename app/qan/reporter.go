@@ -78,6 +78,7 @@ func SparklineData(qr *Reporter, endTs int64, intervalTs int64, queryClassId uin
 	defer sparkLinesRows.Close()
 	for sparkLinesRows.Next() {
 		ql := qp.QueryLog{}
+		ql.Start_ts = ql.Start_ts.UTC()
 		sparkLinesRows.Scan(
 			&ql.Point,
 			&ql.Start_ts,
@@ -91,11 +92,14 @@ func SparklineData(qr *Reporter, endTs int64, intervalTs int64, queryClassId uin
 	var i int64
 	for i = 0; i < amountOfPoints; i++ {
 		ts := endTs - i*intervalTs
-		if val, ok := queryLogArrRaw[ts]; ok {
-			queryLogArr = append(queryLogArr, val)
-		} else {
-			queryLogArr = append(queryLogArr, qp.QueryLog{uint(i), time.Unix(ts, 0), 0, 0, 0})
+		val, ok := queryLogArrRaw[ts]
+		if !ok {
+			val = qp.QueryLog{
+				Point:    uint(i),
+				Start_ts: time.Unix(ts, 0).UTC(),
+			}
 		}
+		queryLogArr = append(queryLogArr, val)
 	}
 	return queryLogArr
 }

@@ -23,7 +23,7 @@ import (
 
 type AgentHandlerMock struct {
 	DbConnectionMock
-	SetConfigMock     func(agentId uint, service, otherUUID string, config []byte) error
+	SetConfigMock     func(agentId uint, service, otherUUID string, set, running []byte) error
 	RemoveConfigMock  func(agentId uint, service, otherUUID string) error
 	UpdateConfigsMock func(agentId uint, configs []proto.AgentConfig, reset bool) error
 	CreateAgentMock   func(agent proto.Agent) (string, error)
@@ -60,9 +60,9 @@ func (a *AgentHandlerMock) Remove(agentId uint) (err error) {
 	return nil
 }
 
-func (a *AgentHandlerMock) SetConfig(agentId uint, service, otherUUID string, config []byte) error {
+func (a *AgentHandlerMock) SetConfig(agentId uint, service, otherUUID string, set, running []byte) error {
 	if a.SetConfigMock != nil {
-		return a.SetConfigMock(agentId, service, otherUUID, config)
+		return a.SetConfigMock(agentId, service, otherUUID, set, running)
 	}
 	return nil
 }

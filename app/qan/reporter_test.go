@@ -20,17 +20,18 @@ package qan_test
 import (
 	"encoding/json"
 	"io/ioutil"
+	"os"
 	"time"
 
 	"github.com/cactus/go-statsd-client/statsd"
-	"github.com/daniel-nichter/deep-equal"
+	qp "github.com/percona/pmm/proto/qan"
 	"github.com/percona/qan-api/app/db"
 	"github.com/percona/qan-api/app/qan"
 	"github.com/percona/qan-api/config"
 	"github.com/percona/qan-api/stats"
 	"github.com/percona/qan-api/test"
 	testDb "github.com/percona/qan-api/tests/setup/db"
-	qp "github.com/percona/pmm/proto/qan"
+	"github.com/stretchr/testify/assert"
 	. "gopkg.in/check.v1"
 )
 
@@ -89,18 +90,24 @@ func (s *ReporterTestSuite) TestSimple(t *C) {
 	}
 
 	qr := qan.NewReporter(db.DBManager, s.nullStats)
-	got, err := qr.Profile(s.mysqlId, begin, end, r)
+	got, err := qr.Profile(s.mysqlId, begin, end, r, 0, "")
 	t.Check(err, IsNil)
 
-	j, err := ioutil.ReadFile(config.TestDir + "/qan/profile/may-2015-01.json")
+	expectedFile := config.TestDir + "/qan/profile/may-2015-01.json"
+	updateTestData := os.Getenv("UPDATE_TEST_DATA")
+	if updateTestData != "" {
+		data, _ := json.MarshalIndent(&got, "", "  ")
+		ioutil.WriteFile(expectedFile, data, 0666)
+
+	}
+
+	j, err := ioutil.ReadFile(expectedFile)
 	t.Assert(err, IsNil)
 	var expect qp.Profile
 	err = json.Unmarshal(j, &expect)
 	t.Assert(err, IsNil)
 
-	diff, err := deep.Equal(got, expect)
-	t.Assert(err, IsNil)
-	t.Check(diff, IsNil)
+	assert.Equal(t, expect, got)
 }
 
 func (s *ReporterTestSuite) Test003(t *C) {
@@ -115,16 +122,22 @@ func (s *ReporterTestSuite) Test003(t *C) {
 	}
 
 	qr := qan.NewReporter(db.DBManager, s.nullStats)
-	got, err := qr.Profile(3, begin, end, r)
+	got, err := qr.Profile(3, begin, end, r, 0, "")
 	t.Check(err, IsNil)
 
-	j, err := ioutil.ReadFile(config.TestDir + "/qan/profile/003-01.json")
-	t.Assert(err, IsNil)
-	var expect qp.Profile
-	err = json.Unmarshal(j, &expect)
+	expectedFile := config.TestDir + "/qan/profile/003-01.json"
+	updateTestData := os.Getenv("UPDATE_TEST_DATA")
+	if updateTestData != "" {
+		data, _ := json.MarshalIndent(&got, "", "  ")
+		ioutil.WriteFile(expectedFile, data, 0666)
+
+	}
+
+	gotData, err := json.Marshal(got)
 	t.Assert(err, IsNil)
 
-	diff, err := deep.Equal(got, expect)
+	expectData, err := ioutil.ReadFile(expectedFile)
 	t.Assert(err, IsNil)
-	t.Check(diff, IsNil)
+
+	assert.JSONEq(t, string(expectData), string(gotData))
 }

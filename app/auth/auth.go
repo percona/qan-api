@@ -21,9 +21,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/percona/pmm/proto"
 	"github.com/percona/qan-api/app/shared"
 	"github.com/percona/qan-api/stats"
-	"github.com/percona/pmm/proto"
 )
 
 type AuthHandler interface {

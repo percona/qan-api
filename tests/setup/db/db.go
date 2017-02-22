@@ -18,6 +18,8 @@
 package db
 
 import (
+	"bufio"
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -26,6 +28,9 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
+
+	"github.com/percona/qan-api/app/shared"
 )
 
 type Db struct {
@@ -36,8 +41,8 @@ type Db struct {
 
 func NewDb(dsn string, schemaDir, testDir string) *Db {
 	files := []string{
-		filepath.Join(schemaDir, "datastore.sql"),
-		filepath.Join(testDir, "schema", "basic.sql"),
+		filepath.Join(schemaDir, "pmm.sql"),
+		filepath.Join(testDir, "schema/basic.sql"),
 	}
 	return newDb(dsn, files)
 }
@@ -124,6 +129,8 @@ func (d *Db) CreateDb() (err error) {
 }
 
 func (d *Db) LoadSchema(data []byte) (err error) {
+	data = append(data, []byte(d.preSQL())...)
+
 	cmd := exec.Command(
 		"mysql",
 		"--local-infile=1",
@@ -176,7 +183,7 @@ func (d *Db) LoadData() (err error) {
 	return nil
 }
 
-func (d *Db) Dump(query string) (tableData []map[string]interface{}, err error) {
+func (d *Db) Dump(query string) (tableData [][]string, err error) {
 	db, err := sql.Open("mysql", d.dsn.dsn)
 	if err != nil {
 		return nil, err
@@ -191,7 +198,7 @@ func (d *Db) Dump(query string) (tableData []map[string]interface{}, err error) 
 		return nil, err
 	}
 	count := len(columns)
-	tableData = []map[string]interface{}{}
+	tableData = [][]string{}
 	values := make([]interface{}, count)
 	valuePtrs := make([]interface{}, count)
 	for rows.Next() {
@@ -199,22 +206,39 @@ func (d *Db) Dump(query string) (tableData []map[string]interface{}, err error) 
 			valuePtrs[i] = &values[i]
 		}
 		rows.Scan(valuePtrs...)
-		entry := make(map[string]interface{})
-		for i, col := range columns {
-			var v interface{}
-			val := values[i]
-			b, ok := val.([]byte)
-			if ok {
-				v = string(b)
+		entry := []string{}
+		for i := range columns {
+			v := ""
+			if values[i] == nil {
+				v = "\\N"
+			} else if t, ok := values[i].(time.Time); ok {
+				v = t.Format(shared.MYSQL_DATETIME_LAYOUT)
 			} else {
-				v = val
+				v = fmt.Sprintf("%s", values[i])
 			}
-			entry[col] = v
+			entry = append(entry, v)
 		}
 		tableData = append(tableData, entry)
 	}
 
 	return tableData, nil
+}
+
+func (d *Db) DumpString(query string) ([][]string, error) {
+	rows, err := d.Dump(query)
+	if err != nil {
+		return [][]string{}, err
+	}
+	stringData := [][]string{}
+	for i := range rows {
+		columns := []string{}
+		for j := range rows[i] {
+			columns = append(columns, fmt.Sprintf("%s", rows[i][j]))
+		}
+		stringData = append(stringData, columns)
+	}
+
+	return stringData, nil
 }
 
 func (d *Db) DumpJson(query string) (string, error) {
@@ -228,6 +252,28 @@ func (d *Db) DumpJson(query string) (string, error) {
 		return "", err
 	}
 	return string(jsonData), nil
+}
+
+func (d *Db) TableExpected(filename string) [][]string {
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		panic(err)
+	}
+	scannerLines := bufio.NewScanner(bytes.NewReader(data))
+	output := [][]string{}
+	for scannerLines.Scan() {
+		fields := strings.Split(scannerLines.Text(), "\t")
+		output = append(output, fields)
+	}
+	if err := scannerLines.Err(); err != nil {
+		panic(err)
+	}
+	return output
+}
+
+func (d *Db) TableGot(table, orderBy string) [][]string {
+	output, _ := d.DumpString("SELECT * FROM " + table + " ORDER BY " + orderBy)
+	return output
 }
 
 func (d *Db) TruncateTables(tables []string) error {
@@ -291,13 +337,20 @@ func (d *Db) LoadDataInfiles(dir string) error {
 			"-u"+d.dsn.user,
 			"--password="+d.dsn.passwd,
 			"--local-infile=1",
-			"-e", sql,
+			"-e", d.preSQL()+sql,
 		)
 		if err := runCmd(c); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func (d *Db) preSQL() (sql string) {
+	if d.dsn.timeZone != "" {
+		sql = fmt.Sprintf("SET time_zone = %s;", d.dsn.timeZone)
+	}
+	return sql
 }
 
 func (d *Db) DB() *sql.DB {

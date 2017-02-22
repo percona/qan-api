@@ -20,11 +20,11 @@ package auth_test
 import (
 	"testing"
 
+	"github.com/percona/pmm/proto"
 	"github.com/percona/qan-api/app/auth"
 	"github.com/percona/qan-api/app/db"
 	"github.com/percona/qan-api/config"
 	testDb "github.com/percona/qan-api/tests/setup/db"
-	"github.com/percona/pmm/proto"
 	. "gopkg.in/check.v1"
 )
 

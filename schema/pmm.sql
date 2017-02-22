@@ -1,3 +1,5 @@
+SET time_zone='+00:00'; -- be sure we use right timezone otherwise dates like '1970-01-01 00:00:01' might become incorrect
+
 CREATE TABLE IF NOT EXISTS instances (
   instance_id   INT UNSIGNED NOT NULL AUTO_INCREMENT,
   subsystem_id  INT UNSIGNED NOT NULL, -- 1=os, 2=agent, 3=mysql
@@ -54,7 +56,7 @@ CREATE TABLE IF NOT EXISTS query_examples (
   instance_id     INT UNSIGNED NOT NULL DEFAULT 0, -- PK
   period          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- PK
   ts              TIMESTAMP NULL DEFAULT NULL,
-  db              VARCHAR(255) NOT NULL DEFAULT "",
+  db              VARCHAR(255) NOT NULL DEFAULT '',
   Query_time      FLOAT NOT NULL DEFAULT 0,
   query           TEXT NOT NULL,
   --
