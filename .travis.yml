@@ -16,6 +16,16 @@ before_script:
 
 script:
   - tests/runner.sh
+  # Let's try to build api from current sources similar way it's done in rpm spec file
+  # https://github.com/Percona-Lab/pmm-server-packaging/blob/32f8faf6b478bad9f6c3a096cd60517b0d384467/rhel/SPECS/percona-qan-api.spec#L39-L44
+  - export GOPATH=$(pwd)
+  - mkdir -p /tmp/qan-api
+  - cp -R ./ /tmp/qan-api
+  - mkdir -p ./src/github.com/percona
+  - mv /tmp/qan-api ./src/github.com/percona
+  - go build -o ./revel ./src/github.com/percona/qan-api/vendor/github.com/revel/cmd/revel
+  - ln -s $(pwd)/src/github.com/percona/qan-api/vendor/github.com/revel src/github.com/revel
+  - ./revel build github.com/percona/qan-api qan-api prod
 
 notifications:
   email:

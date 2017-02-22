@@ -1,0 +1,748 @@
+# union
+"select * from a union select * from b"
+{
+  "PlanID": "PASS_SELECT",
+  "FieldQuery": "select * from a where 1 != 1 union select * from b where 1 != 1",
+  "FullQuery": "select * from a union select * from b"
+}
+
+# distinct
+"select distinct * from a"
+{
+  "PlanID": "PASS_SELECT",
+  "TableName": "a",
+  "FieldQuery": "select * from a where 1 != 1",
+  "FullQuery": "select distinct * from a limit :#maxLimit"
+}
+
+# grouy by
+"select * from a group by b"
+{
+  "PlanID": "PASS_SELECT",
+  "TableName": "a",
+  "FieldQuery": "select * from a where 1 != 1",
+  "FullQuery": "select * from a group by b limit :#maxLimit"
+}
+
+# having
+"select * from a having b=1"
+{
+  "PlanID": "PASS_SELECT",
+  "TableName": "a",
+  "FieldQuery": "select * from a where 1 != 1",
+  "FullQuery": "select * from a having b = 1 limit :#maxLimit"
+}
+
+# limit
+"select * from a limit 5"
+{
+  "PlanID": "PASS_SELECT",
+  "TableName": "a",
+  "FieldQuery": "select * from a where 1 != 1",
+  "FullQuery": "select * from a limit 5"
+}
+
+# cross-db
+"select * from a.b"
+{
+  "PlanID": "PASS_SELECT",
+  "FieldQuery": "select * from a.b where 1 != 1",
+  "FullQuery": "select * from a.b limit :#maxLimit"
+}
+
+# multi-table
+"select * from a,b"
+{
+  "PlanID": "PASS_SELECT",
+  "FieldQuery": "select * from a, b where 1 != 1",
+  "FullQuery": "select * from a, b limit :#maxLimit"
+}
+
+# multi-table (join)
+"select * from a join b"
+{
+  "PlanID": "PASS_SELECT",
+  "FieldQuery": "select * from a join b where 1 != 1",
+  "FullQuery": "select * from a join b limit :#maxLimit"
+}
+
+# multi-table (right join)
+"select * from a right join b on c = d"
+{
+  "PlanID": "PASS_SELECT",
+  "FieldQuery": "select * from a right join b on 1 != 1 where 1 != 1",
+  "FullQuery": "select * from a right join b on c = d limit :#maxLimit"
+}
+
+# Parenthesized table
+"select * from (b)"
+{
+  "PlanID": "PASS_SELECT",
+  "FieldQuery": "select * from (b) where 1 != 1",
+  "FullQuery": "select * from (b) limit :#maxLimit"
+}
+
+# bind in select list
+"select :bv from a"
+{
+  "PlanID": "PASS_SELECT",
+  "TableName": "a",
+  "FullQuery": "select :bv from a limit :#maxLimit"
+}
+
+# simple
+"select eid from a"
+{
+  "PlanID": "PASS_SELECT",
+  "TableName": "a",
+  "FieldQuery": "select eid from a where 1 != 1",
+  "FullQuery": "select eid from a limit :#maxLimit"
+}
+
+# as
+"select eid as foo from a"
+{
+  "PlanID": "PASS_SELECT",
+  "TableName": "a",
+  "FieldQuery": "select eid as foo from a where 1 != 1",
+  "FullQuery": "select eid as foo from a limit :#maxLimit"
+}
+
+# *
+"select * from a"
+{
+  "PlanID": "PASS_SELECT",
+  "TableName": "a",
+  "FieldQuery": "select * from a where 1 != 1",
+  "FullQuery": "select * from a limit :#maxLimit"
+}
+
+# c.eid
+"select c.eid from a as c"
+{
+  "PlanID": "PASS_SELECT",
+  "TableName": "a",
+  "FieldQuery": "select c.eid from a as c where 1 != 1",
+  "FullQuery": "select c.eid from a as c limit :#maxLimit"
+}
+
+# for update
+"select eid from a for update"
+{
+  "PlanID": "SELECT_LOCK",
+  "TableName": "a",
+  "FieldQuery": "select eid from a where 1 != 1",
+  "FullQuery": "select eid from a limit :#maxLimit for update"
+}
+
+# lock in share mode
+"select eid from a lock in share mode"
+{
+  "PlanID": "SELECT_LOCK",
+  "TableName": "a",
+  "FieldQuery": "select eid from a where 1 != 1",
+  "FullQuery": "select eid from a limit :#maxLimit lock in share mode"
+}
+
+# insert cross-db
+"insert into b.a (eid, id) values (1, :a)"
+{
+  "PlanID": "PASS_DML",
+  "Reason": "TABLE",
+  "FullQuery": "insert into b.a(eid, id) values (1, :a)"
+}
+
+# insert sub-select
+"insert into a (eid, id) values (select * from b)"
+"row subquery not supported for inserts"
+
+# insert with bind value
+"insert into a (eid, id) values (1, :a)"
+{
+  "PlanID": "INSERT_PK",
+  "TableName": "a",
+  "FullQuery": "insert into a(eid, id) values (1, :a)",
+  "OuterQuery": "insert into a(eid, id) values (1, :a)",
+  "PKValues": [1, ":a"]
+}
+
+# default number
+"insert into a (id) values (1)"
+{
+  "PlanID": "INSERT_PK",
+  "TableName": "a",
+  "FullQuery": "insert into a(id) values (1)",
+  "OuterQuery": "insert into a(id) values (1)",
+  "PKValues": [0, 1]
+}
+
+# default string
+"insert into d(id) values(1)"
+{
+  "PlanID": "INSERT_PK",
+  "TableName": "d",
+  "FullQuery": "insert into d(id) values (1)",
+  "OuterQuery": "insert into d(id) values (1)",
+  "PKValues": ["0"]
+}
+
+# mismatch
+"insert into a (eid, id) values (1)"
+"column count doesn't match value count"
+
+# negative number
+"insert into a (eid, id) values (-1, 2)"
+{
+  "PlanID": "INSERT_PK",
+  "TableName": "a",
+  "FullQuery": "insert into a(eid, id) values (-1, 2)",
+  "OuterQuery": "insert into a(eid, id) values (-1, 2)",
+  "PKValues": [-1, 2]
+}
+
+# positive number
+"insert into a (eid, id) values (+1, 2)"
+{
+  "PlanID": "INSERT_PK",
+  "TableName": "a",
+  "FullQuery": "insert into a(eid, id) values (1, 2)",
+  "OuterQuery": "insert into a(eid, id) values (1, 2)",
+  "PKValues": [1, 2]
+}
+
+# non-trivial unary
+"insert into a (eid, id) values (~1, 2)"
+{
+  "PlanID": "PASS_DML",
+  "Reason": "COMPLEX_EXPR",
+  "TableName": "a",
+  "FullQuery": "insert into a(eid, id) values (~1, 2)"
+}
+
+# complex
+"insert into a (eid, id) values (1+1, 2)"
+{
+  "PlanID": "PASS_DML",
+  "Reason": "COMPLEX_EXPR",
+  "TableName": "a",
+  "FullQuery": "insert into a(eid, id) values (1 + 1, 2)"
+}
+
+# no index
+"insert into c (eid, id) values (1, 2)"
+{
+  "PlanID": "PASS_DML",
+  "Reason": "TABLE_NOINDEX",
+  "TableName": "c",
+  "FullQuery": "insert into c(eid, id) values (1, 2)"
+}
+
+# no column list
+"insert into a values (1, 2)"
+{
+  "PlanID": "INSERT_PK",
+  "TableName": "a",
+  "FullQuery": "insert into a values (1, 2)",
+  "OuterQuery": "insert into a values (1, 2)",
+  "PKValues": [1, 2]
+}
+
+# on dup
+"insert into b (eid, id) values (1, 2) on duplicate key update name = func(a)"
+{
+  "PlanID": "UPSERT_PK",
+  "TableName": "b",
+  "FullQuery": "insert into b(eid, id) values (1, 2) on duplicate key update name = func(a)",
+  "OuterQuery": "insert into b(eid, id) values (1, 2)",
+  "UpsertQuery": "update b set name = func(a) where :#pk",
+  "PKValues": [1, 2]
+}
+
+# on dup pk change
+"insert into b (eid, id) values (1, 2) on duplicate key update eid = 2"
+{
+  "PlanID": "UPSERT_PK",
+  "TableName": "b",
+  "FullQuery": "insert into b(eid, id) values (1, 2) on duplicate key update eid = 2",
+  "OuterQuery": "insert into b(eid, id) values (1, 2)",
+  "UpsertQuery": "update b set eid = 2 where :#pk",
+  "PKValues": [1, 2],
+  "SecondaryPKValues": [2, null]
+}
+
+# on dup complex pk change
+"insert into b (id, eid) values (1, 2) on duplicate key update eid = func(a)"
+{
+  "PlanID": "PASS_DML",
+  "Reason": "PK_CHANGE",
+  "TableName": "b",
+  "FullQuery": "insert into b(id, eid) values (1, 2) on duplicate key update eid = func(a)",
+  "PKValues": [2, 1]
+}
+
+# on dup multi-row
+"insert into b (id, eid) values (1, 2), (2, 3) on duplicate key update name = func(a)"
+{
+  "PlanID": "PASS_DML",
+  "Reason": "UPSERT",
+  "TableName": "b",
+  "FullQuery": "insert into b(id, eid) values (1, 2), (2, 3) on duplicate key update name = func(a)",
+  "PKValues": [[2,3],[1,2]]
+}
+
+# on dup subquery
+"insert into b (id, eid) select * from a on duplicate key update name = func(a)"
+{
+  "PlanID": "PASS_DML",
+  "Reason": "UPSERT",
+  "TableName": "b",
+  "FullQuery": "insert into b(id, eid) select * from a on duplicate key update name = func(a)"
+}
+
+# subquery
+"insert into b (eid, id) select * from a"
+{
+  "PlanID": "INSERT_SUBQUERY",
+  "TableName": "b",
+  "FullQuery": "insert into b(eid, id) select * from a",
+  "OuterQuery": "insert into b(eid, id) values :#values",
+  "Subquery": "select * from a limit :#maxLimit",
+  "ColumnNumbers": [0, 1],
+  "SubqueryPKColumns": [0, 1]
+}
+
+# subquery with no column list
+"insert into b select * from a"
+{
+  "PlanID": "INSERT_SUBQUERY",
+  "TableName": "b",
+  "FullQuery": "insert into b select * from a",
+  "OuterQuery": "insert into b values :#values",
+  "Subquery": "select * from a limit :#maxLimit",
+  "ColumnNumbers": [0, 1],
+  "SubqueryPKColumns": [0, 1]
+}
+
+# multi-row
+"insert into b (eid, id) values (1, 2), (3, 4)"
+{
+  "PlanID": "INSERT_PK",
+  "TableName": "b",
+  "FullQuery": "insert into b(eid, id) values (1, 2), (3, 4)",
+  "OuterQuery": "insert into b(eid, id) values (1, 2), (3, 4)",
+  "PKValues": [[1, 3], [2, 4]]
+}
+
+# update cross-db
+"update b.a set name='foo' where eid=1 and id=1"
+{
+  "PlanID": "PASS_DML",
+  "Reason": "TABLE",
+  "FullQuery": "update b.a set name = 'foo' where eid = 1 and id = 1"
+}
+
+# pk changed
+"update b set eid=1"
+{
+  "PlanID": "DML_SUBQUERY",
+  "TableName": "b",
+  "FullQuery": "update b set eid = 1",
+  "OuterQuery": "update b set eid = 1 where :#pk",
+  "Subquery": "select eid, id from b limit :#maxLimit for update",
+  "SecondaryPKValues": [1, null]
+}
+
+# type mismatch
+"update b set eid=1.2"
+"type mismatch: strconv.ParseUint: parsing "1.2": invalid syntax"
+
+# complex pk change
+"update b set eid=foo()"
+{
+  "PlanID": "PASS_DML",
+  "Reason": "PK_CHANGE",
+  "TableName": "b",
+  "FullQuery": "update b set eid = foo()"
+}
+
+# update subquery
+"update a set name='foo'"
+{
+  "PlanID": "DML_SUBQUERY",
+  "TableName": "a",
+  "FullQuery": "update a set name = 'foo'",
+  "OuterQuery": "update a set name = 'foo' where :#pk",
+  "Subquery": "select eid, id from a limit :#maxLimit for update"
+}
+
+# update complex where clause
+"update a set name='foo' where eid+1=1"
+{
+  "PlanID": "DML_SUBQUERY",
+  "TableName": "a",
+  "FullQuery": "update a set name = 'foo' where eid + 1 = 1",
+  "OuterQuery": "update a set name = 'foo' where :#pk",
+  "Subquery": "select eid, id from a where eid + 1 = 1 limit :#maxLimit for update"
+}
+
+# pk
+"update a set name='foo' where eid=1 and id=1"
+{
+  "PlanID": "DML_PK",
+  "TableName": "a",
+  "FullQuery": "update a set name = 'foo' where eid = 1 and id = 1",
+  "OuterQuery": "update a set name = 'foo' where :#pk",
+  "PKValues": [1, 1]
+}
+
+# partial pk
+"update a set name='foo' where eid=1"
+{
+  "PlanID": "DML_SUBQUERY",
+  "TableName": "a",
+  "FullQuery": "update a set name = 'foo' where eid = 1",
+  "OuterQuery": "update a set name = 'foo' where :#pk",
+  "Subquery": "select eid, id from a where eid = 1 limit :#maxLimit for update"
+}
+
+# bad pk
+"update a set name='foo' where eid=1.0 and id=1"
+{
+  "PlanID": "DML_SUBQUERY",
+  "TableName": "a",
+  "FullQuery": "update a set name = 'foo' where eid = 1.0 and id = 1",
+  "OuterQuery": "update a set name = 'foo' where :#pk",
+  "Subquery": "select eid, id from a where eid = 1.0 and id = 1 limit :#maxLimit for update"
+}
+
+# partial pk with limit
+"update a set name='foo' where eid=1 limit 10"
+{
+  "PlanID": "DML_SUBQUERY",
+  "TableName": "a",
+  "FullQuery": "update a set name = 'foo' where eid = 1 limit 10",
+  "OuterQuery": "update a set name = 'foo' where :#pk",
+  "Subquery": "select eid, id from a where eid = 1 limit 10 for update"
+}
+
+# non-pk
+"update a set name='foo' where eid=1 and name='foo'"
+{
+  "PlanID": "DML_SUBQUERY",
+  "TableName": "a",
+  "FullQuery": "update a set name = 'foo' where eid = 1 and name = 'foo'",
+  "OuterQuery": "update a set name = 'foo' where :#pk",
+  "Subquery": "select eid, id from a where eid = 1 and name = 'foo' limit :#maxLimit for update"
+}
+
+# no index
+"update c set eid=1"
+{
+  "PlanID": "PASS_DML",
+  "Reason": "TABLE_NOINDEX",
+  "TableName": "c",
+  "FullQuery": "update c set eid = 1"
+}
+
+# complex expression in where
+"update a set name='foo' where eid+1=1 and id=1"
+{
+  "PlanID":"DML_SUBQUERY",
+  "TableName":"a",
+  "FullQuery":"update a set name = 'foo' where eid + 1 = 1 and id = 1",
+  "OuterQuery":"update a set name = 'foo' where :#pk",
+  "Subquery":"select eid, id from a where eid + 1 = 1 and id = 1 limit :#maxLimit for update"
+}
+
+# parenthesized expressions in where
+"update a set name='foo' where (eid=1) and id=1"
+{
+  "PlanID": "DML_PK",
+  "TableName": "a",
+  "FullQuery": "update a set name = 'foo' where (eid = 1) and id = 1",
+  "OuterQuery": "update a set name = 'foo' where :#pk",
+  "PKValues": [1, 1]
+}
+
+# in clause expression in where
+"update a set name='foo' where eid in (1, 2) and id=1"
+{
+  "PlanID":"DML_PK",
+  "TableName":"a",
+  "FullQuery":"update a set name = 'foo' where eid in (1, 2) and id = 1",
+  "OuterQuery":"update a set name = 'foo' where :#pk",
+  "PKValues":[[1,2],1]
+}
+
+# double in clause
+"update a set name='foo' where eid in (1, 2) and id in (1, 2)"
+{
+  "PlanID":"DML_SUBQUERY",
+  "TableName":"a",
+  "FullQuery":"update a set name = 'foo' where eid in (1, 2) and id in (1, 2)",
+  "OuterQuery":"update a set name = 'foo' where :#pk",
+  "Subquery":"select eid, id from a where eid in (1, 2) and id in (1, 2) limit :#maxLimit for update"
+}
+
+# double use of pk
+"update a set name='foo' where eid=1 and eid=2"
+{
+  "PlanID":"DML_SUBQUERY",
+  "TableName":"a",
+  "FullQuery":"update a set name = 'foo' where eid = 1 and eid = 2",
+  "OuterQuery":"update a set name = 'foo' where :#pk",
+  "Subquery":"select eid, id from a where eid = 1 and eid = 2 limit :#maxLimit for update"
+}
+
+# delete cross-db
+"delete from b.a where eid=1 and id=1"
+{
+  "PlanID": "PASS_DML",
+  "Reason": "TABLE",
+  "FullQuery": "delete from b.a where eid = 1 and id = 1"
+}
+
+# delete with no where clause
+"delete from a"
+{
+  "PlanID": "DML_SUBQUERY",
+  "TableName": "a",
+  "FullQuery": "delete from a",
+  "OuterQuery": "delete from a where :#pk",
+  "Subquery": "select eid, id from a limit :#maxLimit for update"
+}
+
+# delete complex where clause
+"delete from a where eid+1=1"
+{
+  "PlanID": "DML_SUBQUERY",
+  "TableName": "a",
+  "FullQuery": "delete from a where eid + 1 = 1",
+  "OuterQuery": "delete from a where :#pk",
+  "Subquery": "select eid, id from a where eid + 1 = 1 limit :#maxLimit for update"
+}
+
+# pk
+"delete from a where eid=1 and id=1"
+{
+  "PlanID": "DML_PK",
+  "TableName": "a",
+  "FullQuery": "delete from a where eid = 1 and id = 1",
+  "OuterQuery": "delete from a where :#pk",
+  "PKValues": [1, 1]
+}
+
+# partial pk
+"delete from a where eid=1"
+{
+  "PlanID": "DML_SUBQUERY",
+  "TableName": "a",
+  "FullQuery": "delete from a where eid = 1",
+  "OuterQuery": "delete from a where :#pk",
+  "Subquery": "select eid, id from a where eid = 1 limit :#maxLimit for update"
+}
+
+# bad pk value delete
+"delete from a where eid=1.0 and id=1"
+{
+  "PlanID": "DML_SUBQUERY",
+  "TableName": "a",
+  "FullQuery": "delete from a where eid = 1.0 and id = 1",
+  "OuterQuery": "delete from a where :#pk",
+  "Subquery": "select eid, id from a where eid = 1.0 and id = 1 limit :#maxLimit for update"
+}
+
+# non-pk
+"delete from a where eid=1 and name='foo'"
+{
+  "PlanID": "DML_SUBQUERY",
+  "TableName": "a",
+  "FullQuery": "delete from a where eid = 1 and name = 'foo'",
+  "OuterQuery": "delete from a where :#pk",
+  "Subquery": "select eid, id from a where eid = 1 and name = 'foo' limit :#maxLimit for update"
+}
+
+# no index
+"delete from c"
+{
+  "PlanID": "PASS_DML",
+  "Reason": "TABLE_NOINDEX",
+  "TableName": "c",
+  "FullQuery": "delete from c"
+}
+
+# delete complex expression in where
+"delete from a where eid+1=1 and id=1"
+{
+  "PlanID":"DML_SUBQUERY",
+  "TableName":"a",
+  "FullQuery":"delete from a where eid + 1 = 1 and id = 1",
+  "OuterQuery":"delete from a where :#pk",
+  "Subquery":"select eid, id from a where eid + 1 = 1 and id = 1 limit :#maxLimit for update"
+}
+
+# parenthesized expressions in where
+"delete from a where (eid=1) and id=1"
+{
+  "PlanID": "DML_PK",
+  "TableName": "a",
+  "FullQuery": "delete from a where (eid = 1) and id = 1",
+  "OuterQuery": "delete from a where :#pk",
+  "PKValues": [1, 1]
+}
+
+# delete in clause expression in where
+"delete from a where eid in (1, 2) and id=1"
+{
+  "PlanID":"DML_PK",
+  "TableName":"a",
+  "FullQuery":"delete from a where eid in (1, 2) and id = 1",
+  "OuterQuery":"delete from a where :#pk",
+  "PKValues":[[1,2],1]
+}
+
+# delete double in clause
+"delete from a where eid in (1, 2) and id in (1, 2)"
+{
+  "PlanID":"DML_SUBQUERY",
+  "TableName":"a",
+  "FullQuery":"delete from a where eid in (1, 2) and id in (1, 2)",
+  "OuterQuery":"delete from a where :#pk",
+  "Subquery":"select eid, id from a where eid in (1, 2) and id in (1, 2) limit :#maxLimit for update"
+}
+
+# delete double use of pk
+"delete from a where eid=1 and eid=2"
+{
+  "PlanID":"DML_SUBQUERY",
+  "TableName":"a",
+  "FullQuery":"delete from a where eid = 1 and eid = 2",
+  "OuterQuery":"delete from a where :#pk",
+  "Subquery":"select eid, id from a where eid = 1 and eid = 2 limit :#maxLimit for update"
+}
+
+# sequence
+"select next value from seq"
+{
+  "PlanID": "NEXTVAL",
+  "TableName": "seq"
+}
+
+# nextval on non-sequence table
+"select next value from a"
+"a is not a sequence"
+
+# nextval on non-existent table
+"select next value from id"
+"table id not found in schema"
+
+# int
+"set  a=1"
+{
+  "PlanID": "SET",
+  "FullQuery": "set a = 1"
+}
+
+# float
+"set  a=1.2"
+{
+  "PlanID": "SET",
+  "FullQuery": "set a = 1.2"
+}
+
+# string
+"set a='b'"
+{
+  "PlanID": "SET",
+  "FullQuery": "set a = 'b'"
+}
+
+# multi
+"set a=1, b=2"
+{
+  "PlanID": "SET",
+  "FullQuery": "set a = 1, b = 2"
+}
+
+# create
+"create table a(a int, b varchar(8))"
+{
+  "PlanID": "DDL"
+}
+
+# alter
+"alter table a add column(a int)"
+{
+  "PlanID": "DDL",
+  "TableName": "a"
+}
+
+# alter rename
+"alter table a rename b"
+{
+  "PlanID": "DDL",
+  "TableName": "a"
+}
+
+# rename
+"rename table a to b"
+{
+  "PlanID": "DDL",
+  "TableName": "a"
+}
+
+# drop
+"drop table a"
+{
+  "PlanID": "DDL",
+  "TableName": "a"
+}
+
+# analyze
+"analyze table a"
+{
+  "PlanID": "DDL",
+  "TableName": "a"
+}
+
+# show
+"show a"
+{
+  "PlanID": "OTHER"
+}
+
+# describe
+"describe a"
+{
+  "PlanID": "OTHER"
+}
+
+# explain
+"explain a"
+{
+  "PlanID": "OTHER"
+}
+
+# table not found select
+"select * from aaaa"
+"table aaaa not found in schema"
+
+# table not found update
+"update aaaa set a=1"
+"table aaaa not found in schema"
+
+# table not found update
+"delete from aaaa"
+"table aaaa not found in schema"
+
+# table not found update
+"insert into aaaa values(1)"
+"table aaaa not found in schema"
+
+# column not found insert with subquery
+"insert into a(missing) select * from b"
+"column missing not found in table a"
+
+# syntax error
+"syntax error"
+"syntax error at position 7 near 'syntax'"
