@@ -5,6 +5,7 @@ coverage.out
 revel-build.log
 todo/
 tmp/
+vendor/
 app/routes/routes.go
 distro/
 docs/docs
