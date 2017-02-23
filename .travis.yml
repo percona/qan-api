@@ -9,12 +9,15 @@ services:
 
 install:
   - go get -u github.com/Masterminds/glide
+  - rm -rf vendor/
   - glide install
 
 before_script:
   - mysql -e 'CREATE DATABASE dev_pmm;'
 
 script:
+  # Verify dependencies in vendor dir weren't changed
+  - git diff --exit-code
   - tests/runner.sh
   # Let's try to build api from current sources similar way it's done in rpm spec file
   # https://github.com/Percona-Lab/pmm-server-packaging/blob/32f8faf6b478bad9f6c3a096cd60517b0d384467/rhel/SPECS/percona-qan-api.spec#L39-L44
