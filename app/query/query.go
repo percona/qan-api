@@ -23,12 +23,12 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	queryProto "github.com/percona/pmm/proto/query"
 	"github.com/percona/qan-api/app/db"
 	"github.com/percona/qan-api/app/db/mysql"
 	"github.com/percona/qan-api/app/shared"
 	queryService "github.com/percona/qan-api/service/query"
 	"github.com/percona/qan-api/stats"
-	queryProto "github.com/percona/pmm/proto/query"
 )
 
 func GetClassId(db *sql.DB, checksum string) (uint, error) {

@@ -40,6 +40,7 @@ type DSN struct {
 	dbname            string
 	params            map[string]string
 	loc               *time.Location
+	timeZone          string
 	timeout           time.Duration
 	allowAllFiles     bool
 	allowOldPasswords bool
@@ -189,6 +190,12 @@ func parseDSNParams(cfg *DSN, params string) (err error) {
 				return fmt.Errorf("Invalid Bool value: %s", value)
 			}
 
+			// Time zone
+		case "time_zone":
+			if value, err = url.QueryUnescape(value); err != nil {
+				return
+			}
+			cfg.timeZone = value
 			// Time Location
 		case "loc":
 			if value, err = url.QueryUnescape(value); err != nil {

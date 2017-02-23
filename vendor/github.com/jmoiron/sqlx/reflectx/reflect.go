@@ -127,7 +127,7 @@ func (m *Mapper) FieldMap(v reflect.Value) map[string]reflect.Value {
 	return r
 }
 
-// FieldByName returns a field by the its mapped name as a reflect.Value.
+// FieldByName returns a field by its mapped name as a reflect.Value.
 // Panics if v's Kind is not Struct or v is not Indirectable to a struct Kind.
 // Returns zero Value if the name is not found.
 func (m *Mapper) FieldByName(v reflect.Value, name string) reflect.Value {
@@ -330,10 +330,19 @@ func getMapping(t reflect.Type, tagName string, mapFunc, tagMapFunc mapf) *Struc
 	queue := []typeQueue{}
 	queue = append(queue, typeQueue{Deref(t), root, ""})
 
+QueueLoop:
 	for len(queue) != 0 {
 		// pop the first item off of the queue
 		tq := queue[0]
 		queue = queue[1:]
+
+		// ignore recursive field
+		for p := tq.fi.Parent; p != nil; p = p.Parent {
+			if tq.fi.Field.Type == p.Field.Type {
+				continue QueueLoop
+			}
+		}
+
 		nChildren := 0
 		if tq.t.Kind() == reflect.Struct {
 			nChildren = tq.t.NumField()

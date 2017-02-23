@@ -592,7 +592,7 @@ func TestNamedQuery(t *testing.T) {
 	var schema = Schema{
 		create: `
 			CREATE TABLE place (
-				id integer AUTO_INCREMENT PRIMARY KEY,
+				id integer PRIMARY KEY,
 				name text NULL
 			);
 			CREATE TABLE person (
@@ -768,18 +768,15 @@ func TestNamedQuery(t *testing.T) {
 			Email:     sql.NullString{String: "ben@doe.com", Valid: true},
 		}
 
-		q2 := `INSERT INTO place (name) VALUES (:name)`
-		result, err := db.NamedExec(q2, pl)
+		q2 := `INSERT INTO place (id, name) VALUES (1, :name)`
+		_, err = db.NamedExec(q2, pl)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		id, err := result.LastInsertId()
-		if err != nil {
-			log.Fatal(err)
-		}
+		id := 1
+		pp.Place.ID = id
 
-		pp.Place.ID = int(id)
 		q3 := `INSERT INTO placeperson (first_name, last_name, email, place_id) VALUES (:first_name, :last_name, :email, :place.id)`
 		_, err = db.NamedExec(q3, pp)
 		if err != nil {
@@ -794,7 +791,7 @@ func TestNamedQuery(t *testing.T) {
 				email,
 				place.id AS "place.id",
 				place.name AS "place.name"
-			FROM placeperson 
+			FROM placeperson
 			INNER JOIN place ON place.id = placeperson.place_id
 			WHERE
 				place.id=:place.id`, pp)
@@ -970,6 +967,9 @@ func TestUsage(t *testing.T) {
 			t.Error("Expected an error")
 		}
 		err = stmt1.Get(&jason, "DoesNotExist User 2")
+		if err == nil {
+			t.Fatal(err)
+		}
 
 		stmt2, err := db.Preparex(db.Rebind("SELECT * FROM person WHERE first_name=?"))
 		if err != nil {
@@ -990,6 +990,10 @@ func TestUsage(t *testing.T) {
 
 		places := []*Place{}
 		err = db.Select(&places, "SELECT telcode FROM place ORDER BY telcode ASC")
+		if err != nil {
+			t.Fatal(err)
+		}
+
 		usa, singsing, honkers := places[0], places[1], places[2]
 
 		if usa.TelCode != 1 || honkers.TelCode != 852 || singsing.TelCode != 65 {
@@ -1007,6 +1011,10 @@ func TestUsage(t *testing.T) {
 		// this test also verifies that you can use either a []Struct{} or a []*Struct{}
 		places2 := []Place{}
 		err = db.Select(&places2, "SELECT * FROM place ORDER BY telcode ASC")
+		if err != nil {
+			t.Fatal(err)
+		}
+
 		usa, singsing, honkers = &places2[0], &places2[1], &places2[2]
 
 		// this should return a type error that &p is not a pointer to a struct slice
@@ -1726,6 +1734,36 @@ func BenchmarkIn(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		_, _, _ = In(q, []interface{}{"foo", []int{0, 5, 7, 2, 9}, "bar"}...)
+	}
+}
+
+func BenchmarkIn1k(b *testing.B) {
+	q := `SELECT * FROM foo WHERE x = ? AND v in (?) AND y = ?`
+
+	var vals [1000]interface{}
+
+	for i := 0; i < b.N; i++ {
+		_, _, _ = In(q, []interface{}{"foo", vals[:], "bar"}...)
+	}
+}
+
+func BenchmarkIn1kInt(b *testing.B) {
+	q := `SELECT * FROM foo WHERE x = ? AND v in (?) AND y = ?`
+
+	var vals [1000]int
+
+	for i := 0; i < b.N; i++ {
+		_, _, _ = In(q, []interface{}{"foo", vals[:], "bar"}...)
+	}
+}
+
+func BenchmarkIn1kString(b *testing.B) {
+	q := `SELECT * FROM foo WHERE x = ? AND v in (?) AND y = ?`
+
+	var vals [1000]string
+
+	for i := 0; i < b.N; i++ {
+		_, _, _ = In(q, []interface{}{"foo", vals[:], "bar"}...)
 	}
 }
 

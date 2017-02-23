@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/percona/qan-api/app/shared"
 	"github.com/percona/pmm/proto"
+	"github.com/percona/qan-api/app/shared"
 	"github.com/revel/revel"
 )
 

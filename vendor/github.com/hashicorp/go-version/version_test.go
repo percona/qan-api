@@ -108,6 +108,7 @@ func TestComparePreReleases(t *testing.T) {
 		{"v1.2-beta.2", "v1.2-beta.2", 0},
 		{"v1.2-beta.1", "v1.2-beta.2", -1},
 		{"v3.2-alpha.1", "v3.2-alpha", 1},
+		{"v3.2-rc.1-1-g123", "v3.2-rc.2", 1},
 	}
 
 	for _, tc := range cases {
@@ -200,6 +201,32 @@ func TestVersionSegments(t *testing.T) {
 		}
 
 		actual := v.Segments()
+		expected := tc.expected
+		if !reflect.DeepEqual(actual, expected) {
+			t.Fatalf("expected: %#v\nactual: %#v", expected, actual)
+		}
+	}
+}
+
+func TestVersionSegments64(t *testing.T) {
+	cases := []struct {
+		version  string
+		expected []int64
+	}{
+		{"1.2.3", []int64{1, 2, 3}},
+		{"1.2-beta", []int64{1, 2, 0}},
+		{"1-x.Y.0", []int64{1, 0, 0}},
+		{"1.2.0-x.Y.0+metadata", []int64{1, 2, 0}},
+		{"1.4.9223372036854775807", []int64{1, 4, 9223372036854775807}},
+	}
+
+	for _, tc := range cases {
+		v, err := NewVersion(tc.version)
+		if err != nil {
+			t.Fatalf("err: %s", err)
+		}
+
+		actual := v.Segments64()
 		expected := tc.expected
 		if !reflect.DeepEqual(actual, expected) {
 			t.Fatalf("expected: %#v\nactual: %#v", expected, actual)

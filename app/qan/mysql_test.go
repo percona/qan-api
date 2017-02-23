@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/cactus/go-statsd-client/statsd"
+	qp "github.com/percona/pmm/proto/qan"
 	"github.com/percona/qan-api/app/db"
 	"github.com/percona/qan-api/app/qan"
 	"github.com/percona/qan-api/config"
@@ -30,7 +31,6 @@ import (
 	"github.com/percona/qan-api/stats"
 	"github.com/percona/qan-api/test"
 	testDb "github.com/percona/qan-api/tests/setup/db"
-	qp "github.com/percona/pmm/proto/qan"
 	. "gopkg.in/check.v1"
 )
 

@@ -21,9 +21,9 @@ import (
 	"testing"
 
 	. "github.com/go-test/test"
+	qp "github.com/percona/pmm/proto/query"
 	"github.com/percona/qan-api/config"
 	"github.com/percona/qan-api/service/query"
-	qp "github.com/percona/pmm/proto/query"
 	. "gopkg.in/check.v1"
 )
 
@@ -141,7 +141,7 @@ func (s *MiniTestSuite) TestParse(t *C) {
 		},
 		example{
 			"select c from t1 join t2 using (c) where id=?",
-			"SELECT t?",
+			"SELECT t1 t2",
 			[]qp.Table{},
 		},
 		example{

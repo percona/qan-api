@@ -23,10 +23,10 @@ import (
 	"strings"
 
 	"github.com/nu7hatch/gouuid"
+	"github.com/percona/pmm/proto"
 	"github.com/percona/qan-api/app/db"
 	"github.com/percona/qan-api/app/instance"
 	"github.com/percona/qan-api/app/shared"
-	"github.com/percona/pmm/proto"
 	"github.com/revel/revel"
 )
 

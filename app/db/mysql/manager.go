@@ -62,10 +62,6 @@ func (m *Manager) Open() error {
 	// it should autoclose lost descriptors
 	db.SetConnMaxLifetime(time.Duration(30) * time.Second)
 
-	// fixme: this should be a DSN param (&time_zone=%2B0%3A00), but that breaks
-	//        something in tests/setup/db/ which parses DSNs
-	db.Exec("SET time_zone='+0:00'")
-
 	m.db = db
 	return nil
 }

@@ -66,8 +66,8 @@ type Mini struct {
 func NewMini(cwd string) *Mini {
 	m := &Mini{
 		cwd:        cwd,
-		onlyTables: cwd == "", // only tables if no path to mini.pl given
-		queryIn:    make(chan string), // XXX see note below 
+		onlyTables: cwd == "",         // only tables if no path to mini.pl given
+		queryIn:    make(chan string), // XXX see note below
 		miniOut:    make(chan string), // XXX see note below
 		parseChan:  make(chan parseTry, 1),
 		stopChan:   make(chan struct{}),

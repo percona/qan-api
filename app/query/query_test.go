@@ -24,14 +24,14 @@ import (
 	"time"
 
 	"github.com/cactus/go-statsd-client/statsd"
-	"github.com/daniel-nichter/deep-equal"
+	queryProto "github.com/percona/pmm/proto/query"
 	"github.com/percona/qan-api/app/db"
 	"github.com/percona/qan-api/app/query"
 	"github.com/percona/qan-api/config"
 	"github.com/percona/qan-api/stats"
 	"github.com/percona/qan-api/test"
 	testDb "github.com/percona/qan-api/tests/setup/db"
-	queryProto "github.com/percona/pmm/proto/query"
+	"github.com/stretchr/testify/assert"
 	. "gopkg.in/check.v1"
 )
 
@@ -89,7 +89,5 @@ func (s *TestSuite) TestSimple(t *C) {
 	err = json.Unmarshal(j, &expect)
 	t.Assert(err, IsNil)
 
-	diff, err := deep.Equal(got, expect)
-	t.Assert(err, IsNil)
-	t.Check(diff, IsNil)
+	assert.Equal(t, expect, got)
 }

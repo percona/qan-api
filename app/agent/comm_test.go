@@ -20,9 +20,9 @@ package agent_test
 import (
 	"encoding/json"
 
+	"github.com/percona/pmm/proto"
 	"github.com/percona/qan-api/app/agent"
 	"github.com/percona/qan-api/test/mock"
-	"github.com/percona/pmm/proto"
 	. "gopkg.in/check.v1"
 )
 
