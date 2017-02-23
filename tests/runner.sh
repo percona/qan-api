@@ -19,7 +19,7 @@ for dir in $(find . \( ! -path '*/\.*' \) -type f \( -name '*_test.go' ! -name '
    (
       cd ${dir}
       # Run tests
-      go test -v -coverprofile=c.out -timeout 3m
+      go test -v -race -coverprofile=c.out -timeout 3m
    )
    if [ $? -ne 0 ]; then
       echo "$header" >> "$failures"
