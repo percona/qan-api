@@ -1,8 +1,6 @@
-hash: 20e5af91981422e29d15e73a5ddeaec07129838451524c0007d6aadee0dbc1a2
-updated: 2017-02-22T17:09:59.780478511+01:00
+hash: fdc662e51cd3f32182d039c8224ae1abef80e2040b0317e42794892a2c995ccd
+updated: 2017-02-23T13:45:08.372812233+01:00
 imports:
-- name: bitbucket.org/pkg/inflect
-  version: 8961c3750a47b8c0b3e118d52513b97adf85a7e8
 - name: github.com/agtorre/gocolorize
   version: 99fea4bc9517f07eea8194702cb7076f4845b7de
 - name: github.com/cactus/go-statsd-client
@@ -64,12 +62,6 @@ imports:
   version: 0f78529c8c7e3e9a25f15876532ecbc07c7d99e6
 - name: github.com/robfig/pathtree
   version: 41257a1839e945fce74afd070e02bab2ea2c776a
-- name: github.com/russross/blackfriday
-  version: 5f33e7b7878355cd2b7e6b8eefc48a5472c69f70
-- name: github.com/shurcooL/sanitized_anchor_name
-  version: 1dba4b3954bc059efc3991ec364f9f9a35f597d2
-- name: github.com/subosito/iglo
-  version: 83f8872ffe4714c0b183f7880188b5c9d3173203
 - name: github.com/youtube/vitess
   version: f729316a75213a533287dfe100b4a81177629b15
   subpackages:
