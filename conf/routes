@@ -7,27 +7,27 @@ GET	/ping	Home.Ping
 # ###########################################################################
 # Instances
 # ###########################################################################
-GET	/instances		Instance.List
-POST	/instances		Instance.Create
-GET	/instances/:uuid	Instance.Get
-PUT	/instances/:uuid	Instance.Update
+GET	    /instances		    Instance.List
+POST	/instances		    Instance.Create
+GET	    /instances/:uuid	Instance.Get
+PUT	    /instances/:uuid	Instance.Update
 DELETE	/instances/:uuid	Instance.Delete
 
 # ###########################################################################
 # Agent
 # ###########################################################################
-GET	/agents       	Agent.List
-POST	/agents		Agent.Create
-GET	/agents/:uuid	Agent.Get
-PUT	/agents/:uuid	Agent.Update
+GET	    /agents      	Agent.List
+POST	/agents		    Agent.Create
+GET	    /agents/:uuid	Agent.Get
+PUT	    /agents/:uuid	Agent.Update
 DELETE	/agents/:uuid	Agent.Delete
 
 # ---------------------------------------------------------------------------
 # Management
 # ---------------------------------------------------------------------------
-PUT	/agents/:uuid/cmd	Agent.SendCmd
+PUT	/agents/:uuid/cmd	    Agent.SendCmd
 GET	/agents/:uuid/status	Agent.Status
-GET	/agents/:uuid/log	Agent.GetLog
+GET	/agents/:uuid/log	    Agent.GetLog
 
 # ---------------------------------------------------------------------------
 # Websocket comm
@@ -39,16 +39,47 @@ WS	/agents/:uuid/log	Agent.Log
 # ###########################################################################
 # Queries
 # ###########################################################################
-GET	/queries/:id		Query.Get
+GET	/queries/:id		    Query.Get
 GET	/queries/:id/examples	Query.GetExamples
 PUT	/queries/:id/examples	Query.UpdateExample
-GET	/queries/:id/tables	Query.GetTables
-PUT	/queries/:id/tables	Query.UpdateTables
+GET	/queries/:id/tables	    Query.GetTables
+PUT	/queries/:id/tables	    Query.UpdateTables
 
 # ###########################################################################
 # Query Analytics
 # ###########################################################################
-GET	/qan/profile/:uuid			QAN.Profile
-GET	/qan/report/:uuid/server-summary        QAN.ServerSummary
+GET	/qan/profile/:uuid			        QAN.Profile
+GET	/qan/report/:uuid/server-summary    QAN.ServerSummary
 GET	/qan/report/:uuid/query/:queryId	QAN.QueryReport
-GET	/qan/config/:uuid			QAN.Config
+GET	/qan/config/:uuid			        QAN.Config
+
+# ###########################################################################
+# API v2
+# ###########################################################################
+
+# ###########################################################################
+# MySQL Queries
+# ###########################################################################
+GET	/mysql/queries/:id		    Query.Get
+GET	/mysql/queries/:id/examples	Query.GetExamples
+PUT	/mysql/queries/:id/examples	Query.UpdateExample
+GET	/mysql/queries/:id/tables	Query.GetTables
+PUT	/mysql/queries/:id/tables	Query.UpdateTables
+
+# ###########################################################################
+# MySQL Query Analytics
+# ###########################################################################
+GET	/mysql/qan/profile/:uuid			    QAN.Profile
+GET	/mysql/qan/report/:uuid/server-summary  QAN.ServerSummary
+GET	/mysql/qan/report/:uuid/query/:queryId	QAN.QueryReport
+GET	/mysql/qan/config/:uuid			        QAN.Config
+
+# ###########################################################################
+# MySQL Queries
+# ###########################################################################
+
+GET	/mongo/queries/:id		Query.Get
+
+# ###########################################################################
+# Mongo Query Analytics
+# ###########################################################################

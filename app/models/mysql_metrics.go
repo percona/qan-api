@@ -9,11 +9,22 @@ import (
 	"time"
 )
 
-// Metrics provire instruments to works with metrics
-type metrics struct{}
+// MySQLMetricsManager provide instruments to works with metrics
+type MySQLMetricsManager struct {
+	*Base
+}
 
-// Metrics instance of metrics model
-var Metrics = metrics{}
+// MySQLMetrics instance of metrics model
+var MySQLMetrics *MySQLMetricsManager
+
+// NewMySQLMetricsManager returns manager of metrics
+func NewMySQLMetricsManager() *MySQLMetricsManager {
+	return &MySQLMetricsManager{DefaultBase}
+}
+
+func init() {
+	MySQLMetrics = NewMySQLMetricsManager()
+}
 
 type metricGroup struct {
 	Basic             bool
@@ -48,7 +59,7 @@ SELECT
         LIMIT 1), false) AS performance_schema;
 `
 
-func (m metrics) identifyMetricGroup(instanceID uint, begin, end time.Time) metricGroup {
+func (m MySQLMetricsManager) identifyMetricGroup(instanceID uint, begin, end time.Time) metricGroup {
 	currentMetricGroup := metricGroup{}
 	currentMetricGroup.CountField = "query_count"
 	args := struct {
@@ -61,7 +72,7 @@ func (m metrics) identifyMetricGroup(instanceID uint, begin, end time.Time) metr
 		end,
 	}
 
-	if nstmt, err := db.PrepareNamed(metricGroupQuery); err != nil {
+	if nstmt, err := m.mysqlDB.PrepareNamed(metricGroupQuery); err != nil {
 		log.Fatalln(err)
 	} else if err = nstmt.Get(&currentMetricGroup, args); err != nil {
 		log.Fatalln(err)
@@ -70,15 +81,16 @@ func (m metrics) identifyMetricGroup(instanceID uint, begin, end time.Time) metr
 	return currentMetricGroup
 }
 
-type classMetrics struct {
+// ClassMetrics include all component metrics
+type ClassMetrics struct {
 	generalMetrics
 	metricsPercentOfTotal
-	rateMetrics
-	specialMetrics
+	RateMetrics
+	SpecialMetrics
 }
 
 // GetClassMetrics return metrics for given instance and query class
-func (m metrics) GetClassMetrics(classID, instanceID uint, begin, end time.Time) (classMetrics, []rateMetrics) {
+func (m MySQLMetricsManager) GetClassMetrics(classID, instanceID uint, begin, end time.Time) (ClassMetrics, []RateMetrics) {
 	currentMetricGroup := m.identifyMetricGroup(instanceID, begin, end)
 	currentMetricGroup.CountField = "query_count"
 	endTs := end.Unix()
@@ -104,23 +116,24 @@ func (m metrics) GetClassMetrics(classID, instanceID uint, begin, end time.Time)
 	aMetrics := m.computeRateMetrics(generalClassMetrics, begin, end)
 	sMetrics := m.computeSpecialMetrics(generalClassMetrics)
 
-	classMetrics := classMetrics{
+	classMetrics := ClassMetrics{
 		generalMetrics:        generalClassMetrics,
 		metricsPercentOfTotal: classMetricsOfTotal,
-		rateMetrics:           aMetrics,
-		specialMetrics:        sMetrics,
+		RateMetrics:           aMetrics,
+		SpecialMetrics:        sMetrics,
 	}
 	return classMetrics, sparks
 }
 
-type globalMetrics struct {
+// GlobalMetrics - resulted metrics
+type GlobalMetrics struct {
 	generalMetrics
-	rateMetrics
-	specialMetrics
+	RateMetrics
+	SpecialMetrics
 }
 
 // GetGlobalMetrics return metrics for given instance
-func (m metrics) GetGlobalMetrics(instanceID uint, begin, end time.Time) (globalMetrics, []rateMetrics) {
+func (m MySQLMetricsManager) GetGlobalMetrics(instanceID uint, begin, end time.Time) (GlobalMetrics, []RateMetrics) {
 	currentMetricGroup := m.identifyMetricGroup(instanceID, begin, end)
 	currentMetricGroup.ServerSummary = true
 	currentMetricGroup.CountField = "total_query_count"
@@ -140,7 +153,7 @@ func (m metrics) GetGlobalMetrics(instanceID uint, begin, end time.Time) (global
 
 	aMetrics := m.computeRateMetrics(generalGlobalMetrics, begin, end)
 	sMetrics := m.computeSpecialMetrics(generalGlobalMetrics)
-	globalMetrics := globalMetrics{
+	globalMetrics := GlobalMetrics{
 		generalGlobalMetrics,
 		aMetrics,
 		sMetrics,
@@ -148,7 +161,7 @@ func (m metrics) GetGlobalMetrics(instanceID uint, begin, end time.Time) (global
 	return globalMetrics, sparks
 }
 
-func (m metrics) getMetrics(group metricGroup, args args) generalMetrics {
+func (m MySQLMetricsManager) getMetrics(group metricGroup, args args) generalMetrics {
 	var queryClassMetricsBuffer bytes.Buffer
 	if tmpl, err := template.New("queryClassMetricsSQL").Parse(queryClassMetricsTemplate); err != nil {
 		log.Fatalln(err)
@@ -158,7 +171,7 @@ func (m metrics) getMetrics(group metricGroup, args args) generalMetrics {
 
 	queryClassMetricsSQL := queryClassMetricsBuffer.String()
 	gMetrics := generalMetrics{}
-	if nstmt, err := db.PrepareNamed(queryClassMetricsSQL); err != nil {
+	if nstmt, err := m.mysqlDB.PrepareNamed(queryClassMetricsSQL); err != nil {
 		log.Fatalln(err)
 	} else if err = nstmt.Get(&gMetrics, args); err != nil {
 		log.Fatalln(err)
@@ -169,7 +182,7 @@ func (m metrics) getMetrics(group metricGroup, args args) generalMetrics {
 
 const amountOfPoints = 60
 
-func (m metrics) getSparklines(group metricGroup, args args) []rateMetrics {
+func (m MySQLMetricsManager) getSparklines(group metricGroup, args args) []RateMetrics {
 	var querySparklinesBuffer bytes.Buffer
 	if tmpl, err := template.New("querySparklinesSQL").Parse(querySparklinesTemplate); err != nil {
 		log.Fatalln(err)
@@ -178,14 +191,14 @@ func (m metrics) getSparklines(group metricGroup, args args) []rateMetrics {
 	}
 
 	querySparklinesSQL := querySparklinesBuffer.String()
-	var sparksWithGaps []rateMetrics
-	if nstmt, err := db.PrepareNamed(querySparklinesSQL); err != nil {
+	var sparksWithGaps []RateMetrics
+	if nstmt, err := m.mysqlDB.PrepareNamed(querySparklinesSQL); err != nil {
 		log.Fatalln(err)
 	} else if err = nstmt.Select(&sparksWithGaps, args); err != nil {
 		log.Fatalln(err)
 	}
 
-	metricLogRaw := make(map[int64]rateMetrics)
+	metricLogRaw := make(map[int64]RateMetrics)
 
 	for i := range sparksWithGaps {
 		key := sparksWithGaps[i].Ts.Unix()
@@ -193,21 +206,21 @@ func (m metrics) getSparklines(group metricGroup, args args) []rateMetrics {
 	}
 
 	// fills up gaps in sparklines by zero values
-	var sparks []rateMetrics
+	var sparks []RateMetrics
 	var pointN int64
 	for pointN = 0; pointN < amountOfPoints; pointN++ {
 		ts := args.EndTS - pointN*args.IntervalTS
 		if val, ok := metricLogRaw[ts]; ok {
 			sparks = append(sparks, val)
 		} else {
-			val := rateMetrics{Point: pointN, Ts: time.Unix(ts, 0).UTC()}
+			val := RateMetrics{Point: pointN, Ts: time.Unix(ts, 0).UTC()}
 			sparks = append(sparks, val)
 		}
 	}
 	return sparks
 }
 
-func (m metrics) computeOfTotal(classMetrics, globalMetrics generalMetrics) metricsPercentOfTotal {
+func (m MySQLMetricsManager) computeOfTotal(classMetrics, globalMetrics generalMetrics) metricsPercentOfTotal {
 	mPercentOfTotal := metricsPercentOfTotal{}
 	reflectPercentOfTotal := reflect.ValueOf(&mPercentOfTotal).Elem()
 	reflectClassMetrics := reflect.ValueOf(&classMetrics).Elem()
@@ -226,9 +239,9 @@ func (m metrics) computeOfTotal(classMetrics, globalMetrics generalMetrics) metr
 	return mPercentOfTotal
 }
 
-func (m metrics) computeRateMetrics(gMetrics generalMetrics, begin, end time.Time) rateMetrics {
+func (m MySQLMetricsManager) computeRateMetrics(gMetrics generalMetrics, begin, end time.Time) RateMetrics {
 	duration := end.Sub(begin).Seconds()
-	aMetrics := rateMetrics{}
+	aMetrics := RateMetrics{}
 	reflectionAdittionalMetrics := reflect.ValueOf(&aMetrics).Elem()
 	reflectionGeneralMetrics := reflect.ValueOf(&gMetrics).Elem()
 
@@ -244,8 +257,8 @@ func (m metrics) computeRateMetrics(gMetrics generalMetrics, begin, end time.Tim
 	return aMetrics
 }
 
-func (m metrics) computeSpecialMetrics(gMetrics generalMetrics) specialMetrics {
-	sMetrics := specialMetrics{}
+func (m MySQLMetricsManager) computeSpecialMetrics(gMetrics generalMetrics) SpecialMetrics {
+	sMetrics := SpecialMetrics{}
 	reflectionSpecialMetrics := reflect.ValueOf(&sMetrics).Elem()
 	reflectionGeneralMetrics := reflect.ValueOf(&gMetrics).Elem()
 
@@ -264,7 +277,8 @@ func (m metrics) computeSpecialMetrics(gMetrics generalMetrics) specialMetrics {
 	return sMetrics
 }
 
-type specialMetrics struct {
+// SpecialMetrics - metrics calculated with divider
+type SpecialMetrics struct {
 	Lock_time_avg_per_query_time                 float32 `json:",omitempty" divider:"Query_time_avg"`
 	InnoDB_rec_lock_wait_avg_per_query_time      float32 `json:",omitempty" divider:"Query_time_avg"`
 	InnoDB_IO_r_wait_avg_per_query_time          float32 `json:",omitempty" divider:"Query_time_avg"`
@@ -285,7 +299,8 @@ type specialMetrics struct {
 	Tmp_table_sizes_sum_per_query                float32 `json:",omitempty" divider:"Query_count"`
 }
 
-type rateMetrics struct {
+// RateMetrics - metrics per second
+type RateMetrics struct {
 	Point                            int64
 	Ts                               time.Time
 	Query_count_per_sec              float32 `json:",omitempty"`
