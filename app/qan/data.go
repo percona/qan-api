@@ -92,7 +92,7 @@ func SaveData(wsConn ws.Connector, agentId uint, agentVersion string, dbh *MySQL
 		stats.TimingDuration(stats.System("db"), time.Now().Sub(tDb), stats.SampleRate)
 		if err != nil {
 			if shared.IsNetworkError(err) {
-				// This is usually due to losing connetion to MySQL. Return an error
+				// This is usually due to losing connection to MySQL. Return an error
 				// so the caller will restart the consumer.
 				return fmt.Errorf("dbh.Write: %s", err)
 			} else if err == shared.ErrReadOnlyDb {

@@ -27,6 +27,7 @@ var subsysName map[uint]string = map[uint]string{
 	1: "os",
 	2: "agent",
 	3: "mysql",
+	4: "mongo",
 }
 
 var subsys map[string]proto.Subsystem = map[string]proto.Subsystem{
@@ -47,6 +48,12 @@ var subsys map[string]proto.Subsystem = map[string]proto.Subsystem{
 		ParentId: 1,
 		Name:     "mysql",
 		Label:    "MySQL",
+	},
+	"mongo": {
+		Id:       4,
+		ParentId: 1,
+		Name:     "mongo",
+		Label:    "MongoDB",
 	},
 }
 

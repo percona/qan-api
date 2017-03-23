@@ -20,10 +20,10 @@ package query_test
 import (
 	"testing"
 
-	. "github.com/go-test/test"
 	qp "github.com/percona/pmm/proto/query"
 	"github.com/percona/qan-api/config"
 	"github.com/percona/qan-api/service/query"
+	"github.com/stretchr/testify/assert"
 	. "gopkg.in/check.v1"
 )
 
@@ -173,10 +173,6 @@ func (s *MiniTestSuite) TestParse(t *C) {
 		q, err := m.Parse(e.query, "")
 		t.Check(err, IsNil)
 		t.Check(q.Abstract, Equals, e.abstract)
-		if ok, diff := IsDeeply(q.Tables, e.tables); !ok {
-			t.Log(e.query)
-			Dump(q.Tables) // got
-			t.Error(diff)
-		}
+		assert.Equal(t, e.tables, q.Tables)
 	}
 }
