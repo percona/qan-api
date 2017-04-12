@@ -25,6 +25,7 @@ import (
 	"github.com/cactus/go-statsd-client/statsd"
 	qp "github.com/percona/pmm/proto/qan"
 	"github.com/percona/qan-api/app/db"
+	"github.com/percona/qan-api/app/instance"
 	"github.com/percona/qan-api/app/qan"
 	"github.com/percona/qan-api/config"
 	"github.com/percona/qan-api/service/query"
@@ -36,6 +37,7 @@ import (
 
 type MySQLTestSuite struct {
 	testDb    *testDb.Db
+	ih        instance.DbHandler
 	m         *query.Mini
 	nullStats *stats.Stats
 	qcmPK     string
@@ -58,6 +60,9 @@ func (s *MySQLTestSuite) SetUpSuite(t *C) {
 	s.nullStats = &nullStats
 
 	s.qcmPK = "query_class_id,instance_id,start_ts"
+
+	// Create instance handler
+	s.ih = instance.NewMySQLHandler(db.DBManager)
 }
 
 func (s *MySQLTestSuite) SetUpTest(t *C) {
@@ -83,7 +88,7 @@ func (s *MySQLTestSuite) TearDownTest(t *C) {
 func (s *MySQLTestSuite) TestSimple(t *C) {
 	var err error
 
-	qanHandler := qan.NewMySQLMetricWriter(db.DBManager, s.m, s.nullStats)
+	qanHandler := qan.NewMySQLMetricWriter(db.DBManager, s.ih, s.m, s.nullStats)
 
 	data1, err := ioutil.ReadFile(config.ApiRootDir + "/test/qan/001/data1_v3.json")
 	t.Assert(err, IsNil)
@@ -128,7 +133,7 @@ func (s *MySQLTestSuite) TestQueryExample(t *C) {
 
 	now, _ := time.Parse("2006-01-02T15:04:05", "2014-04-16T18:17:58")
 
-	qanHandler := qan.NewMySQLMetricWriter(db.DBManager, s.m, s.nullStats)
+	qanHandler := qan.NewMySQLMetricWriter(db.DBManager, s.ih, s.m, s.nullStats)
 
 	data1, err := ioutil.ReadFile(config.ApiRootDir + "/test/qan/001/slow001_v3.json")
 	t.Assert(err, IsNil)
@@ -175,7 +180,7 @@ func (s *MySQLTestSuite) TestQueryExampleUsesDefaultDb(t *C) {
 	report.Class[0].Fingerprint = "select c from t where id=?"
 	report.Class[0].Example.Query = "select c from t where id=100"
 
-	qanHandler := qan.NewMySQLMetricWriter(db.DBManager, s.m, s.nullStats)
+	qanHandler := qan.NewMySQLMetricWriter(db.DBManager, s.ih, s.m, s.nullStats)
 	err = qanHandler.Write(report)
 	t.Assert(err, IsNil)
 
@@ -203,7 +208,7 @@ func (s *MySQLTestSuite) TestLastSeen(t *C) {
 	report1.EndOffset = 1000
 
 	// Create qanHandler
-	qanHandler := qan.NewMySQLMetricWriter(db.DBManager, s.m, s.nullStats)
+	qanHandler := qan.NewMySQLMetricWriter(db.DBManager, s.ih, s.m, s.nullStats)
 
 	// Write metrics first time to set last seen.
 	err = qanHandler.Write(report1)
@@ -252,7 +257,7 @@ func (s *MySQLTestSuite) TestBadFingerprints(t *C) {
 	report.EndTs = now
 
 	// Create qanHandler
-	qanHandler := qan.NewMySQLMetricWriter(db.DBManager, s.m, s.nullStats)
+	qanHandler := qan.NewMySQLMetricWriter(db.DBManager, s.ih, s.m, s.nullStats)
 
 	// Write metrics first time to set last seen.
 	err = qanHandler.Write(report)
@@ -281,7 +286,7 @@ func (s *MySQLTestSuite) TestWorkaroundPSBug830286(t *C) {
 	report.StartOffset = 0
 	report.EndOffset = 1000
 
-	qanHandler := qan.NewMySQLMetricWriter(db.DBManager, s.m, s.nullStats)
+	qanHandler := qan.NewMySQLMetricWriter(db.DBManager, s.ih, s.m, s.nullStats)
 
 	err = qanHandler.Write(report)
 	t.Assert(err, IsNil)
@@ -314,7 +319,7 @@ func (s *MySQLTestSuite) TestRateLimit(t *C) {
 	report1.StartOffset = 0
 	report1.EndOffset = 1000
 
-	qanHandler := qan.NewMySQLMetricWriter(db.DBManager, s.m, s.nullStats)
+	qanHandler := qan.NewMySQLMetricWriter(db.DBManager, s.ih, s.m, s.nullStats)
 
 	err = qanHandler.Write(report1)
 	t.Assert(err, IsNil)
@@ -394,7 +399,7 @@ func (s *MySQLTestSuite) Test009(t *C) {
 		var err error
 
 		// Make a qanHandler.
-		qanHandler := qan.NewMySQLMetricWriter(db.DBManager, s.m, s.nullStats)
+		qanHandler := qan.NewMySQLMetricWriter(db.DBManager, s.ih, s.m, s.nullStats)
 
 		// Read input, parse into a qan.Result, then make into a qan.Report.
 		data, err := ioutil.ReadFile(input + "data1.json")

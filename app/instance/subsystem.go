@@ -23,36 +23,50 @@ import (
 	"github.com/percona/pmm/proto"
 )
 
+const (
+	SubsystemOS = iota + 1
+	SubsystemAgent
+	SubsystemMySQL
+	SubsystemMongo
+)
+
+const (
+	SubsystemNameOS    = "os"
+	SubsystemNameAgent = "agent"
+	SubsystemNameMySQL = "mysql"
+	SubsystemNameMongo = "mongo"
+)
+
 var subsysName map[uint]string = map[uint]string{
-	1: "os",
-	2: "agent",
-	3: "mysql",
-	4: "mongo",
+	SubsystemOS:    SubsystemNameOS,
+	SubsystemAgent: SubsystemNameAgent,
+	SubsystemMySQL: SubsystemNameMySQL,
+	SubsystemMongo: SubsystemNameMongo,
 }
 
 var subsys map[string]proto.Subsystem = map[string]proto.Subsystem{
-	"os": {
+	SubsystemNameOS: {
 		Id:       1,
 		ParentId: 0,
-		Name:     "os",
+		Name:     SubsystemNameOS,
 		Label:    "OS",
 	},
-	"agent": {
+	SubsystemNameAgent: {
 		Id:       2,
 		ParentId: 1,
-		Name:     "agent",
+		Name:     SubsystemNameAgent,
 		Label:    "Agent",
 	},
-	"mysql": {
+	SubsystemNameMySQL: {
 		Id:       3,
 		ParentId: 1,
-		Name:     "mysql",
+		Name:     SubsystemNameMySQL,
 		Label:    "MySQL",
 	},
-	"mongo": {
+	SubsystemNameMongo: {
 		Id:       4,
 		ParentId: 1,
-		Name:     "mongo",
+		Name:     SubsystemNameMongo,
 		Label:    "MongoDB",
 	},
 }
