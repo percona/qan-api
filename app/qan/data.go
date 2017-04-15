@@ -36,7 +36,7 @@ const (
 	THROTTLE_CODE = 299
 )
 
-func SaveData(wsConn ws.Connector, agentId uint, agentVersion string, dbh *MySQLMetricWriter, stats *stats.Stats) error {
+func SaveData(wsConn ws.Connector, agentId uint, dbh *MySQLMetricWriter, stats *stats.Stats) error {
 	prefix := fmt.Sprintf("[qan.SaveData] agent_id=%d", agentId)
 
 	nMsgs := 0

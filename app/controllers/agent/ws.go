@@ -114,7 +114,6 @@ func (c Agent) Cmd(uuid string, conn *websocket.Conn) revel.Result {
 func (c Agent) Data(conn *websocket.Conn) revel.Result {
 	origin := c.Request.Header.Get("Origin")
 	agentId := c.Args["agentId"].(uint)
-	agentVersion := c.Args["agentVersion"].(string)
 
 	// Authenticate/authorize agent
 	wsConn := ws.ExistingConnection(origin, c.Request.URL.String(), conn)
@@ -126,14 +125,18 @@ func (c Agent) Data(conn *websocket.Conn) revel.Result {
 		return c.Error(err, "Agent.Data: dbm.Open")
 	}
 	defer dbm.Close()
-	dbh := qan.NewMySQLMetricWriter(dbm, shared.QueryAbstracter, &dbStats)
+
+	// create instance handler
+	ih := instance.NewMySQLHandler(dbm)
+
+	dbh := qan.NewMySQLMetricWriter(dbm, ih, shared.QueryAbstracter, &dbStats)
 
 	// Read and queue log entries from agent.
 	dataStats := msgStats // copy
 
 	// Synchronous data transfer from agent to API: agent sends data as proto.Data,
 	// API accepts, queues, and sends data.Response; repeat.
-	if err := qan.SaveData(wsConn, agentId, agentVersion, dbh, &dataStats); err != nil {
+	if err := qan.SaveData(wsConn, agentId, dbh, &dataStats); err != nil {
 		switch err {
 		case io.EOF:
 			// We got everything, client disconnected.
