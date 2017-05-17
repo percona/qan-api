@@ -111,6 +111,10 @@ The most important and only strictly required fields are `AgentUUID`, `Service`,
     + GetAllConfigs
     + SetConfig
     + Version
+    + Reconnect (disconnect and re-connect to api)
+    + GetServerSummary (run `pt-summary` tool if available)
+    + GetMySQLSummary (run `pt-mysql-summary` tool if available)
+    + GetMongoSummary (run `pt-mongodb-summary` tool if available)
 + `log` (online and file logger)
     + SetConfig
     + GetConfig
