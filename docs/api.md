@@ -134,6 +134,7 @@ The most important and only strictly required fields are `AgentUUID`, `Service`,
 + `query`
     + Explain (EXPLAIN a query)
     + TableInfo (get table def, status, and indexes)
+    + Summary (run `pt-(*-)summary` tool if available)
 
 In response, the agent always returns a `Reply`:
 
