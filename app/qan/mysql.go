@@ -38,13 +38,13 @@ import (
 )
 
 const (
-	UINT64_HIGH_BIT = uint64(1 << 63)
 	MAX_ABSTRACT    = 100  // query_classes.abstract
 	MAX_FINGERPRINT = 5000 // query_classes.fingerprint
 )
 
 type MySQLMetricWriter struct {
 	dbm   db.Manager
+	ih    instance.DbHandler
 	m     *query.Mini
 	stats *stats.Stats
 	// --
@@ -56,9 +56,15 @@ type MySQLMetricWriter struct {
 	stmtUpdateQueryClass    *sql.Stmt
 }
 
-func NewMySQLMetricWriter(dbm db.Manager, m *query.Mini, stats *stats.Stats) *MySQLMetricWriter {
+func NewMySQLMetricWriter(
+	dbm db.Manager,
+	ih instance.DbHandler,
+	m *query.Mini,
+	stats *stats.Stats,
+) *MySQLMetricWriter {
 	h := &MySQLMetricWriter{
 		dbm:   dbm,
+		ih:    ih,
 		m:     m,
 		stats: stats,
 		// --
@@ -69,9 +75,9 @@ func NewMySQLMetricWriter(dbm db.Manager, m *query.Mini, stats *stats.Stats) *My
 func (h *MySQLMetricWriter) Write(report qp.Report) error {
 	var err error
 
-	instanceId, err := instance.GetInstanceId(h.dbm.DB(), report.UUID)
+	instanceId, in, err := h.ih.Get(report.UUID)
 	if err != nil {
-		return fmt.Errorf("cannot get instance ID of %s: %s", report.UUID, err)
+		return fmt.Errorf("cannot get instance of %s: %s", report.UUID, err)
 	}
 
 	if report.Global == nil {
@@ -132,7 +138,7 @@ func (h *MySQLMetricWriter) Write(report qp.Report) error {
 			}
 		} else {
 			// New class, create it.
-			id, err = h.newClass(instanceId, class, lastSeen)
+			id, err = h.newClass(instanceId, in.Subsystem, class, lastSeen)
 			if err != nil {
 				log.Printf("WARNING: cannot create new query class, skipping: %s: %#v: %s", err, class, trace)
 				continue
@@ -256,55 +262,65 @@ func (h *MySQLMetricWriter) getClassId(checksum string) (uint, error) {
 	return classId, nil
 }
 
-func (h *MySQLMetricWriter) newClass(instanceId uint, class *event.Class, lastSeen string) (uint, error) {
-	// In theory the shortest valid SQL statment should be at least 2 chars
-	// (I'm not aware of any 1 char statments), so if the fingerprint is shorter
-	// than 2 then it's invalid, effectively empty, probably due to a slow log
-	// parser bug.
-	if len(class.Fingerprint) < 2 {
-		return 0, fmt.Errorf("empty fingerprint")
-	} else if class.Fingerprint[len(class.Fingerprint)-1] == '\n' {
-		// https://jira.percona.com/browse/PCT-826
-		class.Fingerprint = strings.TrimSuffix(class.Fingerprint, "\n")
-		log.Printf("WARNING: fingerprint had newline: %s: instance_id=%d", class.Fingerprint, instanceId)
-	}
-
-	// Distill the query (select c from t where id=? -> SELECT t) and extract
-	// its tables if possible. query.Query = fingerprint (cleaned up).
-	t := time.Now()
-	defaultDb := ""
-	if class.Example != nil {
-		defaultDb = class.Example.Db
-	}
-
-	query, err := h.m.Parse(class.Fingerprint, defaultDb)
-	h.stats.TimingDuration(h.stats.System("abstract-fingerprint"), time.Now().Sub(t), h.stats.SampleRate)
-	if err != nil {
-		return 0, err
-	}
+func (h *MySQLMetricWriter) newClass(instanceId uint, subsystem string, class *event.Class, lastSeen string) (uint, error) {
+	var queryAbstract, queryQuery string
 	var tables interface{}
-	if len(query.Tables) > 0 {
-		bytes, _ := json.Marshal(query.Tables)
-		tables = string(bytes)
-		h.stats.Inc(h.stats.System("parse-tables-yes"), 1, h.stats.SampleRate)
-	} else {
-		h.stats.Inc(h.stats.System("parse-tables-no"), 1, h.stats.SampleRate)
-	}
 
-	// Truncate long fingerprints and abstracts to avoid MySQL warning 1265:
-	// Data truncated for column 'abstract'
-	if len(query.Query) > MAX_FINGERPRINT {
-		query.Query = query.Query[0:MAX_FINGERPRINT-3] + "..."
-	}
-	if len(query.Abstract) > MAX_ABSTRACT {
-		query.Abstract = query.Abstract[0:MAX_ABSTRACT-3] + "..."
+	switch subsystem {
+	case instance.SubsystemNameMySQL:
+		// In theory the shortest valid SQL statment should be at least 2 chars
+		// (I'm not aware of any 1 char statments), so if the fingerprint is shorter
+		// than 2 then it's invalid, effectively empty, probably due to a slow log
+		// parser bug.
+		if len(class.Fingerprint) < 2 {
+			return 0, fmt.Errorf("empty fingerprint")
+		} else if class.Fingerprint[len(class.Fingerprint)-1] == '\n' {
+			// https://jira.percona.com/browse/PCT-826
+			class.Fingerprint = strings.TrimSuffix(class.Fingerprint, "\n")
+			log.Printf("WARNING: fingerprint had newline: %s: instance_id=%d", class.Fingerprint, instanceId)
+		}
+
+		// Distill the query (select c from t where id=? -> SELECT t) and extract
+		// its tables if possible. query.Query = fingerprint (cleaned up).
+		t := time.Now()
+		defaultDb := ""
+		if class.Example != nil {
+			defaultDb = class.Example.Db
+		}
+
+		query, err := h.m.Parse(class.Fingerprint, defaultDb)
+		h.stats.TimingDuration(h.stats.System("abstract-fingerprint"), time.Now().Sub(t), h.stats.SampleRate)
+		if err != nil {
+			return 0, err
+		}
+		if len(query.Tables) > 0 {
+			bytes, _ := json.Marshal(query.Tables)
+			tables = string(bytes)
+			h.stats.Inc(h.stats.System("parse-tables-yes"), 1, h.stats.SampleRate)
+		} else {
+			h.stats.Inc(h.stats.System("parse-tables-no"), 1, h.stats.SampleRate)
+		}
+
+		// Truncate long fingerprints and abstracts to avoid MySQL warning 1265:
+		// Data truncated for column 'abstract'
+		if len(query.Query) > MAX_FINGERPRINT {
+			query.Query = query.Query[0:MAX_FINGERPRINT-3] + "..."
+		}
+		if len(query.Abstract) > MAX_ABSTRACT {
+			query.Abstract = query.Abstract[0:MAX_ABSTRACT-3] + "..."
+		}
+		queryAbstract = query.Abstract
+		queryQuery = query.Query
+	case instance.SubsystemNameMongo:
+		queryAbstract = class.Fingerprint
+		queryQuery = class.Fingerprint
 	}
 
 	// Create the query class which is internally identified by its query_class_id.
 	// The query checksum is the class is identified externally (in a QAN report).
 	// Since this is the first time we've seen the query, firstSeen=lastSeen.
-	t = time.Now()
-	res, err := h.stmtInsertQueryClass.Exec(class.Id, query.Abstract, query.Query, tables, lastSeen, lastSeen)
+	t := time.Now()
+	res, err := h.stmtInsertQueryClass.Exec(class.Id, queryAbstract, queryQuery, tables, lastSeen, lastSeen)
 
 	h.stats.TimingDuration(h.stats.System("insert-query-class"), time.Now().Sub(t), h.stats.SampleRate)
 	if err != nil {

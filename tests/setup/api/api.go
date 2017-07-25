@@ -35,9 +35,9 @@ import (
 	"syscall"
 	"time"
 
-	"golang.org/x/net/websocket"
 	"github.com/percona/pmm/proto"
 	"github.com/percona/qan-api/test/mock"
+	"golang.org/x/net/websocket"
 )
 
 var ErrStartFailed = errors.New("failed to start API")

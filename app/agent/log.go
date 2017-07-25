@@ -25,12 +25,12 @@ import (
 	"sort"
 	"time"
 
+	"github.com/percona/pmm/proto"
 	"github.com/percona/qan-api/app/db"
 	"github.com/percona/qan-api/app/db/mysql"
 	"github.com/percona/qan-api/app/shared"
 	"github.com/percona/qan-api/app/ws"
 	"github.com/percona/qan-api/stats"
-	"github.com/percona/pmm/proto"
 )
 
 const (

@@ -36,12 +36,12 @@ const amountOfPoints = 60
 
 // get data for spark-lines at query profile
 const sparkLinesQueryClass = "SELECT (? - UNIX_TIMESTAMP(start_ts)) DIV ? as point," +
-	" FROM_UNIXTIME(? - (SELECT point) * ?) as start_ts, SUM(query_count)/?, SUM(Query_time_sum)/?, AVG(Query_time_avg) " +
+	" FROM_UNIXTIME(? - (SELECT point) * ?) as start_ts, SUM(query_count), SUM(Query_time_sum), AVG(Query_time_avg) " +
 	" FROM query_class_metrics" +
 	" WHERE query_class_id = ? and instance_id = ? AND (start_ts >= ? AND start_ts < ?) GROUP BY point;"
 
 const sparkLinesQueryGlobal = "SELECT (? - UNIX_TIMESTAMP(start_ts)) DIV ? as point," +
-	" FROM_UNIXTIME(? - (SELECT point) * ?) as start_ts, SUM(total_query_count)/?, SUM(Query_time_sum)/?, AVG(Query_time_avg) " +
+	" FROM_UNIXTIME(? - (SELECT point) * ?) as start_ts, SUM(total_query_count), SUM(Query_time_sum), AVG(Query_time_avg) " +
 	" FROM query_global_metrics " +
 	" WHERE instance_id = ? AND (start_ts >= ? AND start_ts < ?) GROUP BY point;"
 
@@ -64,11 +64,11 @@ func SparklineData(qr *Reporter, endTs int64, intervalTs int64, queryClassId uin
 	queryLogArrRaw := make(map[int64]qp.QueryLog)
 	queryLogArr := []qp.QueryLog{}
 
-	var args = []interface{}{endTs, intervalTs, endTs, intervalTs, intervalTs, intervalTs, queryClassId, instanceId, begin, end}
+	var args = []interface{}{endTs, intervalTs, endTs, intervalTs, queryClassId, instanceId, begin, end}
 	var query string = sparkLinesQueryClass
 	if queryClassId == 0 {
 		// pop queryClassId
-		args = append(args[:6], args[7:]...)
+		args = append(args[:4], args[5:]...)
 		query = sparkLinesQueryGlobal
 	}
 	sparkLinesRows, err := qr.dbm.DB().Query(query, args...)
@@ -78,6 +78,7 @@ func SparklineData(qr *Reporter, endTs int64, intervalTs int64, queryClassId uin
 	defer sparkLinesRows.Close()
 	for sparkLinesRows.Next() {
 		ql := qp.QueryLog{}
+		ql.Start_ts = ql.Start_ts.UTC()
 		sparkLinesRows.Scan(
 			&ql.Point,
 			&ql.Start_ts,
@@ -91,11 +92,14 @@ func SparklineData(qr *Reporter, endTs int64, intervalTs int64, queryClassId uin
 	var i int64
 	for i = 0; i < amountOfPoints; i++ {
 		ts := endTs - i*intervalTs
-		if val, ok := queryLogArrRaw[ts]; ok {
-			queryLogArr = append(queryLogArr, val)
-		} else {
-			queryLogArr = append(queryLogArr, qp.QueryLog{uint(i), time.Unix(ts, 0), 0, 0, 0})
+		val, ok := queryLogArrRaw[ts]
+		if !ok {
+			val = qp.QueryLog{
+				Point:    uint(i),
+				Start_ts: time.Unix(ts, 0).UTC(),
+			}
 		}
+		queryLogArr = append(queryLogArr, val)
 	}
 	return queryLogArr
 }
@@ -308,18 +312,16 @@ func (qr *Reporter) filterByFingerprint(instanceId uint, begin, end time.Time, s
 	queryClassIds := []uint{}
 
 	query := `
-        SELECT
-            qc.query_class_id
-        FROM
-            query_classes AS qc, query_class_metrics AS qcm
-        WHERE
-                qc.query_class_id = qcm.query_class_id
+        SELECT qc.query_class_id
+        FROM query_classes AS qc, query_class_metrics AS qcm
+        WHERE qc.query_class_id = qcm.query_class_id
             AND qcm.instance_id = ?
-            AND qc.last_seen > ?
-                AND qc.last_seen <= ?
-            AND (qc.checksum = ? OR qc.fingerprint LIKE ?);
-    `
-	rows, err := qr.dbm.DB().Query(query, instanceId, begin, end, search, "%"+search+"%")
+            AND qcm.start_ts > ?
+            AND qcm.end_ts <= ?
+            AND (qc.checksum = ? OR qc.abstract LIKE ? OR qc.fingerprint LIKE ?)
+        GROUP BY qc.query_class_id;
+        `
+	rows, err := qr.dbm.DB().Query(query, instanceId, begin, end, search, search+"%", "%"+search+"%")
 	if err != nil {
 		return queryClassIds, mysql.Error(err, "Reporter.filterByFingerprint: SELECT query_classes AS qc, query_examples AS qe LIKE")
 	}

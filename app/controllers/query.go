@@ -22,12 +22,12 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	queryProto "github.com/percona/pmm/proto/query"
 	"github.com/percona/qan-api/app/db"
 	"github.com/percona/qan-api/app/instance"
 	"github.com/percona/qan-api/app/query"
 	"github.com/percona/qan-api/app/shared"
 	"github.com/percona/qan-api/stats"
-	queryProto "github.com/percona/pmm/proto/query"
 	"github.com/revel/revel"
 )
 

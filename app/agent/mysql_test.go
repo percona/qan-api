@@ -20,12 +20,12 @@ package agent_test
 import (
 	"time"
 
+	"github.com/percona/pmm/proto"
 	"github.com/percona/qan-api/app/agent"
 	"github.com/percona/qan-api/app/db"
 	"github.com/percona/qan-api/app/instance"
 	"github.com/percona/qan-api/config"
 	testDb "github.com/percona/qan-api/tests/setup/db"
-	"github.com/percona/pmm/proto"
 	. "gopkg.in/check.v1"
 )
 
@@ -54,43 +54,66 @@ func (s *MySQLTestSuite) TestSetConfigInternalService(t *C) {
 	var (
 		agentId uint   = 1
 		service string = "log"
-		config  []byte = []byte("...") // normally this is JSON
+		set     []byte = []byte{}
+		running []byte = []byte{}
 	)
 
 	// Create agentHandler
 	agentHandler := agent.NewMySQLHandler(db.DBManager, instance.NewMySQLHandler(db.DBManager))
 
 	// Update config (actual test)
-	err := agentHandler.SetConfig(agentId, service, "", config)
+	err := agentHandler.SetConfig(agentId, service, "", set, running)
 	t.Assert(err, IsNil)
 
 	var (
 		gotAgentId uint
 		gotOtherId uint
 		gotService string
-		gotConfig  string
+		gotSet     string
+		gotRunning string
 	)
 	err = s.testDb.DB().QueryRow(
-		"SELECT agent_instance_id, other_instance_id, service, config FROM agent_configs WHERE agent_instance_id=? AND other_instance_id=? AND service=?",
-		agentId, 0, service).Scan(&gotAgentId, &gotOtherId, &gotService, &gotConfig)
+		"SELECT agent_instance_id, other_instance_id, service, in_file, running FROM agent_configs WHERE agent_instance_id=? AND other_instance_id=? AND service=?",
+		agentId,
+		0,
+		service,
+	).Scan(
+		&gotAgentId,
+		&gotOtherId,
+		&gotService,
+		&gotSet,
+		&gotRunning,
+	)
 	t.Assert(err, IsNil)
 	t.Check(gotAgentId, Equals, agentId)
 	t.Check(gotOtherId, Equals, uint(0))
 	t.Check(gotService, Equals, service)
-	t.Check(gotConfig, Equals, string(config))
+	t.Check(gotSet, Equals, string(set))
+	t.Check(gotRunning, Equals, string(running))
 
 	// Do again to update existing config and check there's no dupe.
-	config = []byte("new config")
-	err = agentHandler.SetConfig(agentId, service, "", config)
+	set = []byte("new set")
+	running = []byte("new running")
+	err = agentHandler.SetConfig(agentId, service, "", set, running)
 	t.Assert(err, IsNil)
 	err = s.testDb.DB().QueryRow(
-		"SELECT agent_instance_id, other_instance_id, service, config FROM agent_configs WHERE agent_instance_id=? AND other_instance_id=? AND service=?",
-		agentId, 0, service).Scan(&gotAgentId, &gotOtherId, &gotService, &gotConfig)
+		"SELECT agent_instance_id, other_instance_id, service, in_file, running FROM agent_configs WHERE agent_instance_id=? AND other_instance_id=? AND service=?",
+		agentId,
+		0,
+		service,
+	).Scan(
+		&gotAgentId,
+		&gotOtherId,
+		&gotService,
+		&gotSet,
+		&gotRunning,
+	)
 	t.Assert(err, IsNil)
 	t.Check(gotAgentId, Equals, agentId)
 	t.Check(gotOtherId, Equals, uint(0))
 	t.Check(gotService, Equals, service)
-	t.Check(gotConfig, Equals, string(config))
+	t.Check(gotSet, Equals, string(set))
+	t.Check(gotRunning, Equals, string(running))
 
 	// Let's check if there are no duplicates for key 42-"qan"
 	var count int
@@ -102,46 +125,69 @@ func (s *MySQLTestSuite) TestSetConfigTool(t *C) {
 	var (
 		agentId   uint   = 1
 		service   string = "qan"
-		mysqlId   uint   = 3
+		otherId   uint   = 3
 		mysqlUUID string = "313" // a MySQL instance
-		config    []byte = []byte("qan config")
+		set       []byte = []byte("qan config")
+		running   []byte = []byte("qan config")
 	)
 
 	// Create agentHandler
 	agentHandler := agent.NewMySQLHandler(db.DBManager, instance.NewMySQLHandler(db.DBManager))
 
 	// Update config (actual test)
-	err := agentHandler.SetConfig(agentId, service, mysqlUUID, config)
+	err := agentHandler.SetConfig(agentId, service, mysqlUUID, set, running)
 	t.Assert(err, IsNil)
 
 	var (
 		gotAgentId uint
 		gotOtherId uint
 		gotService string
-		gotConfig  string
+		gotSet     string
+		gotRunning string
 	)
 	err = s.testDb.DB().QueryRow(
-		"SELECT agent_instance_id, other_instance_id, service, config FROM agent_configs WHERE agent_instance_id=? AND other_instance_id=? AND service=?",
-		agentId, mysqlId, service).Scan(&gotAgentId, &gotOtherId, &gotService, &gotConfig)
+		"SELECT agent_instance_id, other_instance_id, service, in_file, running FROM agent_configs WHERE agent_instance_id=? AND other_instance_id=? AND service=?",
+		agentId,
+		otherId,
+		service,
+	).Scan(
+		&gotAgentId,
+		&gotOtherId,
+		&gotService,
+		&gotSet,
+		&gotRunning,
+	)
 	t.Assert(err, IsNil)
 	t.Check(gotAgentId, Equals, agentId)
-	t.Check(gotOtherId, Equals, mysqlId)
+	t.Check(gotOtherId, Equals, otherId)
 	t.Check(gotService, Equals, service)
-	t.Check(gotConfig, Equals, string(config))
+	t.Check(gotSet, Equals, string(set))
+	t.Check(gotRunning, Equals, string(running))
 
 	// Set a config for the same MySQL instance but another tool.
 	service = "mm-mysql"
-	config = []byte("mm config")
-	err = agentHandler.SetConfig(agentId, service, mysqlUUID, config)
+	set = []byte("mm config")
+	running = []byte("mm config")
+	err = agentHandler.SetConfig(agentId, service, mysqlUUID, set, running)
 	t.Assert(err, IsNil)
 	err = s.testDb.DB().QueryRow(
-		"SELECT agent_instance_id, other_instance_id, service, config FROM agent_configs WHERE agent_instance_id=? AND other_instance_id=? AND service=?",
-		agentId, mysqlId, service).Scan(&gotAgentId, &gotOtherId, &gotService, &gotConfig)
+		"SELECT agent_instance_id, other_instance_id, service, in_file, running FROM agent_configs WHERE agent_instance_id=? AND other_instance_id=? AND service=?",
+		agentId,
+		otherId,
+		service,
+	).Scan(
+		&gotAgentId,
+		&gotOtherId,
+		&gotService,
+		&gotSet,
+		&gotRunning,
+	)
 	t.Assert(err, IsNil)
 	t.Check(gotAgentId, Equals, agentId)
-	t.Check(gotOtherId, Equals, mysqlId)
+	t.Check(gotOtherId, Equals, otherId)
 	t.Check(gotService, Equals, service)
-	t.Check(gotConfig, Equals, string(config))
+	t.Check(gotSet, Equals, string(set))
+	t.Check(gotRunning, Equals, string(running))
 
 	// There should be two configs for the MySQL instance.
 	var count int
@@ -221,17 +267,14 @@ func (s *MySQLTestSuite) TestUpdateConfigs(t *C) {
 	newConfigs := []proto.AgentConfig{
 		{
 			Service: "data",
-			Config:  `{"SendInterval":63}`, // 60 -> 63
 		},
 		{
 			Service: "mm",
 			UUID:    "313",
-			Config:  `{"UUID":"313","Collect":10,"Report":63}`, // 60 -> 63
 		},
 		{ // new
 			Service: "sysconfig",
 			UUID:    "313",
-			Config:  `{"UUID":"313","Report":3600}`,
 		},
 	}
 
@@ -255,16 +298,13 @@ func (s *MySQLTestSuite) TestUpdateConfigs(t *C) {
 
 	// Check new config first: sysconfig
 	t.Check(gotConfigs[c["sysconfig"]].UUID, Equals, newConfigs[2].UUID)
-	t.Check(gotConfigs[c["sysconfig"]].Config, Equals, newConfigs[2].Config)
 
 	// Existing mm config, updated.
 	t.Check(gotConfigs[c["mm"]].UUID, Equals, newConfigs[1].UUID)
-	t.Check(gotConfigs[c["mm"]].Config, Equals, newConfigs[1].Config)
 	t.Check(gotConfigs[c["mm"]].Updated, Not(Equals), t0)
 
 	// Existing data config, updated.
 	t.Check(gotConfigs[c["data"]].UUID, Equals, newConfigs[0].UUID)
-	t.Check(gotConfigs[c["data"]].Config, Equals, newConfigs[0].Config)
 	t.Check(gotConfigs[c["data"]].Updated, Not(Equals), t0)
 
 	// We didn't provide a log config so it was deleted because last arg was true.

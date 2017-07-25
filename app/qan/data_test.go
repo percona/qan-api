@@ -24,16 +24,17 @@ import (
 	"io/ioutil"
 	"time"
 
+	"github.com/percona/pmm/proto"
+	qp "github.com/percona/pmm/proto/qan"
 	"github.com/percona/qan-api/app/db"
+	"github.com/percona/qan-api/app/instance"
 	"github.com/percona/qan-api/app/qan"
 	"github.com/percona/qan-api/config"
 	"github.com/percona/qan-api/service/query"
 	"github.com/percona/qan-api/stats"
-	"github.com/percona/qan-api/test"
 	"github.com/percona/qan-api/test/mock"
 	testDb "github.com/percona/qan-api/tests/setup/db"
-	"github.com/percona/pmm/proto"
-	qp "github.com/percona/pmm/proto/qan"
+	"github.com/stretchr/testify/assert"
 	. "gopkg.in/check.v1"
 )
 
@@ -60,8 +61,11 @@ func (s *DataTestSuite) SetUpSuite(t *C) {
 	s.mini = query.NewMini(config.ApiRootDir + "/service/query")
 	go s.mini.Run()
 
+	// Create instance handler
+	ih := instance.NewMySQLHandler(db.DBManager)
+
 	// Make real dbh.
-	s.dbh = qan.NewMySQLMetricWriter(db.DBManager, s.mini, stats.NullStats())
+	s.dbh = qan.NewMySQLMetricWriter(db.DBManager, ih, s.mini, stats.NullStats())
 
 	// Make aux MySQL connection.
 	s.db, err = sql.Open("mysql", dsn)
@@ -106,7 +110,7 @@ func (s *DataTestSuite) TestSaveData(t *C) {
 	// Call SaveData which will wait on wsConn.RecvBytes().
 	errChan := make(chan error, 1)
 	go func() {
-		errChan <- qan.SaveData(s.wsConn, 2, "1.0.0", s.dbh, stats.NullStats())
+		errChan <- qan.SaveData(s.wsConn, 2, s.dbh, stats.NullStats())
 	}()
 
 	// Send data, wait for a response.
@@ -124,7 +128,7 @@ func (s *DataTestSuite) TestSaveData(t *C) {
 	err = <-errChan
 	t.Check(err, Equals, io.EOF)
 
-	if diff := test.TableDiff(s.db, "query_class_metrics", "query_class_id,instance_id", config.ApiRootDir+"/test/qan/002/qcm.tab"); diff != "" {
-		t.Error(diff)
-	}
+	expected := s.testDb.TableExpected(config.ApiRootDir + "/test/qan/002/qcm.tab")
+	got := s.testDb.TableGot("query_class_metrics", "query_class_id,instance_id")
+	assert.Equal(t, expected, got)
 }

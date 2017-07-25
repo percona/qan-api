@@ -86,21 +86,6 @@
           "Rows_sent": {"Cnt": 5,"Sum": 1,"Min": 1,"Max": 1,"Avg": 1}
         }
       }
-    },
-    {
-      "PCT-1079": "All QAN data is discarded if new class has empty fingerprint",
-      "Id": "6000000000000006",
-      "Fingerprint": "",
-      "TotalQueries": 5,
-      "Metrics": {
-        "TimeMetrics": {
-          "Query_time": {"Cnt": 5,"Sum": 0.101001,"Min": 0.000100,"Max": 0.5,"Avg": 0.07},
-          "Lock_time": {"Cnt": 5,"Sum": 0,"Min": 0,"Max": 0,"Avg": 0}
-        },
-        "NumberMetrics": {
-          "Rows_sent": {"Cnt": 5,"Sum": 1,"Min": 1,"Max": 1,"Avg": 1}
-        }
-      }
     }
   ]
 }

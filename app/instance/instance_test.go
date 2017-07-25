@@ -21,13 +21,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/daniel-nichter/deep-equal"
+	"github.com/percona/pmm/proto"
 	"github.com/percona/qan-api/app/db"
-	"github.com/percona/qan-api/app/instance"
+	appInstance "github.com/percona/qan-api/app/instance"
 	"github.com/percona/qan-api/app/shared"
 	"github.com/percona/qan-api/config"
 	testDb "github.com/percona/qan-api/tests/setup/db"
-	"github.com/percona/pmm/proto"
+	"github.com/stretchr/testify/assert"
 	. "gopkg.in/check.v1"
 )
 
@@ -59,7 +59,7 @@ func (s *InstanceTestSuite) TearDownSuite(t *C) {
 // --------------------------------------------------------------------------
 
 func (s *InstanceTestSuite) TestGet(t *C) {
-	ih := instance.NewMySQLHandler(db.DBManager)
+	ih := appInstance.NewMySQLHandler(db.DBManager)
 	_, instance, err := ih.Get("00000000000000000000000000000000") // Invalid UUID
 	t.Assert(err, NotNil)
 	t.Check(err, Equals, shared.ErrNotFound)
@@ -75,13 +75,11 @@ func (s *InstanceTestSuite) TestGet(t *C) {
 		DSN:        "",
 		Created:    time.Date(2015, 04, 22, 19, 22, 46, 0, time.UTC),
 	}
-	if diff, _ := deep.Equal(instance, expected); len(diff) > 0 {
-		t.Error(diff)
-	}
+	assert.Equal(t, instance, expected)
 }
 
 func (s *InstanceTestSuite) TestCreate(t *C) {
-	ih := instance.NewMySQLHandler(db.DBManager)
+	ih := appInstance.NewMySQLHandler(db.DBManager)
 
 	instance := proto.Instance{
 		Subsystem:  "agent",
@@ -115,7 +113,7 @@ func (s *InstanceTestSuite) TestCreate(t *C) {
 }
 
 func (s *InstanceTestSuite) TestUpdate(t *C) {
-	ih := instance.NewMySQLHandler(db.DBManager)
+	ih := appInstance.NewMySQLHandler(db.DBManager)
 
 	mysqlUUID := "3d341070b1d74a84bb5f797c3ddbccc4"
 
