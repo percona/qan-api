@@ -1,5 +1,5 @@
-hash: fdc662e51cd3f32182d039c8224ae1abef80e2040b0317e42794892a2c995ccd
-updated: 2017-02-23T13:45:08.372812233+01:00
+hash: 2a062802c779cb4b363f7aaab102a437ec1f26a0c4ca93b68b892210ab2623fc
+updated: 2017-07-26T15:04:07.345176701+03:00
 imports:
 - name: github.com/agtorre/gocolorize
   version: 99fea4bc9517f07eea8194702cb7076f4845b7de
@@ -29,6 +29,10 @@ imports:
   version: 09cded8978dc9e80714c4d85b0322337b0a1e5e0
 - name: github.com/klauspost/crc32
   version: 1bab8b35b6bb565f92cbc97939610af9369f942a
+- name: github.com/kshvakov/clickhouse
+  version: 4bdcb0a13d032cf62aa4884c8c9e7e7194115953
+- name: github.com/mattn/go-sqlite3
+  version: ca5e3819723d8eeaf170ad510e7da1d6d2e94a08
 - name: github.com/nu7hatch/gouuid
   version: 179d4d0c4d8d407a32af483c2354df1d2c91e6c3
 - name: github.com/percona/go-mysql

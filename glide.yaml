@@ -33,3 +33,7 @@ import:
 - package: github.com/revel/modules
   subpackages:
   - testrunner/app/controllers
+- package: github.com/mattn/go-sqlite3
+  version: v1.2.0
+- package: github.com/kshvakov/clickhouse
+  version: v1

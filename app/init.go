@@ -34,6 +34,7 @@ import (
 	agentCtrl "github.com/percona/qan-api/app/controllers/agent"
 	"github.com/percona/qan-api/app/db"
 	"github.com/percona/qan-api/app/instance"
+	"github.com/percona/qan-api/app/models"
 	"github.com/percona/qan-api/app/query"
 	"github.com/percona/qan-api/app/shared"
 	"github.com/percona/qan-api/config"
@@ -112,8 +113,10 @@ func init() {
 		revel.ActionInvoker,           // Invoke the action.
 	}
 
+	connsPool := models.NewConnectionsPool()
+
 	// Tasks to be run at the begin and end of every request
-	revel.InterceptFunc(beforeController, revel.BEFORE, revel.ALL_CONTROLLERS)
+	revel.InterceptFunc(beforeController(connsPool), revel.BEFORE, revel.ALL_CONTROLLERS)
 	revel.InterceptFunc(afterController, revel.FINALLY, revel.ALL_CONTROLLERS)
 
 	// All access to agent resources (/agents/:uuid/*) must specify a valid agent.
@@ -134,50 +137,56 @@ func includeStat(rate float32) bool {
 	return true
 }
 
-func beforeController(c *revel.Controller) revel.Result {
-	if c.Action == "Home.Options" {
+func beforeController(connsPool *models.ConnectionsPool) revel.InterceptorFunc {
+	return func(c *revel.Controller) revel.Result {
+		if c.Action == "Home.Options" {
+			return nil
+		}
+
+		if includeStat(shared.RouteStats.SampleRate) {
+			c.Args["t"] = time.Now()
+		}
+
+		if c.Action == "Home.Ping" {
+			c.Response.Out.Header().Set("X-Percona-QAN-API-Version", APP_VERSION)
+		}
+
+		// Create a MySQL db manager for the controller because most need it, but
+		// don't open the connection yet, let the controller do that when it's
+		// ready because it might return early (e.g. on invalid input).
+		// The controller doesn't need to close it; we do that in afterController.
+		// Deprecated
+		c.Args["dbm"] = db.NewMySQLManager()
+
+		// Pass connections pool to controller
+		c.Args["connsPool"] = connsPool
+
+		// Args for various controllers/routes.
+		apiBasePath := os.Getenv("BASE_PATH")
+		if apiBasePath == "" {
+			apiBasePath = config.Get("api.base.path")
+		}
+		schema := "http"
+		if strings.Contains(strings.ToLower(c.Request.Request.Proto), "https") {
+			schema = "https"
+		}
+		c.Args["wsBase"] = "ws://" + c.Request.Request.Host + apiBasePath
+		c.Args["httpBase"] = schema + "://" + c.Request.Request.Host + apiBasePath
+
+		agentVersion := c.Request.Header.Get("X-Percona-QAN-Agent-Version")
+		if agentVersion == "" {
+			agentVersion = "0.0.9"
+		}
+		c.Args["agentVersion"] = agentVersion
+
+		// Set common headers before Revel sets the response code and writes
+		// the response body. This avoids "multiple calls to WriterHeader" errors.
+		c.Response.Out.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization")
+		c.Response.Out.Header().Set("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE")
+		c.Response.Out.Header().Set("Access-Control-Allow-Origin", "*")
+
 		return nil
 	}
-
-	if includeStat(shared.RouteStats.SampleRate) {
-		c.Args["t"] = time.Now()
-	}
-
-	if c.Action == "Home.Ping" {
-		c.Response.Out.Header().Set("X-Percona-QAN-API-Version", APP_VERSION)
-	}
-
-	// Create a MySQL db manager for the controller because most need it, but
-	// don't open the connection yet, let the controller do that when it's
-	// ready because it might return early (e.g. on invalid input).
-	// The controller doesn't need to close it; we do that in afterController.
-	c.Args["dbm"] = db.NewMySQLManager()
-
-	// Args for various controllers/routes.
-	apiBasePath := os.Getenv("BASE_PATH")
-	if apiBasePath == "" {
-		apiBasePath = config.Get("api.base.path")
-	}
-	schema := "http"
-	if strings.Contains(strings.ToLower(c.Request.Request.Proto), "https") {
-		schema = "https"
-	}
-	c.Args["wsBase"] = "ws://" + c.Request.Request.Host + apiBasePath
-	c.Args["httpBase"] = schema + "://" + c.Request.Request.Host + apiBasePath
-
-	agentVersion := c.Request.Header.Get("X-Percona-QAN-Agent-Version")
-	if agentVersion == "" {
-		agentVersion = "0.0.9"
-	}
-	c.Args["agentVersion"] = agentVersion
-
-	// Set common headers before Revel sets the response code and writes
-	// the response body. This avoids "multiple calls to WriterHeader" errors.
-	c.Response.Out.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization")
-	c.Response.Out.Header().Set("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE")
-	c.Response.Out.Header().Set("Access-Control-Allow-Origin", "*")
-
-	return nil
 }
 
 func afterController(c *revel.Controller) revel.Result {
@@ -213,18 +222,18 @@ func authAgent(c *revel.Controller) revel.Result {
 		return nil
 	}
 
-	var agentUuid string
-	c.Params.Bind(&agentUuid, "uuid")
+	var agentUUUD string
+	c.Params.Bind(&agentUUUD, "uuid")
 
 	dbm := c.Args["dbm"].(db.Manager)
 	dbh := auth.NewMySQLHandler(dbm)
 	authHandler := auth.NewAuthDb(dbh)
 
-	agentId, res, err := authHandler.Agent(agentUuid)
+	agentId, res, err := authHandler.Agent(agentUUUD)
 	if err != nil {
 		switch err {
 		case shared.ErrNotFound:
-			revel.INFO.Printf("auth agent: not found: %s", agentUuid)
+			revel.INFO.Printf("auth agent: not found: %s", agentUUUD)
 		default:
 			revel.ERROR.Printf("auth agent: %s", err)
 		}

@@ -38,6 +38,7 @@ func NewManager() *Manager {
 	}
 }
 
+// Deprecated
 func (m *Manager) Open() error {
 	m.Lock()
 	defer m.Unlock()

@@ -20,51 +20,43 @@ package controllers
 import (
 	"encoding/json"
 	"io/ioutil"
-	"strings"
 
-	"github.com/nu7hatch/gouuid"
 	"github.com/percona/pmm/proto"
 	"github.com/percona/qan-api/app/db"
 	"github.com/percona/qan-api/app/instance"
+	"github.com/percona/qan-api/app/models"
 	"github.com/percona/qan-api/app/shared"
 	"github.com/revel/revel"
 )
 
+// Instance controller
 type Instance struct {
 	BackEnd
 }
 
-// GET /instances
+// List uses for GET /instances
 func (c *Instance) List() revel.Result {
-	dbm := c.Args["dbm"].(db.Manager)
-	if err := dbm.Open(); err != nil {
-		return c.Error(err, "Instance.List: dbm.Open")
-	}
-	instanceHandler := instance.NewMySQLHandler(dbm)
-
 	var instanceType, instanceName, parentUUID string
 	c.Params.Bind(&instanceType, "type")
 	c.Params.Bind(&instanceName, "name")
 	c.Params.Bind(&parentUUID, "parent_uuid")
+        instanceMgr := models.NewInstanceManager(c.Args["connsPool"])
 	if instanceType != "" && instanceName != "" {
-		_, in, err := instanceHandler.GetByName(instanceType, instanceName, parentUUID)
+		_, in, err := instanceMgr.GetByName(instanceType, instanceName, parentUUID)
 		if err != nil {
-			return c.Error(err, "Instance.List: ih.GetByName")
-		}
-		if in == nil {
-			return c.Error(shared.ErrNotFound, "Instance.List: ih.GetByName")
+			return c.Error(err, "Instance.List: models.InstanceManager.GetByName")
 		}
 		return c.RenderJson(in)
-	} else {
-		instances, err := instanceHandler.GetAll()
-		if err != nil {
-			return c.Error(err, "Instance.List: ih.GetAll")
-		}
-		return c.RenderJson(instances)
 	}
+
+	instances, err := instanceMgr.GetAll()
+	if err != nil {
+		return c.Error(err, "Instance.List: models.InstanceManager.GetAll()")
+	}
+	return c.RenderJson(instances)
 }
 
-// POST /instances
+// Create uses for POST /instances
 func (c *Instance) Create() revel.Result {
 	body, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
@@ -74,56 +66,48 @@ func (c *Instance) Create() revel.Result {
 		return c.BadRequest(nil, "empty body (no data posted)")
 	}
 
-	in := proto.Instance{}
+	in := models.Instance{}
 	err = json.Unmarshal(body, &in)
 	if err != nil {
 		return c.BadRequest(err, "cannot decode proto.Instance")
 	}
-
-	if in.UUID == "" {
-		u4, _ := uuid.NewV4()
-		in.UUID = strings.Replace(u4.String(), "-", "", -1)
+        instanceMgr := models.NewInstanceManager(c.Args["connsPool"])
+	if &in.ParentUUID != nil {
+		id, err := instanceMgr.GetInstanceID(*in.ParentUUID)
+		if err != nil || id == 0 {
+			return c.BadRequest(err, "Invalid parent uuid")
+		}
 	}
 
-	dbm := c.Args["dbm"].(db.Manager)
-	if err := dbm.Open(); err != nil {
-		return c.Error(err, "Instance.Create: dbm.Open")
-	}
-	ih := instance.NewMySQLHandler(dbm)
-	if _, err := ih.Create(in); err != nil {
+	if _, err := instanceMgr.Create(in); err != nil {
 		if err == shared.ErrDuplicateEntry {
-			id, _ := instance.GetInstanceId(dbm.DB(), in.UUID)
+			id, _ := instanceMgr.GetInstanceID(in.UUID)
 			if id == 0 {
-				_, in2, err := ih.GetByName(in.Subsystem, in.Name, "")
+				_, in2, err := instanceMgr.GetByName(string(in.Subsystem), in.Name, "")
 				if err != nil {
-					return c.Error(err, "Instance.Create: ih.GetByName")
+					return c.Error(err, "Instance.Create: models.InstanceManager.GetByName")
 				}
 				in = *in2
 			}
 			uri := c.Args["httpBase"].(string) + "/instances/" + in.UUID
 			c.Response.Out.Header().Set("Location", uri)
 		}
-		return c.Error(err, "Instance.Create: ih.Create")
+		return c.Error(err, "Instance.Create: models.InstanceManager.Create")
 	}
-
 	return c.RenderCreated(c.Args["httpBase"].(string) + "/instances/" + in.UUID)
 }
 
-// GET /instances/:uuid
+// Get uses for GET /instances/:uuid
 func (c *Instance) Get(uuid string) revel.Result {
-	dbm := c.Args["dbm"].(db.Manager)
-	if err := dbm.Open(); err != nil {
-		return c.Error(err, "Instance.Get: dbm.Open")
-	}
-	instanceHandler := instance.NewMySQLHandler(dbm)
-	_, instance, err := instanceHandler.Get(uuid)
+        instanceMgr := models.NewInstanceManager(c.Args["connsPool"])
+	_, instance, err := instanceMgr.Get(uuid)
 	if err != nil {
-		return c.Error(err, "Instance.Get: ih.Get")
+		return c.Error(err, "Instance.Get: models.InstanceManager.Get")
 	}
 	return c.RenderJson(instance)
 }
 
-// PUT /instances/:uuid
+// Update uses for PUT /instances/:uuid
 func (c *Instance) Update(uuid string) revel.Result {
 	body, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
@@ -158,7 +142,7 @@ func (c *Instance) Update(uuid string) revel.Result {
 	return c.RenderNoContent()
 }
 
-// DELETE /instances/:uuid
+// Delete uses for DELETE /instances/:uuid
 func (c *Instance) Delete(uuid string) revel.Result {
 	dbm := c.Args["dbm"].(db.Manager)
 	if err := dbm.Open(); err != nil {

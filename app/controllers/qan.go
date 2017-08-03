@@ -125,7 +125,8 @@ func (c QAN) QueryReport(uuid, queryId string) revel.Result {
 		Example:    s,
 	}
 
-	metrics2, sparks2 := models.Metrics.GetClassMetrics(classId, instanceId, begin, end)
+	metricsMgr := models.NewMetricsManager(c.Args["connsPool"])
+	metrics2, sparks2 := metricsMgr.GetClassMetrics(classId, instanceId, begin, end)
 	report.Metrics2 = metrics2
 	report.Sparks2 = sparks2
 
@@ -154,7 +155,8 @@ func (c QAN) ServerSummary(uuid string) revel.Result {
 		End:        end,
 	}
 
-	metrics2, sparks2 := models.Metrics.GetGlobalMetrics(instanceId, begin, end)
+	metricsMgr := models.NewMetricsManager(c.Args["connsPool"])
+	metrics2, sparks2 := metricsMgr.GetGlobalMetrics(instanceId, begin, end)
 	summary.Metrics2 = metrics2
 	summary.Sparks2 = sparks2
 
