@@ -111,6 +111,10 @@ The most important and only strictly required fields are `AgentUUID`, `Service`,
     + GetAllConfigs
     + SetConfig
     + Version
+    + Reconnect (disconnect and re-connect to api)
+    + GetServerSummary (run `pt-summary` tool if available)
+    + GetMySQLSummary (run `pt-mysql-summary` tool if available)
+    + GetMongoSummary (run `pt-mongodb-summary` tool if available)
 + `log` (online and file logger)
     + SetConfig
     + GetConfig
@@ -130,6 +134,7 @@ The most important and only strictly required fields are `AgentUUID`, `Service`,
 + `query`
     + Explain (EXPLAIN a query)
     + TableInfo (get table def, status, and indexes)
+    + Summary (run `pt-(*-)summary` tool if available)
 
 In response, the agent always returns a `Reply`:
 

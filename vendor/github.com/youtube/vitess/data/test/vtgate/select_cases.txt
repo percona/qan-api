@@ -1,0 +1,362 @@
+# No column referenced
+"select 1 from user"
+{
+  "Original": "select 1 from user",
+  "Instructions": {
+    "Opcode": "SelectScatter",
+    "Keyspace": {
+      "Name": "user",
+      "Sharded": true
+    },
+    "Query": "select 1 from user",
+    "FieldQuery": "select 1 from user where 1 != 1"
+  }
+}
+
+# '*' expression for simple route
+"select user.* from user"
+{
+  "Original": "select user.* from user",
+  "Instructions": {
+    "Opcode": "SelectScatter",
+    "Keyspace": {
+      "Name": "user",
+      "Sharded": true
+    },
+    "Query": "select user.* from user",
+    "FieldQuery": "select user.* from user where 1 != 1"
+  }
+}
+
+# RHS route referenced
+"select user_extra.id from user join user_extra"
+{
+  "Original": "select user_extra.id from user join user_extra",
+  "Instructions": {
+    "Opcode": "Join",
+    "Left": {
+      "Opcode": "SelectScatter",
+      "Keyspace": {
+        "Name": "user",
+        "Sharded": true
+      },
+      "Query": "select 1 from user",
+      "FieldQuery": "select 1 from user where 1 != 1"
+    },
+    "Right": {
+      "Opcode": "SelectScatter",
+      "Keyspace": {
+        "Name": "user",
+        "Sharded": true
+      },
+      "Query": "select user_extra.id from user_extra",
+      "FieldQuery": "select user_extra.id from user_extra where 1 != 1"
+    },
+    "Cols": [
+      1
+    ]
+  }
+}
+
+# Both routes referenced
+"select user.col, user_extra.id from user join user_extra"
+{
+  "Original": "select user.col, user_extra.id from user join user_extra",
+  "Instructions": {
+    "Opcode": "Join",
+    "Left": {
+      "Opcode": "SelectScatter",
+      "Keyspace": {
+        "Name": "user",
+        "Sharded": true
+      },
+      "Query": "select user.col from user",
+      "FieldQuery": "select user.col from user where 1 != 1"
+    },
+    "Right": {
+      "Opcode": "SelectScatter",
+      "Keyspace": {
+        "Name": "user",
+        "Sharded": true
+      },
+      "Query": "select user_extra.id from user_extra",
+      "FieldQuery": "select user_extra.id from user_extra where 1 != 1"
+    },
+    "Cols": [
+      -1,
+      1
+    ]
+  }
+}
+
+# Expression with single-route reference
+"select user.col, user_extra.id + user_extra.col from user join user_extra"
+{
+  "Original": "select user.col, user_extra.id + user_extra.col from user join user_extra",
+  "Instructions": {
+    "Opcode": "Join",
+    "Left": {
+      "Opcode": "SelectScatter",
+      "Keyspace": {
+        "Name": "user",
+        "Sharded": true
+      },
+      "Query": "select user.col from user",
+      "FieldQuery": "select user.col from user where 1 != 1"
+    },
+    "Right": {
+      "Opcode": "SelectScatter",
+      "Keyspace": {
+        "Name": "user",
+        "Sharded": true
+      },
+      "Query": "select user_extra.id + user_extra.col from user_extra",
+      "FieldQuery": "select user_extra.id + user_extra.col from user_extra where 1 != 1"
+    },
+    "Cols": [
+      -1,
+      1
+    ]
+  }
+}
+
+# Jumbled references
+"select user.col, user_extra.id, user.col2 from user join user_extra"
+{
+  "Original": "select user.col, user_extra.id, user.col2 from user join user_extra",
+  "Instructions": {
+    "Opcode": "Join",
+    "Left": {
+      "Opcode": "SelectScatter",
+      "Keyspace": {
+        "Name": "user",
+        "Sharded": true
+      },
+      "Query": "select user.col, user.col2 from user",
+      "FieldQuery": "select user.col, user.col2 from user where 1 != 1"
+    },
+    "Right": {
+      "Opcode": "SelectScatter",
+      "Keyspace": {
+        "Name": "user",
+        "Sharded": true
+      },
+      "Query": "select user_extra.id from user_extra",
+      "FieldQuery": "select user_extra.id from user_extra where 1 != 1"
+    },
+    "Cols": [
+      -1,
+      1,
+      -2
+    ]
+  }
+}
+
+# Aggregate on unsharded
+"select count(*), col from main1"
+{
+  "Original": "select count(*), col from main1",
+  "Instructions": {
+    "Opcode": "SelectUnsharded",
+    "Keyspace": {
+      "Name": "main",
+      "Sharded": false
+    },
+    "Query": "select count(*), col from main1",
+    "FieldQuery": "select count(*), col from main1 where 1 != 1"
+  }
+}
+
+# Aggregate on unique sharded
+"select count(*), col from user where id = 1"
+{
+  "Original": "select count(*), col from user where id = 1",
+  "Instructions": {
+    "Opcode": "SelectEqualUnique",
+    "Keyspace": {
+      "Name": "user",
+      "Sharded": true
+    },
+    "Query": "select count(*), col from user where id = 1",
+    "FieldQuery": "select count(*), col from user where 1 != 1",
+    "Vindex": "user_index",
+    "Values": 1
+  }
+}
+
+# Aggregate on sharded with colvindex
+"select count(*), id from user"
+{
+  "Original": "select count(*), id from user",
+  "Instructions": {
+    "Opcode": "SelectScatter",
+    "Keyspace": {
+      "Name": "user",
+      "Sharded": true
+    },
+    "Query": "select count(*), id from user",
+    "FieldQuery": "select count(*), id from user where 1 != 1"
+  }
+}
+
+# Non-aggregate function on sharded with no colvindex
+"select fun(1), col from user"
+{
+  "Original": "select fun(1), col from user",
+  "Instructions": {
+    "Opcode": "SelectScatter",
+    "Keyspace": {
+      "Name": "user",
+      "Sharded": true
+    },
+    "Query": "select fun(1), col from user",
+    "FieldQuery": "select fun(1), col from user where 1 != 1"
+  }
+}
+
+# Distinct
+"select distinct col, id from user"
+{
+  "Original": "select distinct col, id from user",
+  "Instructions": {
+    "Opcode": "SelectScatter",
+    "Keyspace": {
+      "Name": "user",
+      "Sharded": true
+    },
+    "Query": "select distinct col, id from user",
+    "FieldQuery": "select col, id from user where 1 != 1"
+  }
+}
+
+# Comments
+"select /* comment */ user.col from user join user_extra"
+{
+  "Original": "select /* comment */ user.col from user join user_extra",
+  "Instructions": {
+    "Opcode": "Join",
+    "Left": {
+      "Opcode": "SelectScatter",
+      "Keyspace": {
+        "Name": "user",
+        "Sharded": true
+      },
+      "Query": "select /* comment */ user.col from user",
+      "FieldQuery": "select user.col from user where 1 != 1"
+    },
+    "Right": {
+      "Opcode": "SelectScatter",
+      "Keyspace": {
+        "Name": "user",
+        "Sharded": true
+      },
+      "Query": "select /* comment */ 1 from user_extra",
+      "FieldQuery": "select 1 from user_extra where 1 != 1"
+    },
+    "Cols": [
+      -1
+    ]
+  }
+}
+
+# for update
+"select user.col from user join user_extra for update"
+{
+  "Original": "select user.col from user join user_extra for update",
+  "Instructions": {
+    "Opcode": "Join",
+    "Left": {
+      "Opcode": "SelectScatter",
+      "Keyspace": {
+        "Name": "user",
+        "Sharded": true
+      },
+      "Query": "select user.col from user for update",
+      "FieldQuery": "select user.col from user where 1 != 1"
+    },
+    "Right": {
+      "Opcode": "SelectScatter",
+      "Keyspace": {
+        "Name": "user",
+        "Sharded": true
+      },
+      "Query": "select 1 from user_extra for update",
+      "FieldQuery": "select 1 from user_extra where 1 != 1"
+    },
+    "Cols": [
+      -1
+    ]
+  }
+}
+
+# Field query should work for joins select bind vars
+"select user.id, (select user.id+outm.m+main1.m from main1) from user join main1 outm"
+{
+  "Original": "select user.id, (select user.id+outm.m+main1.m from main1) from user join main1 outm",
+  "Instructions": {
+    "Opcode": "Join",
+    "Left": {
+      "Opcode": "SelectScatter",
+      "Keyspace": {
+        "Name": "user",
+        "Sharded": true
+      },
+      "Query": "select user.id from user",
+      "FieldQuery": "select user.id from user where 1 != 1"
+    },
+    "Right": {
+      "Opcode": "SelectUnsharded",
+      "Keyspace": {
+        "Name": "main",
+        "Sharded": false
+      },
+      "Query": "select (select :user_id + outm.m + main1.m from main1) from main1 as outm",
+      "FieldQuery": "select (select :user_id + outm.m + main1.m from main1 where 1 != 1) from main1 as outm where 1 != 1",
+      "JoinVars": {
+        "user_id": {}
+      }
+    },
+    "Cols": [
+      -1,
+      1
+    ],
+    "Vars": {
+      "user_id": 0
+    }
+  }
+}
+
+# Case preservation
+"select user.Col, user_extra.Id from user join user_extra"
+{
+  "Original": "select user.Col, user_extra.Id from user join user_extra",
+  "Instructions": {
+    "Opcode": "Join",
+    "Left": {
+      "Opcode": "SelectScatter",
+      "Keyspace": {
+        "Name": "user",
+        "Sharded": true
+      },
+      "Query": "select user.Col from user",
+      "FieldQuery": "select user.Col from user where 1 != 1"
+    },
+    "Right": {
+      "Opcode": "SelectScatter",
+      "Keyspace": {
+        "Name": "user",
+        "Sharded": true
+      },
+      "Query": "select user_extra.Id from user_extra",
+      "FieldQuery": "select user_extra.Id from user_extra where 1 != 1"
+    },
+    "Cols": [
+      -1,
+      1
+    ]
+  }
+}
+
+# syntax error
+"the quick brown fox"
+"syntax error at position 4 near 'the'"

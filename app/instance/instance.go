@@ -36,7 +36,7 @@ type DbHandler interface {
 }
 
 // --------------------------------------------------------------------------
-
+// Deprecated: due to migration to sqlite and clickhouse
 func GetInstanceId(db *sql.DB, uuid string) (uint, error) {
 	if uuid == "" {
 		return 0, nil
@@ -62,6 +62,7 @@ func NewMySQLHandler(dbm db.Manager) *MySQLHandler {
 	return n
 }
 
+// Deprecated: due to migration to sqlite and clickhouse
 func (h *MySQLHandler) Create(in proto.Instance) (uint, error) {
 	if in.ParentUUID != "" {
 		id, err := GetInstanceId(h.dbm.DB(), in.ParentUUID)
@@ -99,6 +100,7 @@ func (h *MySQLHandler) Create(in proto.Instance) (uint, error) {
 	return uint(id), nil
 }
 
+// Deprecated: due to migration to sqlite and clickhouse
 func (h *MySQLHandler) Get(uuid string) (uint, *proto.Instance, error) {
 	query := "SELECT subsystem_id, instance_id, parent_uuid, uuid, dsn, name, distro, version, created, deleted" +
 		" FROM instances" +
@@ -106,6 +108,7 @@ func (h *MySQLHandler) Get(uuid string) (uint, *proto.Instance, error) {
 	return h.getInstance(query, uuid)
 }
 
+// Deprecated: due to migration to sqlite and clickhouse
 func (h *MySQLHandler) GetByName(subsystem, name, parentUUID string) (uint, *proto.Instance, error) {
 	s, err := GetSubsystemByName(subsystem)
 	if err != nil {
@@ -124,6 +127,7 @@ func (h *MySQLHandler) GetByName(subsystem, name, parentUUID string) (uint, *pro
 	return h.getInstance(query, s.Id, name)
 }
 
+// Deprecated: due to migration to sqlite and clickhouse
 func (h *MySQLHandler) GetAll() ([]proto.Instance, error) {
 	query := "SELECT subsystem_id, instance_id, parent_uuid, uuid, dsn, name, distro, version, created, deleted" +
 		" FROM instances " +

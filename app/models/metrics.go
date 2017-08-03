@@ -9,27 +9,35 @@ import (
 	"time"
 )
 
-// Metrics provire instruments to works with metrics
-type metrics struct{}
+type (
 
-// Metrics instance of metrics model
-var Metrics = metrics{}
+	// MetricsManager provire instruments to works with metrics
+	MetricsManager struct {
+		conns *ConnectionsPool
+	}
 
-type metricGroup struct {
-	Basic             bool
-	PerconaServer     bool `db:"percona_server"`
-	PerformanceSchema bool `db:"performance_schema"`
-	ServerSummary     bool
-	CountField        string
-}
+	metricGroup struct {
+		Basic             bool
+		PerconaServer     bool `db:"percona_server"`
+		PerformanceSchema bool `db:"performance_schema"`
+		ServerSummary     bool
+		CountField        string
+	}
 
-type args struct {
-	ClassID    uint `db:"class_id"`
-	InstanceID uint `db:"instance_id"`
-	Begin      time.Time
-	End        time.Time
-	EndTS      int64 `db:"end_ts"`
-	IntervalTS int64 `db:"interval_ts"`
+	args struct {
+		ClassID    uint `db:"class_id"`
+		InstanceID uint `db:"instance_id"`
+		Begin      time.Time
+		End        time.Time
+		EndTS      int64 `db:"end_ts"`
+		IntervalTS int64 `db:"interval_ts"`
+	}
+)
+
+// NewMetricsManager instance of metrics model
+func NewMetricsManager(connsPool interface{}) MetricsManager {
+	conns := connsPool.(*ConnectionsPool)
+	return MetricsManager{conns}
 }
 
 const metricGroupQuery = `
@@ -48,7 +56,7 @@ SELECT
         LIMIT 1), false) AS performance_schema;
 `
 
-func (m metrics) identifyMetricGroup(instanceID uint, begin, end time.Time) metricGroup {
+func (m MetricsManager) identifyMetricGroup(instanceID uint, begin, end time.Time) metricGroup {
 	currentMetricGroup := metricGroup{}
 	currentMetricGroup.CountField = "query_count"
 	args := struct {
@@ -61,7 +69,7 @@ func (m metrics) identifyMetricGroup(instanceID uint, begin, end time.Time) metr
 		end,
 	}
 
-	if nstmt, err := db.PrepareNamed(metricGroupQuery); err != nil {
+	if nstmt, err := m.conns.MySQL.PrepareNamed(metricGroupQuery); err != nil {
 		log.Fatalln(err)
 	} else if err = nstmt.Get(&currentMetricGroup, args); err != nil {
 		log.Fatalln(err)
@@ -78,7 +86,7 @@ type classMetrics struct {
 }
 
 // GetClassMetrics return metrics for given instance and query class
-func (m metrics) GetClassMetrics(classID, instanceID uint, begin, end time.Time) (classMetrics, []rateMetrics) {
+func (m MetricsManager) GetClassMetrics(classID, instanceID uint, begin, end time.Time) (classMetrics, []rateMetrics) {
 	currentMetricGroup := m.identifyMetricGroup(instanceID, begin, end)
 	currentMetricGroup.CountField = "query_count"
 	endTs := end.Unix()
@@ -120,7 +128,7 @@ type globalMetrics struct {
 }
 
 // GetGlobalMetrics return metrics for given instance
-func (m metrics) GetGlobalMetrics(instanceID uint, begin, end time.Time) (globalMetrics, []rateMetrics) {
+func (m MetricsManager) GetGlobalMetrics(instanceID uint, begin, end time.Time) (globalMetrics, []rateMetrics) {
 	currentMetricGroup := m.identifyMetricGroup(instanceID, begin, end)
 	currentMetricGroup.ServerSummary = true
 	currentMetricGroup.CountField = "total_query_count"
@@ -148,7 +156,7 @@ func (m metrics) GetGlobalMetrics(instanceID uint, begin, end time.Time) (global
 	return globalMetrics, sparks
 }
 
-func (m metrics) getMetrics(group metricGroup, args args) generalMetrics {
+func (m MetricsManager) getMetrics(group metricGroup, args args) generalMetrics {
 	var queryClassMetricsBuffer bytes.Buffer
 	if tmpl, err := template.New("queryClassMetricsSQL").Parse(queryClassMetricsTemplate); err != nil {
 		log.Fatalln(err)
@@ -158,7 +166,7 @@ func (m metrics) getMetrics(group metricGroup, args args) generalMetrics {
 
 	queryClassMetricsSQL := queryClassMetricsBuffer.String()
 	gMetrics := generalMetrics{}
-	if nstmt, err := db.PrepareNamed(queryClassMetricsSQL); err != nil {
+	if nstmt, err := m.conns.MySQL.PrepareNamed(queryClassMetricsSQL); err != nil {
 		log.Fatalln(err)
 	} else if err = nstmt.Get(&gMetrics, args); err != nil {
 		log.Fatalln(err)
@@ -169,7 +177,7 @@ func (m metrics) getMetrics(group metricGroup, args args) generalMetrics {
 
 const amountOfPoints = 60
 
-func (m metrics) getSparklines(group metricGroup, args args) []rateMetrics {
+func (m MetricsManager) getSparklines(group metricGroup, args args) []rateMetrics {
 	var querySparklinesBuffer bytes.Buffer
 	if tmpl, err := template.New("querySparklinesSQL").Parse(querySparklinesTemplate); err != nil {
 		log.Fatalln(err)
@@ -179,7 +187,7 @@ func (m metrics) getSparklines(group metricGroup, args args) []rateMetrics {
 
 	querySparklinesSQL := querySparklinesBuffer.String()
 	var sparksWithGaps []rateMetrics
-	if nstmt, err := db.PrepareNamed(querySparklinesSQL); err != nil {
+	if nstmt, err := m.conns.MySQL.PrepareNamed(querySparklinesSQL); err != nil {
 		log.Fatalln(err)
 	} else if err = nstmt.Select(&sparksWithGaps, args); err != nil {
 		log.Fatalln(err)
@@ -207,7 +215,7 @@ func (m metrics) getSparklines(group metricGroup, args args) []rateMetrics {
 	return sparks
 }
 
-func (m metrics) computeOfTotal(classMetrics, globalMetrics generalMetrics) metricsPercentOfTotal {
+func (m MetricsManager) computeOfTotal(classMetrics, globalMetrics generalMetrics) metricsPercentOfTotal {
 	mPercentOfTotal := metricsPercentOfTotal{}
 	reflectPercentOfTotal := reflect.ValueOf(&mPercentOfTotal).Elem()
 	reflectClassMetrics := reflect.ValueOf(&classMetrics).Elem()
@@ -226,7 +234,7 @@ func (m metrics) computeOfTotal(classMetrics, globalMetrics generalMetrics) metr
 	return mPercentOfTotal
 }
 
-func (m metrics) computeRateMetrics(gMetrics generalMetrics, begin, end time.Time) rateMetrics {
+func (m MetricsManager) computeRateMetrics(gMetrics generalMetrics, begin, end time.Time) rateMetrics {
 	duration := end.Sub(begin).Seconds()
 	aMetrics := rateMetrics{}
 	reflectionAdittionalMetrics := reflect.ValueOf(&aMetrics).Elem()
@@ -244,7 +252,7 @@ func (m metrics) computeRateMetrics(gMetrics generalMetrics, begin, end time.Tim
 	return aMetrics
 }
 
-func (m metrics) computeSpecialMetrics(gMetrics generalMetrics) specialMetrics {
+func (m MetricsManager) computeSpecialMetrics(gMetrics generalMetrics) specialMetrics {
 	sMetrics := specialMetrics{}
 	reflectionSpecialMetrics := reflect.ValueOf(&sMetrics).Elem()
 	reflectionGeneralMetrics := reflect.ValueOf(&gMetrics).Elem()

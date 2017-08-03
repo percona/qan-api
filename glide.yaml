@@ -1,0 +1,39 @@
+package: github.com/percona/qan-api
+import:
+- package: github.com/cactus/go-statsd-client
+  subpackages:
+  - statsd
+- package: github.com/go-sql-driver/mysql
+- package: github.com/hashicorp/go-version
+- package: github.com/jmoiron/sqlx
+- package: github.com/nu7hatch/gouuid
+- package: github.com/percona/go-mysql
+  subpackages:
+  - event
+- package: github.com/percona/pmm
+  subpackages:
+  - proto
+  - proto/config
+  - proto/metrics
+  - proto/qan
+  - proto/query
+- package: github.com/revel/cmd
+  subpackages:
+  - revel
+- package: github.com/revel/revel
+- package: github.com/robfig/config
+- package: github.com/youtube/vitess
+  version: f729316a75213a533287dfe100b4a81177629b15
+  subpackages:
+  - go/vt/sqlparser
+- package: golang.org/x/net
+  subpackages:
+  - websocket
+- package: gopkg.in/check.v1
+- package: github.com/revel/modules
+  subpackages:
+  - testrunner/app/controllers
+- package: github.com/mattn/go-sqlite3
+  version: v1.2.0
+- package: github.com/kshvakov/clickhouse
+  version: v1

@@ -6,7 +6,5 @@ revel-build.log
 todo/
 tmp/
 app/routes/routes.go
-vendor/
-!vendor/vendor.json
 distro/
 docs/docs
