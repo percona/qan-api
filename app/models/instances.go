@@ -30,8 +30,8 @@ import (
 )
 
 // InstanceManager contains methods to work with DB, server, agent instances;
-type InstanceManager struct{
-    conns *ConnectionsPool
+type InstanceManager struct {
+	conns *ConnectionsPool
 }
 
 // NewInstanceManager returns InstanceManager with db connections pool.
@@ -77,7 +77,7 @@ func (ss *SubSystem) Value() (driver.Value, error) {
 }
 
 // GetAll select not deleted instances.
-func (instanceMgr InstanceManager) GetAll() ([]Instance, error) {
+func (instanceMgr InstanceManager) GetAll() (*[]Instance, error) {
 	const queryGetAllInstances = `
 		SELECT subsystem_id, instance_id, parent_uuid, uuid, dsn, name, distro, version, created, deleted
 			FROM instances
@@ -87,7 +87,7 @@ func (instanceMgr InstanceManager) GetAll() ([]Instance, error) {
 	instances := []Instance{}
 	log.Println("Query from sqlite")
 	err := instanceMgr.conns.SQLite.Select(&instances, queryGetAllInstances)
-	return instances, err
+	return &instances, err
 }
 
 // GetByName select instace by subsystem type instance name and optionaly by parrent UUID

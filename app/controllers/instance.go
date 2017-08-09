@@ -40,7 +40,7 @@ func (c *Instance) List() revel.Result {
 	c.Params.Bind(&instanceType, "type")
 	c.Params.Bind(&instanceName, "name")
 	c.Params.Bind(&parentUUID, "parent_uuid")
-        instanceMgr := models.NewInstanceManager(c.Args["connsPool"])
+	instanceMgr := models.NewInstanceManager(c.Args["connsPool"])
 	if instanceType != "" && instanceName != "" {
 		_, in, err := instanceMgr.GetByName(instanceType, instanceName, parentUUID)
 		if err != nil {
@@ -66,40 +66,44 @@ func (c *Instance) Create() revel.Result {
 		return c.BadRequest(nil, "empty body (no data posted)")
 	}
 
-	in := models.Instance{}
-	err = json.Unmarshal(body, &in)
+	inst := models.Instance{}
+	err = json.Unmarshal(body, &inst)
 	if err != nil {
 		return c.BadRequest(err, "cannot decode proto.Instance")
 	}
-        instanceMgr := models.NewInstanceManager(c.Args["connsPool"])
-	if &in.ParentUUID != nil {
-		id, err := instanceMgr.GetInstanceID(*in.ParentUUID)
+	instanceMgr := models.NewInstanceManager(c.Args["connsPool"])
+	if &inst.ParentUUID != nil {
+		id, err := instanceMgr.GetInstanceID(*inst.ParentUUID)
 		if err != nil || id == 0 {
 			return c.BadRequest(err, "Invalid parent uuid")
 		}
 	}
 
-	if _, err := instanceMgr.Create(in); err != nil {
-		if err == shared.ErrDuplicateEntry {
-			id, _ := instanceMgr.GetInstanceID(in.UUID)
-			if id == 0 {
-				_, in2, err := instanceMgr.GetByName(string(in.Subsystem), in.Name, "")
-				if err != nil {
-					return c.Error(err, "Instance.Create: models.InstanceManager.GetByName")
-				}
-				in = *in2
-			}
-			uri := c.Args["httpBase"].(string) + "/instances/" + in.UUID
-			c.Response.Out.Header().Set("Location", uri)
-		}
+	_, err = instanceMgr.Create(inst)
+	if err != nil && err != shared.ErrDuplicateEntry {
 		return c.Error(err, "Instance.Create: models.InstanceManager.Create")
 	}
-	return c.RenderCreated(c.Args["httpBase"].(string) + "/instances/" + in.UUID)
+
+	// TODO: investigate references and simplify
+	if err == shared.ErrDuplicateEntry {
+		id, _ := instanceMgr.GetInstanceID(inst.UUID)
+		if id == 0 {
+			_, inst2, err := instanceMgr.GetByName(string(inst.Subsystem), inst.Name, "")
+			if err != nil {
+				return c.Error(err, "Instance.Create: models.InstanceManager.GetByName")
+			}
+			inst = *inst2
+		}
+		uri := c.Args["httpBase"].(string) + "/instances/" + inst.UUID
+		c.Response.Out.Header().Set("Location", uri)
+	}
+
+	return c.RenderCreated(c.Args["httpBase"].(string) + "/instances/" + inst.UUID)
 }
 
 // Get uses for GET /instances/:uuid
 func (c *Instance) Get(uuid string) revel.Result {
-        instanceMgr := models.NewInstanceManager(c.Args["connsPool"])
+	instanceMgr := models.NewInstanceManager(c.Args["connsPool"])
 	_, instance, err := instanceMgr.Get(uuid)
 	if err != nil {
 		return c.Error(err, "Instance.Get: models.InstanceManager.Get")

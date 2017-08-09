@@ -43,6 +43,7 @@ func NewConnectionsPool() *ConnectionsPool {
 
 	clickhouseDsn := config.Get("clickhouse.dsn")
 	conns.ClickHouse, err = sqlx.Open("clickhouse", clickhouseDsn)
+	conns.ClickHouse.Ping()
 	if err != nil {
 		log.Fatal(err)
 	} else {

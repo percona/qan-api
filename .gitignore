@@ -8,3 +8,6 @@ tmp/
 app/routes/routes.go
 distro/
 docs/docs
+pmm.db
+.vscode/
+.DS_Store

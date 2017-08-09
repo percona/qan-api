@@ -2,6 +2,7 @@ package models
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"reflect"
 	"strings"
@@ -16,7 +17,8 @@ type (
 		conns *ConnectionsPool
 	}
 
-	metricGroup struct {
+	// MetricGroup uses to build query depend on db instance type
+	MetricGroup struct {
 		Basic             bool
 		PerconaServer     bool `db:"percona_server"`
 		PerformanceSchema bool `db:"performance_schema"`
@@ -35,29 +37,38 @@ type (
 )
 
 // NewMetricsManager instance of metrics model
-func NewMetricsManager(connsPool interface{}) MetricsManager {
+func NewMetricsManager(connsPool interface{}) *MetricsManager {
 	conns := connsPool.(*ConnectionsPool)
-	return MetricsManager{conns}
+	return &MetricsManager{conns}
 }
 
 const metricGroupQuery = `
-SELECT
-    IFNULL((SELECT true FROM query_global_metrics
-        WHERE instance_id = :instance_id AND (start_ts >= :begin AND start_ts < :end)
-        AND Query_time_sum IS NOT NULL
-        LIMIT 1), false) AS basic,
-    IFNULL((SELECT true FROM query_global_metrics
-        WHERE instance_id = :instance_id AND (start_ts >= :begin AND start_ts < :end)
-        AND Rows_affected_sum IS NOT NULL
-        LIMIT 1), false) AS percona_server,
-    IFNULL((SELECT true FROM query_global_metrics
-        WHERE instance_id = :instance_id AND (start_ts >= :begin AND start_ts < :end)
-        AND Errors_sum IS NOT NULL
-        LIMIT 1), false) AS performance_schema;
+	SELECT
+    ifNull(
+    (
+        SELECT 1
+        FROM query_class_metrics
+        WHERE (instance_id = :instance_id) AND ((start_ts >= toDateTime(:begin)) AND (start_ts < toDateTime(:end))) AND (Query_time_sum > 0)
+        LIMIT 1
+    ), 0) AS basic,
+    ifNull(
+    (
+        SELECT 1
+        FROM query_class_metrics
+        WHERE (instance_id = :instance_id) AND ((start_ts >= toDateTime(:begin)) AND (start_ts < toDateTime(:end))) AND (Rows_affected_sum > 0)
+        LIMIT 1
+    ), 0) AS percona_server,
+    ifNull(
+    (
+        SELECT 1
+        FROM query_class_metrics
+        WHERE (instance_id = :instance_id) AND ((start_ts >= toDateTime(:begin)) AND (start_ts < toDateTime(:end))) AND (Errors_sum > 0)
+        LIMIT 1
+    ), 0) AS performance_schema;
 `
 
-func (m MetricsManager) identifyMetricGroup(instanceID uint, begin, end time.Time) metricGroup {
-	currentMetricGroup := metricGroup{}
+func (m *MetricsManager) identifyMetricGroup(instanceID uint, begin, end time.Time) *MetricGroup {
+	currentMetricGroup := MetricGroup{}
 	currentMetricGroup.CountField = "query_count"
 	args := struct {
 		InstanceID uint `db:"instance_id"`
@@ -69,24 +80,30 @@ func (m MetricsManager) identifyMetricGroup(instanceID uint, begin, end time.Tim
 		end,
 	}
 
-	if nstmt, err := m.conns.MySQL.PrepareNamed(metricGroupQuery); err != nil {
+	fmt.Println("===========================")
+	fmt.Println(metricGroupQuery)
+	fmt.Println("===========================")
+	fmt.Printf("bb: %+v \n", args)
+	fmt.Println("===========================")
+	if nstmt, err := m.conns.ClickHouse.PrepareNamed(metricGroupQuery); err != nil {
 		log.Fatalln(err)
 	} else if err = nstmt.Get(&currentMetricGroup, args); err != nil {
 		log.Fatalln(err)
 	}
 
-	return currentMetricGroup
+	return &currentMetricGroup
 }
 
-type classMetrics struct {
-	generalMetrics
-	metricsPercentOfTotal
-	rateMetrics
-	specialMetrics
+// ClassMetrics all mertics
+type ClassMetrics struct {
+	*GeneralMetrics
+	*MetricsPercentOfTotal
+	*RateMetrics
+	*SpecialMetrics
 }
 
 // GetClassMetrics return metrics for given instance and query class
-func (m MetricsManager) GetClassMetrics(classID, instanceID uint, begin, end time.Time) (classMetrics, []rateMetrics) {
+func (m *MetricsManager) GetClassMetrics(classID, instanceID uint, begin, end time.Time) (*ClassMetrics, *[]RateMetrics) {
 	currentMetricGroup := m.identifyMetricGroup(instanceID, begin, end)
 	currentMetricGroup.CountField = "query_count"
 	endTs := end.Unix()
@@ -112,26 +129,27 @@ func (m MetricsManager) GetClassMetrics(classID, instanceID uint, begin, end tim
 	aMetrics := m.computeRateMetrics(generalClassMetrics, begin, end)
 	sMetrics := m.computeSpecialMetrics(generalClassMetrics)
 
-	classMetrics := classMetrics{
-		generalMetrics:        generalClassMetrics,
-		metricsPercentOfTotal: classMetricsOfTotal,
-		rateMetrics:           aMetrics,
-		specialMetrics:        sMetrics,
+	classMetrics := ClassMetrics{
+		GeneralMetrics:        generalClassMetrics,
+		MetricsPercentOfTotal: classMetricsOfTotal,
+		RateMetrics:           aMetrics,
+		SpecialMetrics:        sMetrics,
 	}
-	return classMetrics, sparks
+	return &classMetrics, sparks
 }
 
-type globalMetrics struct {
-	generalMetrics
-	rateMetrics
-	specialMetrics
+// GlobalMetrics include all metrics
+type GlobalMetrics struct {
+	*GeneralMetrics
+	*RateMetrics
+	*SpecialMetrics
 }
 
 // GetGlobalMetrics return metrics for given instance
-func (m MetricsManager) GetGlobalMetrics(instanceID uint, begin, end time.Time) (globalMetrics, []rateMetrics) {
+func (m *MetricsManager) GetGlobalMetrics(instanceID uint, begin, end time.Time) (*GlobalMetrics, *[]RateMetrics) {
 	currentMetricGroup := m.identifyMetricGroup(instanceID, begin, end)
 	currentMetricGroup.ServerSummary = true
-	currentMetricGroup.CountField = "total_query_count"
+	currentMetricGroup.CountField = "query_count" /// TODO: might be rudimental
 	endTs := end.Unix()
 	intervalTs := (endTs - begin.Unix()) / (amountOfPoints - 1)
 	args := args{
@@ -148,15 +166,15 @@ func (m MetricsManager) GetGlobalMetrics(instanceID uint, begin, end time.Time) 
 
 	aMetrics := m.computeRateMetrics(generalGlobalMetrics, begin, end)
 	sMetrics := m.computeSpecialMetrics(generalGlobalMetrics)
-	globalMetrics := globalMetrics{
+	globalMetrics := GlobalMetrics{
 		generalGlobalMetrics,
 		aMetrics,
 		sMetrics,
 	}
-	return globalMetrics, sparks
+	return &globalMetrics, sparks
 }
 
-func (m MetricsManager) getMetrics(group metricGroup, args args) generalMetrics {
+func (m *MetricsManager) getMetrics(group *MetricGroup, args args) *GeneralMetrics {
 	var queryClassMetricsBuffer bytes.Buffer
 	if tmpl, err := template.New("queryClassMetricsSQL").Parse(queryClassMetricsTemplate); err != nil {
 		log.Fatalln(err)
@@ -165,19 +183,19 @@ func (m MetricsManager) getMetrics(group metricGroup, args args) generalMetrics 
 	}
 
 	queryClassMetricsSQL := queryClassMetricsBuffer.String()
-	gMetrics := generalMetrics{}
-	if nstmt, err := m.conns.MySQL.PrepareNamed(queryClassMetricsSQL); err != nil {
+	gMetrics := GeneralMetrics{}
+	if nstmt, err := m.conns.ClickHouse.PrepareNamed(queryClassMetricsSQL); err != nil {
 		log.Fatalln(err)
 	} else if err = nstmt.Get(&gMetrics, args); err != nil {
 		log.Fatalln(err)
 	}
 
-	return gMetrics
+	return &gMetrics
 }
 
 const amountOfPoints = 60
 
-func (m MetricsManager) getSparklines(group metricGroup, args args) []rateMetrics {
+func (m *MetricsManager) getSparklines(group *MetricGroup, args args) *[]RateMetrics {
 	var querySparklinesBuffer bytes.Buffer
 	if tmpl, err := template.New("querySparklinesSQL").Parse(querySparklinesTemplate); err != nil {
 		log.Fatalln(err)
@@ -186,14 +204,14 @@ func (m MetricsManager) getSparklines(group metricGroup, args args) []rateMetric
 	}
 
 	querySparklinesSQL := querySparklinesBuffer.String()
-	var sparksWithGaps []rateMetrics
-	if nstmt, err := m.conns.MySQL.PrepareNamed(querySparklinesSQL); err != nil {
+	var sparksWithGaps []RateMetrics
+	if nstmt, err := m.conns.ClickHouse.PrepareNamed(querySparklinesSQL); err != nil {
 		log.Fatalln(err)
 	} else if err = nstmt.Select(&sparksWithGaps, args); err != nil {
 		log.Fatalln(err)
 	}
 
-	metricLogRaw := make(map[int64]rateMetrics)
+	metricLogRaw := make(map[int64]RateMetrics)
 
 	for i := range sparksWithGaps {
 		key := sparksWithGaps[i].Ts.Unix()
@@ -201,25 +219,25 @@ func (m MetricsManager) getSparklines(group metricGroup, args args) []rateMetric
 	}
 
 	// fills up gaps in sparklines by zero values
-	var sparks []rateMetrics
+	var sparks []RateMetrics
 	var pointN int64
 	for pointN = 0; pointN < amountOfPoints; pointN++ {
 		ts := args.EndTS - pointN*args.IntervalTS
 		if val, ok := metricLogRaw[ts]; ok {
 			sparks = append(sparks, val)
 		} else {
-			val := rateMetrics{Point: pointN, Ts: time.Unix(ts, 0).UTC()}
+			val := RateMetrics{Point: pointN, Ts: time.Unix(ts, 0).UTC()}
 			sparks = append(sparks, val)
 		}
 	}
-	return sparks
+	return &sparks
 }
 
-func (m MetricsManager) computeOfTotal(classMetrics, globalMetrics generalMetrics) metricsPercentOfTotal {
-	mPercentOfTotal := metricsPercentOfTotal{}
+func (m *MetricsManager) computeOfTotal(classMetrics, globalMetrics *GeneralMetrics) *MetricsPercentOfTotal {
+	mPercentOfTotal := MetricsPercentOfTotal{}
 	reflectPercentOfTotal := reflect.ValueOf(&mPercentOfTotal).Elem()
-	reflectClassMetrics := reflect.ValueOf(&classMetrics).Elem()
-	reflectGlobalMetrics := reflect.ValueOf(&globalMetrics).Elem()
+	reflectClassMetrics := reflect.ValueOf(classMetrics).Elem()
+	reflectGlobalMetrics := reflect.ValueOf(globalMetrics).Elem()
 
 	for i := 0; i < reflectPercentOfTotal.NumField(); i++ {
 		fieldName := reflectPercentOfTotal.Type().Field(i).Name
@@ -231,14 +249,14 @@ func (m MetricsManager) computeOfTotal(classMetrics, globalMetrics generalMetric
 		}
 		reflectPercentOfTotal.FieldByName(fieldName).SetFloat(n)
 	}
-	return mPercentOfTotal
+	return &mPercentOfTotal
 }
 
-func (m MetricsManager) computeRateMetrics(gMetrics generalMetrics, begin, end time.Time) rateMetrics {
+func (m *MetricsManager) computeRateMetrics(gMetrics *GeneralMetrics, begin, end time.Time) *RateMetrics {
 	duration := end.Sub(begin).Seconds()
-	aMetrics := rateMetrics{}
+	aMetrics := RateMetrics{}
 	reflectionAdittionalMetrics := reflect.ValueOf(&aMetrics).Elem()
-	reflectionGeneralMetrics := reflect.ValueOf(&gMetrics).Elem()
+	reflectionGeneralMetrics := reflect.ValueOf(gMetrics).Elem()
 
 	for i := 0; i < reflectionAdittionalMetrics.NumField(); i++ {
 		fieldName := reflectionAdittionalMetrics.Type().Field(i).Name
@@ -249,13 +267,13 @@ func (m MetricsManager) computeRateMetrics(gMetrics generalMetrics, begin, end t
 			reflectionAdittionalMetrics.FieldByName(fieldName).SetFloat(metricVal / duration)
 		}
 	}
-	return aMetrics
+	return &aMetrics
 }
 
-func (m MetricsManager) computeSpecialMetrics(gMetrics generalMetrics) specialMetrics {
-	sMetrics := specialMetrics{}
+func (m *MetricsManager) computeSpecialMetrics(gMetrics *GeneralMetrics) *SpecialMetrics {
+	sMetrics := SpecialMetrics{}
 	reflectionSpecialMetrics := reflect.ValueOf(&sMetrics).Elem()
-	reflectionGeneralMetrics := reflect.ValueOf(&gMetrics).Elem()
+	reflectionGeneralMetrics := reflect.ValueOf(gMetrics).Elem()
 
 	for i := 0; i < reflectionSpecialMetrics.NumField(); i++ {
 		field := reflectionSpecialMetrics.Type().Field(i)
@@ -269,10 +287,11 @@ func (m MetricsManager) computeSpecialMetrics(gMetrics generalMetrics) specialMe
 		}
 		reflectionSpecialMetrics.FieldByName(fieldName).SetFloat(dividend / divider)
 	}
-	return sMetrics
+	return &sMetrics
 }
 
-type specialMetrics struct {
+// SpecialMetrics specific metrics
+type SpecialMetrics struct {
 	Lock_time_avg_per_query_time                 float32 `json:",omitempty" divider:"Query_time_avg"`
 	InnoDB_rec_lock_wait_avg_per_query_time      float32 `json:",omitempty" divider:"Query_time_avg"`
 	InnoDB_IO_r_wait_avg_per_query_time          float32 `json:",omitempty" divider:"Query_time_avg"`
@@ -293,7 +312,8 @@ type specialMetrics struct {
 	Tmp_table_sizes_sum_per_query                float32 `json:",omitempty" divider:"Query_count"`
 }
 
-type rateMetrics struct {
+// RateMetrics is metrics divided by time period
+type RateMetrics struct {
 	Point                            int64
 	Ts                               time.Time
 	Query_count_per_sec              float32 `json:",omitempty"`
@@ -335,7 +355,7 @@ type rateMetrics struct {
 	No_good_index_used_sum_per_sec     float32 `json:",omitempty"`
 }
 
-type metricsPercentOfTotal struct {
+type MetricsPercentOfTotal struct {
 	Query_count_of_total       float32
 	Query_time_sum_of_total    float32
 	Lock_time_sum_of_total     float32
@@ -382,9 +402,9 @@ type metricsPercentOfTotal struct {
 	// 10
 }
 
+// GeneralMetrics is common metrics for usual query classes
 // 34
-
-type generalMetrics struct {
+type GeneralMetrics struct {
 
 	/*  Basic metrics */
 
