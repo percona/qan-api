@@ -2,7 +2,6 @@ package models
 
 import (
 	"bytes"
-	"fmt"
 	"log"
 	"reflect"
 	"strings"
@@ -27,12 +26,12 @@ type (
 	}
 
 	args struct {
-		ClassID    uint `db:"class_id"`
-		InstanceID uint `db:"instance_id"`
-		Begin      time.Time
-		End        time.Time
-		EndTS      int64 `db:"end_ts"`
-		IntervalTS int64 `db:"interval_ts"`
+		ClassID    uint      `db:"class_id"`
+		InstanceID uint      `db:"instance_id"`
+		Begin      time.Time `db:"begin"`
+		End        time.Time `db:"end"`
+		EndTS      int64     `db:"end_ts"`
+		IntervalTS int64     `db:"interval_ts"`
 	}
 )
 
@@ -79,12 +78,6 @@ func (m *MetricsManager) identifyMetricGroup(instanceID uint, begin, end time.Ti
 		begin,
 		end,
 	}
-
-	fmt.Println("===========================")
-	fmt.Println(metricGroupQuery)
-	fmt.Println("===========================")
-	fmt.Printf("bb: %+v \n", args)
-	fmt.Println("===========================")
 	if nstmt, err := m.conns.ClickHouse.PrepareNamed(metricGroupQuery); err != nil {
 		log.Fatalln(err)
 	} else if err = nstmt.Get(&currentMetricGroup, args); err != nil {
@@ -149,7 +142,6 @@ type GlobalMetrics struct {
 func (m *MetricsManager) GetGlobalMetrics(instanceID uint, begin, end time.Time) (*GlobalMetrics, *[]RateMetrics) {
 	currentMetricGroup := m.identifyMetricGroup(instanceID, begin, end)
 	currentMetricGroup.ServerSummary = true
-	currentMetricGroup.CountField = "query_count" /// TODO: might be rudimental
 	endTs := end.Unix()
 	intervalTs := (endTs - begin.Unix()) / (amountOfPoints - 1)
 	args := args{
@@ -202,15 +194,14 @@ func (m *MetricsManager) getSparklines(group *MetricGroup, args args) *[]RateMet
 	} else if err = tmpl.Execute(&querySparklinesBuffer, group); err != nil {
 		log.Fatalln(err)
 	}
-
 	querySparklinesSQL := querySparklinesBuffer.String()
 	var sparksWithGaps []RateMetrics
+
 	if nstmt, err := m.conns.ClickHouse.PrepareNamed(querySparklinesSQL); err != nil {
 		log.Fatalln(err)
 	} else if err = nstmt.Select(&sparksWithGaps, args); err != nil {
 		log.Fatalln(err)
 	}
-
 	metricLogRaw := make(map[int64]RateMetrics)
 
 	for i := range sparksWithGaps {
@@ -408,7 +399,7 @@ type GeneralMetrics struct {
 
 	/*  Basic metrics */
 
-	Query_count       float32
+	Query_count       float32 // lint: ignore
 	Query_time_sum    float32
 	Query_time_min    float32
 	Query_time_avg    float32
@@ -536,207 +527,191 @@ type GeneralMetrics struct {
 const queryClassMetricsTemplate = `
 SELECT
 
-{{ if .Basic }}
- /*  Basic metrics */
+	{{ if .Basic }}
+	/*  Basic metrics */
 
- COALESCE(SUM({{ .CountField }}), 0) AS query_count,
- COALESCE(SUM(Query_time_sum), 0) AS query_time_sum,
- COALESCE(MIN(Query_time_min), 0) AS query_time_min,
- COALESCE(AVG(Query_time_avg), 0) AS query_time_avg,
- COALESCE(AVG(Query_time_med), 0) AS query_time_med,
- COALESCE(AVG(Query_time_p95), 0) AS query_time_p95,
- COALESCE(MAX(Query_time_max), 0) AS query_time_max,
- COALESCE(SUM(Lock_time_sum), 0) AS lock_time_sum,
- COALESCE(MIN(Lock_time_min), 0) AS lock_time_min,
- COALESCE(AVG(Lock_time_avg), 0) AS lock_time_avg,
- COALESCE(AVG(Lock_time_med), 0) AS lock_time_med,
- COALESCE(AVG(Lock_time_p95), 0) AS lock_time_p95,
- COALESCE(MAX(Lock_time_max), 0) AS lock_time_max,
- COALESCE(SUM(Rows_sent_sum), 0) AS rows_sent_sum,
- COALESCE(MIN(Rows_sent_min), 0) AS rows_sent_min,
- COALESCE(AVG(Rows_sent_avg), 0) AS rows_sent_avg,
- COALESCE(AVG(Rows_sent_med), 0) AS rows_sent_med,
- COALESCE(AVG(Rows_sent_p95), 0) AS rows_sent_p95,
- COALESCE(MAX(Rows_sent_max), 0) AS rows_sent_max,
- COALESCE(SUM(Rows_examined_sum), 0) AS rows_examined_sum,
- COALESCE(MIN(Rows_examined_min), 0) AS rows_examined_min,
- COALESCE(AVG(Rows_examined_avg), 0) AS rows_examined_avg,
- COALESCE(AVG(Rows_examined_med), 0) AS rows_examined_med,
- COALESCE(AVG(Rows_examined_p95), 0) AS rows_examined_p95,
- COALESCE(MAX(Rows_examined_max), 0) AS rows_examined_max
+	SUM(query_count) AS query_count,
+	SUM(Query_time_sum) AS query_time_sum,
+	MIN(Query_time_min) AS query_time_min,
+	AVG(Query_time_avg) AS query_time_avg,
+	AVG(Query_time_med) AS query_time_med,
+	AVG(Query_time_p95) AS query_time_p95,
+	MAX(Query_time_max) AS query_time_max,
+	SUM(Lock_time_sum) AS lock_time_sum,
+	MIN(Lock_time_min) AS lock_time_min,
+	AVG(Lock_time_avg) AS lock_time_avg,
+	AVG(Lock_time_med) AS lock_time_med,
+	AVG(Lock_time_p95) AS lock_time_p95,
+	MAX(Lock_time_max) AS lock_time_max,
+	SUM(Rows_sent_sum) AS rows_sent_sum,
+	MIN(Rows_sent_min) AS rows_sent_min,
+	AVG(Rows_sent_avg) AS rows_sent_avg,
+	AVG(Rows_sent_med) AS rows_sent_med,
+	AVG(Rows_sent_p95) AS rows_sent_p95,
+	MAX(Rows_sent_max) AS rows_sent_max,
+	SUM(Rows_examined_sum) AS rows_examined_sum,
+	MIN(Rows_examined_min) AS rows_examined_min,
+	AVG(Rows_examined_avg) AS rows_examined_avg,
+	AVG(Rows_examined_med) AS rows_examined_med,
+	AVG(Rows_examined_p95) AS rows_examined_p95,
+	MAX(Rows_examined_max) AS rows_examined_max
 
-{{ end }}
+	{{ end }}
 
-{{ if or .PerconaServer .PerformanceSchema }}
- /* Perf Schema or Percona Server */
+	{{ if or .PerconaServer .PerformanceSchema }}
+	/* Perf Schema or Percona Server */
 
- , /* <-- final comma for basic metrics */
+	, /* <-- final comma for basic metrics */
 
- COALESCE(SUM(Rows_affected_sum), 0) AS rows_affected_sum,
- COALESCE(MIN(Rows_affected_min), 0) AS rows_affected_min,
- COALESCE(AVG(Rows_affected_avg), 0) AS rows_affected_avg,
- COALESCE(AVG(Rows_affected_med), 0) AS rows_affected_med,
- COALESCE(AVG(Rows_affected_p95), 0) AS rows_affected_p95,
- COALESCE(MAX(Rows_affected_max), 0) AS rows_affected_max,
+	SUM(Rows_affected_sum) AS rows_affected_sum,
+	MIN(Rows_affected_min) AS rows_affected_min,
+	AVG(Rows_affected_avg) AS rows_affected_avg,
+	AVG(Rows_affected_med) AS rows_affected_med,
+	AVG(Rows_affected_p95) AS rows_affected_p95,
+	MAX(Rows_affected_max) AS rows_affected_max,
 
- COALESCE(SUM(Full_scan_sum), 0) AS full_scan_sum,
- COALESCE(SUM(Full_join_sum), 0) AS full_join_sum,
- COALESCE(SUM(Tmp_table_sum), 0) AS tmp_table_sum,
- COALESCE(SUM(Tmp_table_on_disk_sum), 0) AS tmp_table_on_disk_sum,
+	SUM(Full_scan_sum) AS full_scan_sum,
+	SUM(Full_join_sum) AS full_join_sum,
+	SUM(Tmp_table_sum) AS tmp_table_sum,
+	SUM(Tmp_table_on_disk_sum) AS tmp_table_on_disk_sum,
 
- COALESCE(SUM(Merge_passes_sum), 0) AS merge_passes_sum,
- COALESCE(MIN(Merge_passes_min), 0) AS merge_passes_min,
- COALESCE(AVG(Merge_passes_avg), 0) AS merge_passes_avg,
- COALESCE(AVG(Merge_passes_med), 0) AS merge_passes_med,
- COALESCE(AVG(Merge_passes_p95), 0) AS merge_passes_p95,
- COALESCE(MAX(Merge_passes_max), 0) AS merge_passes_max,
+	SUM(Merge_passes_sum) AS merge_passes_sum,
+	MIN(Merge_passes_min) AS merge_passes_min,
+	AVG(Merge_passes_avg) AS merge_passes_avg,
+	AVG(Merge_passes_med) AS merge_passes_med,
+	AVG(Merge_passes_p95) AS merge_passes_p95,
+	MAX(Merge_passes_max) AS merge_passes_max,
 
-{{ end }}
+	{{ end }}
 
-{{ if .PerconaServer }}
- /* Percona Server */
+	{{ if .PerconaServer }}
+	/* Percona Server */
 
- COALESCE(SUM(Bytes_sent_sum), 0) AS bytes_sent_sum,
- COALESCE(MIN(Bytes_sent_min), 0) AS bytes_sent_min,
- COALESCE(AVG(Bytes_sent_avg), 0) AS bytes_sent_avg,
- COALESCE(AVG(Bytes_sent_med), 0) AS bytes_sent_med,
- COALESCE(AVG(Bytes_sent_p95), 0) AS bytes_sent_p95,
- COALESCE(MAX(Bytes_sent_max), 0) AS bytes_sent_max,
- COALESCE(SUM(Tmp_tables_sum), 0) AS tmp_tables_sum,
- COALESCE(MIN(Tmp_tables_min), 0) AS tmp_tables_min,
- COALESCE(AVG(Tmp_tables_avg), 0) AS tmp_tables_avg,
- COALESCE(AVG(Tmp_tables_med), 0) AS tmp_tables_med,
- COALESCE(AVG(Tmp_tables_p95), 0) AS tmp_tables_p95,
- COALESCE(MAX(Tmp_tables_max), 0) AS tmp_tables_max,
- COALESCE(SUM(Tmp_disk_tables_sum), 0) AS tmp_disk_tables_sum,
- COALESCE(MIN(Tmp_disk_tables_min), 0) AS tmp_disk_tables_min,
- COALESCE(AVG(Tmp_disk_tables_avg), 0) AS tmp_disk_tables_avg,
- COALESCE(AVG(Tmp_disk_tables_med), 0) AS tmp_disk_tables_med,
- COALESCE(AVG(Tmp_disk_tables_p95), 0) AS tmp_disk_tables_p95,
- COALESCE(MAX(Tmp_disk_tables_max), 0) AS tmp_disk_tables_max,
- COALESCE(SUM(Tmp_table_sizes_sum), 0) AS tmp_table_sizes_sum,
- COALESCE(MIN(Tmp_table_sizes_min), 0) AS tmp_table_sizes_min,
- COALESCE(AVG(Tmp_table_sizes_avg), 0) AS tmp_table_sizes_avg,
- COALESCE(AVG(Tmp_table_sizes_med), 0) AS tmp_table_sizes_med,
- COALESCE(AVG(Tmp_table_sizes_p95), 0) AS tmp_table_sizes_p95,
- COALESCE(MAX(Tmp_table_sizes_max), 0) AS tmp_table_sizes_max,
+	SUM(Bytes_sent_sum) AS bytes_sent_sum,
+	MIN(Bytes_sent_min) AS bytes_sent_min,
+	AVG(Bytes_sent_avg) AS bytes_sent_avg,
+	AVG(Bytes_sent_med) AS bytes_sent_med,
+	AVG(Bytes_sent_p95) AS bytes_sent_p95,
+	MAX(Bytes_sent_max) AS bytes_sent_max,
+	SUM(Tmp_tables_sum) AS tmp_tables_sum,
+	MIN(Tmp_tables_min) AS tmp_tables_min,
+	AVG(Tmp_tables_avg) AS tmp_tables_avg,
+	AVG(Tmp_tables_med) AS tmp_tables_med,
+	AVG(Tmp_tables_p95) AS tmp_tables_p95,
+	MAX(Tmp_tables_max) AS tmp_tables_max,
+	SUM(Tmp_disk_tables_sum) AS tmp_disk_tables_sum,
+	MIN(Tmp_disk_tables_min) AS tmp_disk_tables_min,
+	AVG(Tmp_disk_tables_avg) AS tmp_disk_tables_avg,
+	AVG(Tmp_disk_tables_med) AS tmp_disk_tables_med,
+	AVG(Tmp_disk_tables_p95) AS tmp_disk_tables_p95,
+	MAX(Tmp_disk_tables_max) AS tmp_disk_tables_max,
+	SUM(Tmp_table_sizes_sum) AS tmp_table_sizes_sum,
+	MIN(Tmp_table_sizes_min) AS tmp_table_sizes_min,
+	AVG(Tmp_table_sizes_avg) AS tmp_table_sizes_avg,
+	AVG(Tmp_table_sizes_med) AS tmp_table_sizes_med,
+	AVG(Tmp_table_sizes_p95) AS tmp_table_sizes_p95,
+	MAX(Tmp_table_sizes_max) AS tmp_table_sizes_max,
 
- COALESCE(SUM(QC_Hit_sum), 0) AS qc_hit_sum,
- COALESCE(SUM(Filesort_sum), 0) AS filesort_sum,
+	SUM(QC_Hit_sum) AS qc_hit_sum,
+	SUM(Filesort_sum) AS filesort_sum,
 
- COALESCE(SUM(Filesort_on_disk_sum), 0) AS filesort_on_disk_sum,
- COALESCE(SUM(InnoDB_IO_r_ops_sum), 0) AS innodb_io_r_ops_sum,
- COALESCE(MIN(InnoDB_IO_r_ops_min), 0) AS innodb_io_r_ops_min,
- COALESCE(AVG(InnoDB_IO_r_ops_avg), 0) AS innodb_io_r_ops_avg,
- COALESCE(AVG(InnoDB_IO_r_ops_med), 0) AS innodb_io_r_ops_med,
- COALESCE(AVG(InnoDB_IO_r_ops_p95), 0) AS innodb_io_r_ops_p95,
- COALESCE(MAX(InnoDB_IO_r_ops_max), 0) AS innodb_io_r_ops_max,
- COALESCE(SUM(InnoDB_IO_r_bytes_sum), 0) AS innodb_io_r_bytes_sum,
- COALESCE(MIN(InnoDB_IO_r_bytes_min), 0) AS innodb_io_r_bytes_min,
- COALESCE(AVG(InnoDB_IO_r_bytes_avg), 0) AS innodb_io_r_bytes_avg,
- COALESCE(AVG(InnoDB_IO_r_bytes_med), 0) AS innodb_io_r_bytes_med,
- COALESCE(AVG(InnoDB_IO_r_bytes_p95), 0) AS innodb_io_r_bytes_p95,
- COALESCE(MAX(InnoDB_IO_r_bytes_max), 0) AS innodb_io_r_bytes_max,
- COALESCE(SUM(InnoDB_IO_r_wait_sum), 0) AS innodb_io_r_wait_sum,
- COALESCE(MIN(InnoDB_IO_r_wait_min), 0) AS innodb_io_r_wait_min,
- COALESCE(AVG(InnoDB_IO_r_wait_avg), 0) AS innodb_io_r_wait_avg,
- COALESCE(AVG(InnoDB_IO_r_wait_med), 0) AS innodb_io_r_wait_med,
- COALESCE(AVG(InnoDB_IO_r_wait_p95), 0) AS innodb_io_r_wait_p95,
- COALESCE(MAX(InnoDB_IO_r_wait_max), 0) AS innodb_io_r_wait_max,
- COALESCE(SUM(InnoDB_rec_lock_wait_sum), 0) AS innodb_rec_lock_wait_sum,
- COALESCE(MIN(InnoDB_rec_lock_wait_min), 0) AS innodb_rec_lock_wait_min,
- COALESCE(AVG(InnoDB_rec_lock_wait_avg), 0) AS innodb_rec_lock_wait_avg,
- COALESCE(AVG(InnoDB_rec_lock_wait_med), 0) AS innodb_rec_lock_wait_med,
- COALESCE(AVG(InnoDB_rec_lock_wait_p95), 0) AS innodb_rec_lock_wait_p95,
- COALESCE(MAX(InnoDB_rec_lock_wait_max), 0) AS innodb_rec_lock_wait_max,
- COALESCE(SUM(InnoDB_queue_wait_sum), 0) AS innodb_queue_wait_sum,
- COALESCE(MIN(InnoDB_queue_wait_min), 0) AS innodb_queue_wait_min,
- COALESCE(AVG(InnoDB_queue_wait_avg), 0) AS innodb_queue_wait_avg,
- COALESCE(AVG(InnoDB_queue_wait_med), 0) AS innodb_queue_wait_med,
- COALESCE(AVG(InnoDB_queue_wait_p95), 0) AS innodb_queue_wait_p95,
- COALESCE(MAX(InnoDB_queue_wait_max), 0) AS innodb_queue_wait_max,
- COALESCE(SUM(InnoDB_pages_distinct_sum), 0) AS innodb_pages_distinct_sum,
- COALESCE(MIN(InnoDB_pages_distinct_min), 0) AS innodb_pages_distinct_min,
- COALESCE(AVG(InnoDB_pages_distinct_avg), 0) AS innodb_pages_distinct_avg,
- COALESCE(AVG(InnoDB_pages_distinct_med), 0) AS innodb_pages_distinct_med,
- COALESCE(AVG(InnoDB_pages_distinct_p95), 0) AS innodb_pages_distinct_p95,
- COALESCE(MAX(InnoDB_pages_distinct_max), 0) AS innodb_pages_distinct_max
-{{ end }}
+	SUM(Filesort_on_disk_sum) AS filesort_on_disk_sum,
+	SUM(InnoDB_IO_r_ops_sum) AS innodb_io_r_ops_sum,
+	MIN(InnoDB_IO_r_ops_min) AS innodb_io_r_ops_min,
+	AVG(InnoDB_IO_r_ops_avg) AS innodb_io_r_ops_avg,
+	AVG(InnoDB_IO_r_ops_med) AS innodb_io_r_ops_med,
+	AVG(InnoDB_IO_r_ops_p95) AS innodb_io_r_ops_p95,
+	MAX(InnoDB_IO_r_ops_max) AS innodb_io_r_ops_max,
+	SUM(InnoDB_IO_r_bytes_sum) AS innodb_io_r_bytes_sum,
+	MIN(InnoDB_IO_r_bytes_min) AS innodb_io_r_bytes_min,
+	AVG(InnoDB_IO_r_bytes_avg) AS innodb_io_r_bytes_avg,
+	AVG(InnoDB_IO_r_bytes_med) AS innodb_io_r_bytes_med,
+	AVG(InnoDB_IO_r_bytes_p95) AS innodb_io_r_bytes_p95,
+	MAX(InnoDB_IO_r_bytes_max) AS innodb_io_r_bytes_max,
+	SUM(InnoDB_IO_r_wait_sum) AS innodb_io_r_wait_sum,
+	MIN(InnoDB_IO_r_wait_min) AS innodb_io_r_wait_min,
+	AVG(InnoDB_IO_r_wait_avg) AS innodb_io_r_wait_avg,
+	AVG(InnoDB_IO_r_wait_med) AS innodb_io_r_wait_med,
+	AVG(InnoDB_IO_r_wait_p95) AS innodb_io_r_wait_p95,
+	MAX(InnoDB_IO_r_wait_max) AS innodb_io_r_wait_max,
+	SUM(InnoDB_rec_lock_wait_sum) AS innodb_rec_lock_wait_sum,
+	MIN(InnoDB_rec_lock_wait_min) AS innodb_rec_lock_wait_min,
+	AVG(InnoDB_rec_lock_wait_avg) AS innodb_rec_lock_wait_avg,
+	AVG(InnoDB_rec_lock_wait_med) AS innodb_rec_lock_wait_med,
+	AVG(InnoDB_rec_lock_wait_p95) AS innodb_rec_lock_wait_p95,
+	MAX(InnoDB_rec_lock_wait_max) AS innodb_rec_lock_wait_max,
+	SUM(InnoDB_queue_wait_sum) AS innodb_queue_wait_sum,
+	MIN(InnoDB_queue_wait_min) AS innodb_queue_wait_min,
+	AVG(InnoDB_queue_wait_avg) AS innodb_queue_wait_avg,
+	AVG(InnoDB_queue_wait_med) AS innodb_queue_wait_med,
+	AVG(InnoDB_queue_wait_p95) AS innodb_queue_wait_p95,
+	MAX(InnoDB_queue_wait_max) AS innodb_queue_wait_max,
+	SUM(InnoDB_pages_distinct_sum) AS innodb_pages_distinct_sum,
+	MIN(InnoDB_pages_distinct_min) AS innodb_pages_distinct_min,
+	AVG(InnoDB_pages_distinct_avg) AS innodb_pages_distinct_avg,
+	AVG(InnoDB_pages_distinct_med) AS innodb_pages_distinct_med,
+	AVG(InnoDB_pages_distinct_p95) AS innodb_pages_distinct_p95,
+	MAX(InnoDB_pages_distinct_max) AS innodb_pages_distinct_max
+	{{ end }}
 
-{{ if .PerformanceSchema }}
-/* Perf Schema */
+	{{ if .PerformanceSchema }}
+	/* Perf Schema */
 
-	COALESCE(SUM(Errors_sum), 0) AS errors_sum,
-	COALESCE(SUM(Warnings_sum), 0) AS warnings_sum,
-	COALESCE(SUM(Select_full_range_join_sum), 0) AS select_full_range_join_sum,
-	COALESCE(SUM(Select_range_sum), 0) AS select_range_sum,
-	COALESCE(SUM(Select_range_check_sum), 0) AS select_range_check_sum,
-	COALESCE(SUM(Sort_range_sum), 0) AS sort_range_sum,
-	COALESCE(SUM(Sort_rows_sum), 0) AS sort_rows_sum,
-	COALESCE(SUM(Sort_scan_sum), 0) AS sort_scan_sum,
-	COALESCE(SUM(No_index_used_sum), 0) AS no_index_used_sum,
-	COALESCE(SUM(No_good_index_used_sum), 0) AS no_good_index_used_sum
-{{ end }}
+	SUM(Errors_sum) AS errors_sum,
+	SUM(Warnings_sum) AS warnings_sum,
+	SUM(Select_full_range_join_sum) AS select_full_range_join_sum,
+	SUM(Select_range_sum) AS select_range_sum,
+	SUM(Select_range_check_sum) AS select_range_check_sum,
+	SUM(Sort_range_sum) AS sort_range_sum,
+	SUM(Sort_rows_sum) AS sort_rows_sum,
+	SUM(Sort_scan_sum) AS sort_scan_sum,
+	SUM(No_index_used_sum) AS no_index_used_sum,
+	SUM(No_good_index_used_sum) AS no_good_index_used_sum
+	{{ end }}
 
-FROM {{if .ServerSummary }} query_global_metrics {{ else }} query_class_metrics {{ end }}
+FROM query_class_metrics
 WHERE {{if not .ServerSummary }} query_class_id = :class_id AND {{ end }}
 	 instance_id = :instance_id AND (start_ts >= :begin AND start_ts < :end);
 `
 
+// (:interval_ts) - must be in brackets to be correctly parsed with PrepareNamed
 const querySparklinesTemplate = `
 SELECT
-    (:end_ts - UNIX_TIMESTAMP(start_ts)) DIV :interval_ts as point,
-    FROM_UNIXTIME(:end_ts - (SELECT point) * :interval_ts) AS ts,
-	{{ if .Basic }}
+	intDiv((:end_ts - toRelativeSecondNum(start_ts)), :interval_ts) as point,
+	toDateTime(:end_ts - point * (:interval_ts)) AS ts,
+
 	/*  Basic metrics */
-        COALESCE(SUM({{ .CountField }}), 0) / :interval_ts AS query_count_per_sec,
-        COALESCE(SUM(Query_time_sum), 0) / :interval_ts AS query_time_sum_per_sec,
-	COALESCE(SUM(Lock_time_sum), 0) / :interval_ts AS lock_time_sum_per_sec,
-	COALESCE(SUM(Rows_sent_sum), 0) / :interval_ts AS rows_sent_sum_per_sec,
-	COALESCE(SUM(Rows_examined_sum), 0) / :interval_ts AS rows_examined_sum_per_sec
-	{{ end }}
-	{{ if or .PerconaServer .PerformanceSchema }}
- 	/* Perf Schema or Percona Server */
- 	, /* <-- final comma for basic metrics */
-	COALESCE(SUM(Rows_affected_sum), 0) / :interval_ts AS rows_affected_sum_per_sec,
-	COALESCE(SUM(Merge_passes_sum), 0) / :interval_ts AS merge_passes_sum_per_sec,
-	COALESCE(SUM(Full_join_sum), 0) / :interval_ts AS full_join_sum_per_sec,
-	COALESCE(SUM(Full_scan_sum), 0) / :interval_ts AS full_scan_sum_per_sec,
-	COALESCE(SUM(Tmp_table_sum), 0) / :interval_ts AS tmp_table_sum_per_sec,
-	COALESCE(SUM(Tmp_table_on_disk_sum), 0) / :interval_ts AS tmp_table_on_disk_sum_per_sec,
-    {{ end }}
-	{{ if .PerconaServer }}
-    /* Percona Server */
-	COALESCE(SUM(Bytes_sent_sum), 0) / :interval_ts AS bytes_sent_sum_per_sec,
-	COALESCE(SUM(InnoDB_IO_r_ops_sum), 0) / :interval_ts AS innodb_io_r_ops_sum_per_sec,
+	SUM(query_count) / (:interval_ts) AS query_count_per_sec,
+	SUM(Query_time_sum) / (:interval_ts) AS query_time_sum_per_sec,
+	SUM(Lock_time_sum) / (:interval_ts) AS lock_time_sum_per_sec,
+	SUM(Rows_sent_sum) / (:interval_ts) AS rows_sent_sum_per_sec,
+	SUM(Rows_examined_sum) / (:interval_ts) AS rows_examined_sum_per_sec,
 
-        COALESCE(SUM(InnoDB_IO_r_wait_sum), 0) / :interval_ts AS innodb_io_r_wait_sum_per_sec,
-	COALESCE(SUM(InnoDB_rec_lock_wait_sum), 0) / :interval_ts AS innodb_rec_lock_wait_sum_per_sec,
-	COALESCE(SUM(InnoDB_queue_wait_sum), 0) / :interval_ts AS innodb_queue_wait_sum_per_sec,
+	/* Perf Schema or Percona Server */
+	SUM(Rows_affected_sum) / (:interval_ts) AS rows_affected_sum_per_sec,
+	SUM(Merge_passes_sum) / (:interval_ts) AS merge_passes_sum_per_sec,
+	SUM(Full_join_sum) / (:interval_ts) AS full_join_sum_per_sec,
+	SUM(Full_scan_sum) / (:interval_ts) AS full_scan_sum_per_sec,
+	SUM(Tmp_table_sum) / (:interval_ts) AS tmp_table_sum_per_sec,
+	SUM(Tmp_table_on_disk_sum) / (:interval_ts) AS tmp_table_on_disk_sum_per_sec,
 
-	COALESCE(SUM(InnoDB_IO_r_bytes_sum), 0) / :interval_ts AS innodb_io_r_bytes_sum_per_sec,
-	COALESCE(SUM(QC_Hit_sum), 0) / :interval_ts AS qc_hit_sum_per_sec,
-	COALESCE(SUM(Filesort_sum), 0) / :interval_ts AS filesort_sum_per_sec,
-	COALESCE(SUM(Filesort_on_disk_sum), 0) / :interval_ts AS filesort_on_disk_sum_per_sec,
-	COALESCE(SUM(Tmp_tables_sum), 0) / :interval_ts AS tmp_tables_sum_per_sec,
-	COALESCE(SUM(Tmp_disk_tables_sum), 0) / :interval_ts AS tmp_disk_tables_sum_per_sec,
-	COALESCE(SUM(Tmp_table_sizes_sum), 0) / :interval_ts AS tmp_table_sizes_sum_per_sec
-	{{ end }}
-	{{ if .PerformanceSchema }}
-	/* Perf Schema */
-	COALESCE(SUM(Errors_sum), 0) / :interval_ts AS errors_sum_per_sec,
-	COALESCE(SUM(Warnings_sum), 0) / :interval_ts AS warnings_sum_per_sec,
-	COALESCE(SUM(Select_full_range_join_sum), 0) / :interval_ts AS select_full_range_join_sum_per_sec,
-	COALESCE(SUM(Select_range_sum), 0) / :interval_ts AS select_range_sum_per_sec,
-	COALESCE(SUM(Select_range_check_sum), 0) / :interval_ts AS select_range_check_sum_per_sec,
-	COALESCE(SUM(Sort_range_sum), 0) / :interval_ts AS sort_range_sum_per_sec,
-	COALESCE(SUM(Sort_rows_sum), 0) / :interval_ts AS sort_rows_sum_per_sec,
-	COALESCE(SUM(Sort_scan_sum), 0) / :interval_ts AS sort_scan_sum_per_sec,
-	COALESCE(SUM(No_index_used_sum), 0) / :interval_ts AS no_index_used_sum_per_sec,
-	COALESCE(SUM(No_good_index_used_sum), 0) / :interval_ts AS no_good_index_used_sum_per_sec
+	/* Percona Server */
+	SUM(Bytes_sent_sum) / (:interval_ts) AS bytes_sent_sum_per_sec,
+	SUM(InnoDB_IO_r_ops_sum) / (:interval_ts) AS innodb_io_r_ops_sum_per_sec,
 
-{{ end }}
-FROM {{if .ServerSummary }} query_global_metrics {{ else }} query_class_metrics {{ end }}
+	SUM(InnoDB_IO_r_wait_sum) / (:interval_ts) AS innodb_io_r_wait_sum_per_sec,
+	SUM(InnoDB_rec_lock_wait_sum) / (:interval_ts) AS innodb_rec_lock_wait_sum_per_sec,
+	SUM(InnoDB_queue_wait_sum) / (:interval_ts) AS innodb_queue_wait_sum_per_sec,
+
+	SUM(InnoDB_IO_r_bytes_sum) / (:interval_ts) AS innodb_io_r_bytes_sum_per_sec,
+	SUM(QC_Hit_sum) / (:interval_ts) AS qc_hit_sum_per_sec,
+	SUM(Filesort_sum) / (:interval_ts) AS filesort_sum_per_sec,
+	SUM(Filesort_on_disk_sum) / (:interval_ts) AS filesort_on_disk_sum_per_sec,
+	SUM(Tmp_tables_sum) / (:interval_ts) AS tmp_tables_sum_per_sec,
+	SUM(Tmp_disk_tables_sum) / (:interval_ts) AS tmp_disk_tables_sum_per_sec,
+	SUM(Tmp_table_sizes_sum) / (:interval_ts) AS tmp_table_sizes_sum_per_sec
+
+FROM query_class_metrics
 WHERE {{if not .ServerSummary }} query_class_id = :class_id AND {{ end }}
     instance_id = :instance_id AND (start_ts >= :begin AND start_ts < :end)
 GROUP BY point;
