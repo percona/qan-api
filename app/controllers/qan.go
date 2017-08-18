@@ -25,19 +25,21 @@ import (
 	"github.com/percona/qan-api/app/config"
 	"github.com/percona/qan-api/app/db"
 	"github.com/percona/qan-api/app/models"
-	"github.com/percona/qan-api/app/qan"
 	"github.com/percona/qan-api/app/query"
 	"github.com/percona/qan-api/app/shared"
 	"github.com/percona/qan-api/stats"
 	"github.com/revel/revel"
 )
 
+// QAN is base for query analytics related endpoints.
 type QAN struct {
 	BackEnd
 }
 
-func (c QAN) Profile(uuid string) revel.Result {
-	instanceId := c.Args["instanceId"].(uint)
+// Profile is endpoint to get query analitics for given instance.
+// TODO: looks like UUID is not used
+func (c QAN) Profile(UUID string) revel.Result {
+	instanceID := c.Args["instanceId"].(uint)
 
 	// Convert and validate the time range.
 	var beginTs, endTs, search, searchB64 string
@@ -58,7 +60,7 @@ func (c QAN) Profile(uuid string) revel.Result {
 	}
 
 	// todo: let caller specify rank by args via URL params
-	r := qp.RankBy{
+	r := models.RankBy{
 		Metric: "Query_time",
 		Stat:   "sum",
 		Limit:  10,
@@ -69,8 +71,11 @@ func (c QAN) Profile(uuid string) revel.Result {
 	if err := dbm.Open(); err != nil {
 		return c.Error(err, "QAN.Profile: dbm.Open")
 	}
-	qh := qan.NewReporter(dbm, stats.NullStats())
-	profile, err := qh.Profile(instanceId, begin, end, r, offset, search)
+	// qh := qan.NewReporter(dbm, stats.NullStats())
+	// profile, err := qh.Profile(instanceID, begin, end, r, offset, search)
+
+	queryReportMgr := models.NewQueryReportManager(c.Args["connsPool"])
+	profile, err := queryReportMgr.Profile(instanceID, begin, end, r, offset, search)
 	if err != nil {
 		return c.Error(err, "qh.Profile")
 	}
@@ -78,8 +83,9 @@ func (c QAN) Profile(uuid string) revel.Result {
 	return c.RenderJson(profile)
 }
 
-func (c QAN) QueryReport(uuid, queryId string) revel.Result {
-	instanceId := c.Args["instanceId"].(uint)
+// QueryReport is endpoint to get metrics for given instance and query class
+func (c QAN) QueryReport(UUID, queryID string) revel.Result {
+	instanceID := c.Args["instanceId"].(uint)
 
 	// Convert and validate the time range.
 	var beginTs, endTs string
@@ -94,22 +100,22 @@ func (c QAN) QueryReport(uuid, queryId string) revel.Result {
 	// Get the full query info: abstract, example, first/laset seen, etc.
 	dbm := c.Args["dbm"].(db.Manager)
 	qh := query.NewMySQLHandler(dbm, stats.NullStats())
-	queries, err := qh.Get([]string{queryId})
+	queries, err := qh.Get([]string{queryID})
 	if err != nil {
 		return c.Error(err, "qh.Get")
 	}
-	q, ok := queries[queryId]
+	q, ok := queries[queryID]
 	if !ok {
 		return c.Error(shared.ErrNotFound, "QAN.QueryReport")
 	}
 
 	// Convert query ID to class ID so we can pull data from other tables.
-	classId, err := query.GetClassId(dbm.DB(), queryId)
+	classID, err := query.GetClassId(dbm.DB(), queryID)
 	if err != nil {
 		return c.Error(err, "qh.GetQueryId")
 	}
 
-	s, err := qh.Example(classId, instanceId, end)
+	s, err := qh.Example(classID, instanceID, end)
 	if err != nil && err != shared.ErrNotFound {
 		return c.Error(err, "qh.Example")
 	}
@@ -118,7 +124,7 @@ func (c QAN) QueryReport(uuid, queryId string) revel.Result {
 	// already knows what query and time range it requested, but it makes
 	// the report stateless in case the caller passes the data to other code.
 	report := qp.QueryReport{
-		InstanceId: uuid,
+		InstanceId: UUID,
 		Begin:      begin,
 		End:        end,
 		Query:      q,
@@ -126,15 +132,16 @@ func (c QAN) QueryReport(uuid, queryId string) revel.Result {
 	}
 
 	metricsMgr := models.NewMetricsManager(c.Args["connsPool"])
-	metrics2, sparks2 := metricsMgr.GetClassMetrics(classId, instanceId, begin, end)
+	metrics2, sparks2 := metricsMgr.GetClassMetrics(classID, instanceID, begin, end)
 	report.Metrics2 = metrics2
 	report.Sparks2 = sparks2
 
 	return c.RenderJson(report)
 }
 
-func (c QAN) ServerSummary(uuid string) revel.Result {
-	instanceId := c.Args["instanceId"].(uint)
+// ServerSummary is endpoint to get metrics for given instance over all query classes
+func (c QAN) ServerSummary(UUID string) revel.Result {
+	instanceID := c.Args["instanceId"].(uint)
 
 	// Convert and validate the time range.
 	var beginTs, endTs string
@@ -150,24 +157,26 @@ func (c QAN) ServerSummary(uuid string) revel.Result {
 	// already knows what query and time range it requested, but it makes
 	// the report stateless in case the caller passes the data to other code.
 	summary := qp.Summary{
-		InstanceId: uuid,
+		InstanceId: UUID,
 		Begin:      begin,
 		End:        end,
 	}
 
 	metricsMgr := models.NewMetricsManager(c.Args["connsPool"])
-	metrics2, sparks2 := metricsMgr.GetGlobalMetrics(instanceId, begin, end)
+	metrics2, sparks2 := metricsMgr.GetGlobalMetrics(instanceID, begin, end)
 	summary.Metrics2 = metrics2
 	summary.Sparks2 = sparks2
 
 	return c.RenderJson(summary)
 }
 
-func (c QAN) Config(uuid string) revel.Result {
-	instanceId := c.Args["instanceId"].(uint)
+// Config is endpoint to get configuration of query analytics
+// TODO: looks like UUID is not used
+func (c QAN) Config(UUID string) revel.Result {
+	instanceID := c.Args["instanceId"].(uint)
 	dbm := c.Args["dbm"].(db.Manager)
 	ch := config.NewMySQLHandler(dbm, stats.NullStats())
-	configs, err := ch.GetQAN(instanceId)
+	configs, err := ch.GetQAN(instanceID)
 	if err != nil {
 		return c.Error(err, "config.MySQLHandler.GetQAN")
 	}

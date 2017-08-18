@@ -31,11 +31,12 @@ import (
 	"github.com/revel/revel"
 )
 
+// Query is base truct for query controller endpoints
 type Query struct {
 	BackEnd
 }
 
-// GET /queries/:id
+// Getis endpoint for GET /queries/:id
 func (c *Query) Get(id string) revel.Result {
 	dbm := c.Args["dbm"].(db.Manager)
 	if err := dbm.Open(); err != nil {
@@ -53,9 +54,9 @@ func (c *Query) Get(id string) revel.Result {
 	return c.RenderJson(query)
 }
 
-// GET /queries/:id/tables
+// GetTables is endpoint for GET /queries/:id/tables
 func (c *Query) GetTables(id string) revel.Result {
-	classId := c.Args["classId"].(uint)
+	classID := c.Args["classId"].(uint)
 
 	dbm := c.Args["dbm"].(db.Manager)
 	if err := dbm.Open(); err != nil {
@@ -63,7 +64,7 @@ func (c *Query) GetTables(id string) revel.Result {
 	}
 
 	queryHandler := query.NewMySQLHandler(dbm, stats.NullStats())
-	tables, _, err := queryHandler.Tables(classId, shared.TableParser)
+	tables, _, err := queryHandler.Tables(classID, shared.TableParser)
 	if err != nil {
 		return c.Error(err, "Query.GetTables: queryHandler.Tables")
 	}
@@ -71,9 +72,9 @@ func (c *Query) GetTables(id string) revel.Result {
 	return c.RenderJson(tables)
 }
 
-// PUT /queries/:id/tables
+// UpdateTables is endpoint for PUT /queries/:id/tables
 func (c *Query) UpdateTables(id string) revel.Result {
-	classId := c.Args["classId"].(uint)
+	classID := c.Args["classId"].(uint)
 
 	body, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
@@ -98,16 +99,16 @@ func (c *Query) UpdateTables(id string) revel.Result {
 	}
 
 	queryHandler := query.NewMySQLHandler(dbm, stats.NullStats())
-	if err := queryHandler.UpdateTables(classId, tables); err != nil {
+	if err := queryHandler.UpdateTables(classID, tables); err != nil {
 		return c.Error(err, "Query.UpdateTables: queryHandler.Tables")
 	}
 
 	return c.RenderNoContent()
 }
 
-// GET /queries/:id/examples
+// GetExamples is endpoint for GET /queries/:id/examples
 func (c *Query) GetExamples(id string) revel.Result {
-	classId := c.Args["classId"].(uint)
+	classID := c.Args["classId"].(uint)
 
 	dbm := c.Args["dbm"].(db.Manager)
 	if err := dbm.Open(); err != nil {
@@ -115,23 +116,23 @@ func (c *Query) GetExamples(id string) revel.Result {
 	}
 
 	// ?instance=UUID (optional)
-	var instanceId uint
+	var instanceID uint
 	var instanceUUID string
 	c.Params.Bind(&instanceUUID, "instance")
 	if instanceUUID != "" {
 		var err error
-		instanceId, err = instance.GetInstanceId(dbm.DB(), instanceUUID)
+		instanceID, err = instance.GetInstanceId(dbm.DB(), instanceUUID)
 		if err != nil {
 			return c.Error(err, "Query.GetExamples: GetInstanceId")
 		}
-		if instanceId == 0 {
+		if instanceID == 0 {
 			// todo: make error to user reflect that the instance, not the query, is not found
 			return c.Error(shared.ErrNotFound, "instance not found: "+instanceUUID)
 		}
 	}
 
 	queryHandler := query.NewMySQLHandler(dbm, stats.NullStats())
-	examples, err := queryHandler.Examples(classId, instanceId)
+	examples, err := queryHandler.Examples(classID, instanceID)
 	if err != nil {
 		return c.Error(err, "Query.GetExamples: queryHandler.Examples")
 	}
@@ -139,9 +140,9 @@ func (c *Query) GetExamples(id string) revel.Result {
 	return c.RenderJson(examples)
 }
 
-// PUT /queries/:id/example
+// UpdateExample is endpoint for PUT /queries/:id/example
 func (c *Query) UpdateExample(id string) revel.Result {
-	classId := c.Args["classId"].(uint)
+	classID := c.Args["classId"].(uint)
 
 	body, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
@@ -168,17 +169,17 @@ func (c *Query) UpdateExample(id string) revel.Result {
 		return c.Error(err, "Query.UpdateExample: dbm.Open")
 	}
 
-	instanceId, err := instance.GetInstanceId(dbm.DB(), example.InstanceUUID)
+	instanceID, err := instance.GetInstanceId(dbm.DB(), example.InstanceUUID)
 	if err != nil {
 		return c.Error(err, "Query.UpdateExample: GetInstanceId")
 	}
-	if instanceId == 0 {
+	if instanceID == 0 {
 		// todo: make error to user reflect that the instance, not the query, is not found
 		return c.Error(shared.ErrNotFound, "query.Example.UUID not found: "+example.InstanceUUID)
 	}
 
 	ih := query.NewMySQLHandler(dbm, stats.NullStats())
-	if err := ih.UpdateExample(classId, instanceId, example); err != nil {
+	if err := ih.UpdateExample(classID, instanceID, example); err != nil {
 		return c.Error(err, "Query.UpdateExample: UpdateExample")
 	}
 

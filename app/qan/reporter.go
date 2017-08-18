@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql" // registers mysql driver
 	"github.com/percona/pmm/proto/metrics"
 	qp "github.com/percona/pmm/proto/qan"
 	"github.com/percona/qan-api/app/db"
