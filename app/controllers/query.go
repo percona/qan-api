@@ -51,7 +51,7 @@ func (c *Query) Get(id string) revel.Result {
 	if !ok {
 		return c.Error(shared.ErrNotFound, "")
 	}
-	return c.RenderJson(query)
+	return c.RenderJSON(query)
 }
 
 // GetTables is endpoint for GET /queries/:id/tables
@@ -69,7 +69,7 @@ func (c *Query) GetTables(id string) revel.Result {
 		return c.Error(err, "Query.GetTables: queryHandler.Tables")
 	}
 
-	return c.RenderJson(tables)
+	return c.RenderJSON(tables)
 }
 
 // UpdateTables is endpoint for PUT /queries/:id/tables
@@ -137,7 +137,7 @@ func (c *Query) GetExamples(id string) revel.Result {
 		return c.Error(err, "Query.GetExamples: queryHandler.Examples")
 	}
 
-	return c.RenderJson(examples)
+	return c.RenderJSON(examples)
 }
 
 // UpdateExample is endpoint for PUT /queries/:id/example

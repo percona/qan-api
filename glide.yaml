@@ -18,10 +18,13 @@ import:
   - proto/qan
   - proto/query
 - package: github.com/revel/cmd
+  version: ^0.17.0
   subpackages:
   - revel
 - package: github.com/revel/revel
-- package: github.com/robfig/config
+  version: ^0.17.0
+- package: github.com/revel/config
+  version: ^0.17.0
 - package: github.com/youtube/vitess
   version: f729316a75213a533287dfe100b4a81177629b15
   subpackages:
@@ -31,6 +34,7 @@ import:
   - websocket
 - package: gopkg.in/check.v1
 - package: github.com/revel/modules
+  version: ^0.17.0
   subpackages:
   - testrunner/app/controllers
 - package: github.com/mattn/go-sqlite3

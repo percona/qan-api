@@ -1,6 +1,11 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
+	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -67,6 +72,14 @@ func TestI18nMessage(t *testing.T) {
 	// Assert that we get the expected return value for a message that doesn't exist
 	if message := Message("nl", "unknown message"); message != "??? unknown message ???" {
 		t.Error("Message 'unknown message' is not supposed to exist")
+	}
+	// XSS
+	if message := Message("en", "arguments.string", "<img src=a onerror=alert(1) />"); message != "My name is &lt;img src=a onerror=alert(1) /&gt;" {
+		t.Error("XSS protection for messages is broken:", message)
+	}
+	// Avoid escaping HTML
+	if message := Message("en", "arguments.string", template.HTML("<img src=a onerror=alert(1) />")); message != "My name is <img src=a onerror=alert(1) />" {
+		t.Error("Passing safe HTML to message is broken:", message)
 	}
 }
 

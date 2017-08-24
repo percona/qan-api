@@ -46,14 +46,14 @@ func (c *Instance) List() revel.Result {
 		if err != nil {
 			return c.Error(err, "Instance.List: models.InstanceManager.GetByName")
 		}
-		return c.RenderJson(in)
+		return c.RenderJSON(in)
 	}
 
 	instances, err := instanceMgr.GetAll()
 	if err != nil {
 		return c.Error(err, "Instance.List: models.InstanceManager.GetAll()")
 	}
-	return c.RenderJson(instances)
+	return c.RenderJSON(instances)
 }
 
 // Create uses for POST /instances
@@ -108,7 +108,7 @@ func (c *Instance) Get(uuid string) revel.Result {
 	if err != nil {
 		return c.Error(err, "Instance.Get: models.InstanceManager.Get")
 	}
-	return c.RenderJson(instance)
+	return c.RenderJSON(instance)
 }
 
 // Update uses for PUT /instances/:uuid

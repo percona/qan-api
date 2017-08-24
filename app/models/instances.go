@@ -128,7 +128,7 @@ func (instanceMgr InstanceManager) GetInstanceID(uuid string) (uint, error) {
 	return instanceID, nil
 }
 
-// GetInstanceID get instance by instance UUID
+// Get get instance by instance UUID
 func (instanceMgr InstanceManager) Get(uuid string) (uint, *Instance, error) {
 	const query = `
 		SELECT subsystem_id, instance_id, parent_uuid, uuid, dsn, name, distro, version, created, deleted
@@ -143,13 +143,14 @@ func (instanceMgr InstanceManager) Get(uuid string) (uint, *Instance, error) {
 	return instance.ID, &instance, nil
 }
 
+// Create - adds register instance.
 func (instanceMgr InstanceManager) Create(in Instance) (uint, error) {
 	const query = `
 		INSERT INTO instances
 			(subsystem_id, parent_uuid, uuid, dsn, name, distro, version)
 			VALUES
 			(:subsystem_id, :parent_uuid, :uuid, :dsn, :name, :distro, :version)
-		`
+	`
 	if in.UUID == "" {
 		u4, _ := uuid.NewV4()
 		in.UUID = strings.Replace(u4.String(), "-", "", -1)

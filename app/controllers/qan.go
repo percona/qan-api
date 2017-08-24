@@ -80,7 +80,7 @@ func (c QAN) Profile(UUID string) revel.Result {
 		return c.Error(err, "qh.Profile")
 	}
 
-	return c.RenderJson(profile)
+	return c.RenderJSON(profile)
 }
 
 // QueryReport is endpoint to get metrics for given instance and query class
@@ -136,7 +136,7 @@ func (c QAN) QueryReport(UUID, queryID string) revel.Result {
 	report.Metrics2 = metrics2
 	report.Sparks2 = sparks2
 
-	return c.RenderJson(report)
+	return c.RenderJSON(report)
 }
 
 // ServerSummary is endpoint to get metrics for given instance over all query classes
@@ -167,7 +167,7 @@ func (c QAN) ServerSummary(UUID string) revel.Result {
 	summary.Metrics2 = metrics2
 	summary.Sparks2 = sparks2
 
-	return c.RenderJson(summary)
+	return c.RenderJSON(summary)
 }
 
 // Config is endpoint to get configuration of query analytics
@@ -186,5 +186,5 @@ func (c QAN) Config(UUID string) revel.Result {
 	if len(configs) > 1 {
 		return c.Error(fmt.Errorf("got %d QAN configs, expected 1", len(configs)), "QAN.Config")
 	}
-	return c.RenderJson(configs[0])
+	return c.RenderJSON(configs[0])
 }

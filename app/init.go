@@ -116,8 +116,8 @@ func init() {
 	connsPool := models.NewConnectionsPool()
 
 	// Tasks to be run at the begin and end of every request
-	revel.InterceptFunc(beforeController(connsPool), revel.BEFORE, revel.ALL_CONTROLLERS)
-	revel.InterceptFunc(afterController, revel.FINALLY, revel.ALL_CONTROLLERS)
+	revel.InterceptFunc(beforeController(connsPool), revel.BEFORE, revel.AllControllers)
+	revel.InterceptFunc(afterController, revel.FINALLY, revel.AllControllers)
 
 	// All access to agent resources (/agents/:uuid/*) must specify a valid agent.
 	revel.InterceptFunc(authAgent, revel.BEFORE, &agentCtrl.Agent{})
@@ -303,5 +303,5 @@ func internalError(c *revel.Controller, op string, err error) revel.Result {
 		Error: errMsg,
 	}
 	c.Response.Status = http.StatusInternalServerError
-	return c.RenderJson(res)
+	return c.RenderJSON(res)
 }
