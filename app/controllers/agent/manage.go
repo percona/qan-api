@@ -32,9 +32,9 @@ import (
 	"github.com/revel/revel"
 )
 
-// PUT /agents/:uuid/cmd
+// SendCmd PUT /agents/:uuid/cmd
 func (c Agent) SendCmd(uuid string) revel.Result {
-	agentId := c.Args["agentId"].(uint)
+	agentID := c.Args["agentId"].(uint)
 
 	// Read the proto.Cmd from the client.
 	body, err := ioutil.ReadAll(c.Request.Body)
@@ -52,7 +52,7 @@ func (c Agent) SendCmd(uuid string) revel.Result {
 	}
 
 	// Get the agent.
-	comm := shared.AgentDirectory.Get(agentId)
+	comm := shared.AgentDirectory.Get(agentID)
 	if comm == nil {
 		return c.Error(shared.ErrAgentNotConnected, "shared.AgentDirectory.Get")
 	}

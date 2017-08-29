@@ -1,3 +1,4 @@
+// agent - handle agent's endpoints
 /*
    Copyright (c) 2016, Percona LLC and/or its affiliates. All rights reserved.
 
@@ -22,31 +23,25 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/percona/pmm/proto"
-	"github.com/percona/qan-api/app/agent"
 	"github.com/percona/qan-api/app/controllers"
-	"github.com/percona/qan-api/app/db"
-	"github.com/percona/qan-api/app/instance"
+	"github.com/percona/qan-api/app/models"
 	"github.com/percona/qan-api/app/shared"
 	"github.com/revel/revel"
 )
 
+// Agent - base struct for methods to work with agent instance.
 type Agent struct {
 	controllers.BackEnd
 }
 
-// GET /agents
+// List - GET /agents show all undeleted agents.
 func (c Agent) List() revel.Result {
-	dbm := c.Args["dbm"].(db.Manager)
-	if err := dbm.Open(); err != nil {
-		return c.Error(err, "Agent.List: dbm.Open")
-	}
-	agentHandler := agent.NewMySQLHandler(dbm, instance.NewMySQLHandler(dbm))
-	agents, err := agentHandler.GetAll()
+	instanceMgr := models.NewInstanceManager(c.Args["connsPool"])
+	agentsPtr, err := instanceMgr.GetAllAgents()
 	if err != nil {
-		return c.Error(err, "Agent.List: ah.GetAll")
+		return c.Error(err, "Agent.List: models.InstanceManager.GetAllAgents()")
 	}
-
+	agents := *agentsPtr
 	httpBase := c.Args["httpBase"].(string)
 	for i, a := range agents {
 		agents[i].Links = map[string]string{
@@ -61,7 +56,7 @@ func (c Agent) List() revel.Result {
 	return c.RenderJSON(agents)
 }
 
-// POST /agents
+// Create - POST /agents register new agent if not exist
 func (c Agent) Create() revel.Result {
 	body, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
@@ -71,25 +66,28 @@ func (c Agent) Create() revel.Result {
 		return c.BadRequest(nil, "empty body (no data posted)")
 	}
 
-	var newAgent proto.Agent
+	// fix Instance.Name vs Agent.Hostname
+	type Inst models.Instance
+	newAgent := struct {
+		Inst
+		Hostname string
+	}{}
+
 	if err = json.Unmarshal(body, &newAgent); err != nil {
-		return c.BadRequest(err, "cannot decode proto.Agent")
+		return c.BadRequest(err, "cannot decode models.Instance(Agent)")
 	}
 
-	// todo: validate agent
+	// TODO: need to unify agent and instance struct.
+	instance := models.Instance(newAgent.Inst)
+	instance.Name = newAgent.Hostname
 
-	dbm := c.Args["dbm"].(db.Manager)
-	if err := dbm.Open(); err != nil {
-		return c.Error(err, "Agent.Create: dbm.Open")
-	}
-	agentHandler := agent.NewMySQLHandler(dbm, instance.NewMySQLHandler(dbm))
-	uuid, err := agentHandler.Create(newAgent)
+	instanceMgr := models.NewInstanceManager(c.Args["connsPool"])
+	agent, err := instanceMgr.Create(&instance)
 	if err != nil {
 		if err == shared.ErrDuplicateEntry {
-			ih := instance.NewMySQLHandler(dbm)
-			id, _ := instance.GetInstanceId(dbm.DB(), newAgent.UUID)
-			if id == 0 {
-				_, in, err := ih.GetByName("agent", newAgent.Hostname, "")
+			_, err = instanceMgr.GetInstanceID(newAgent.UUID)
+			if err != nil {
+				_, in, err := instanceMgr.GetByName("agent", newAgent.Hostname, "")
 				if err != nil {
 					return c.Error(err, "Agent.Create: ih.GetByName")
 				}
@@ -100,17 +98,14 @@ func (c Agent) Create() revel.Result {
 		return c.Error(err, "Agent.Create: ah.Create")
 	}
 
-	return c.RenderCreated(c.Args["httpBase"].(string) + "/agents/" + uuid)
+	return c.RenderCreated(c.Args["httpBase"].(string) + "/agents/" + agent.UUID)
 }
 
-// GET /agents/:uuid
+// Get - GET /agents/:uuid returns agent instance
 func (c Agent) Get(uuid string) revel.Result {
-	dbm := c.Args["dbm"].(db.Manager)
-	if err := dbm.Open(); err != nil {
-		return c.Error(err, "Agent.Get: dbm.Open")
-	}
-	agentHandler := agent.NewMySQLHandler(dbm, instance.NewMySQLHandler(dbm))
-	_, agent, err := agentHandler.Get(uuid)
+	instanceMgr := models.NewInstanceManager(c.Args["connsPool"])
+
+	_, agent, err := instanceMgr.Get(uuid)
 	if err != nil {
 		return c.Error(err, "Agent.Get: ah.Get")
 	}
@@ -127,7 +122,7 @@ func (c Agent) Get(uuid string) revel.Result {
 	return c.RenderJSON(agent)
 }
 
-// PUT /agents/:uuid
+// Update -  PUT /agents/:uuid
 func (c Agent) Update(uuid string) revel.Result {
 	body, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
@@ -137,30 +132,32 @@ func (c Agent) Update(uuid string) revel.Result {
 		return c.BadRequest(nil, "empty body (no data posted)")
 	}
 
-	var newAgent proto.Agent
+	// fix Instance.Name vs Agent.Hostname
+	type Inst models.Instance
+	newAgent := struct {
+		Inst
+		Hostname string
+	}{}
 	if err = json.Unmarshal(body, &newAgent); err != nil {
-		return c.BadRequest(err, "cannot decode proto.Agent")
+		return c.BadRequest(err, "cannot decode models.Instance(Agent)")
 	}
 
-	// todo: validate agent
+	// TODO: need to unify agent and instance struct.
+	instance := models.Instance(newAgent.Inst)
+	instance.Name = newAgent.Hostname
 
-	// Connect to MySQL.
-	dbm := c.Args["dbm"].(db.Manager)
-	if err := dbm.Open(); err != nil {
-		return c.Error(err, "Agent.Update: dbm.Open")
-	}
-
-	agentId := c.Args["agentId"].(uint)
-	agentHandler := agent.NewMySQLHandler(dbm, instance.NewMySQLHandler(dbm))
-	if err = agentHandler.Update(agentId, newAgent); err != nil {
+	instance.UUID = uuid
+	instanceMgr := models.NewInstanceManager(c.Args["connsPool"])
+	err = instanceMgr.Update(instance)
+	if err != nil {
 		return c.Error(err, "Agent.Update: ah.Update")
 	}
 
 	return c.RenderNoContent()
 }
 
-// DELETE /agents/:uuid
+// Delete - DELETE /agents/:uuid
+// TODO: do we need this method?
 func (c Agent) Delete(uuid string) revel.Result {
-	// todo
 	return c.RenderNoContent()
 }

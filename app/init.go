@@ -19,6 +19,7 @@ package app
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"net/http"
 	"os"
@@ -29,7 +30,6 @@ import (
 	"github.com/cactus/go-statsd-client/statsd"
 	"github.com/percona/pmm/proto"
 	"github.com/percona/qan-api/app/agent"
-	"github.com/percona/qan-api/app/auth"
 	"github.com/percona/qan-api/app/controllers"
 	agentCtrl "github.com/percona/qan-api/app/controllers/agent"
 	"github.com/percona/qan-api/app/db"
@@ -43,9 +43,9 @@ import (
 	"github.com/revel/revel"
 )
 
-// Do not set this var. It's set by scripts/build. The official version is set
+// AppVersion Do not set this var. It's set by scripts/build. The official version is set
 // in conf/app.conf.
-var APP_VERSION = ""
+var AppVersion = ""
 
 func init() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
@@ -58,7 +58,7 @@ func init() {
 			panic("Set CLOUD_API_HOSTNAME env var or api.hostname in the config file")
 		}
 	}
-
+	log.Println("Yooohooo! Deployed!!!")
 	// Use real stats clients only in stage and prod.
 	statsEnv := config.Get("stats.env")
 	if statsEnv == "stage" || statsEnv == "prod" {
@@ -91,7 +91,7 @@ func init() {
 	shared.AgentDirectory = agent.NewLocalDirectory()
 	go func() {
 		t := time.NewTicker(1 * time.Minute)
-		for _ = range t.C {
+		for range t.C {
 			shared.AgentDirectory.Refresh(20 * time.Second)
 		}
 	}()
@@ -122,8 +122,8 @@ func init() {
 	// All access to agent resources (/agents/:uuid/*) must specify a valid agent.
 	revel.InterceptFunc(authAgent, revel.BEFORE, &agentCtrl.Agent{})
 
-	revel.InterceptFunc(getInstanceId, revel.BEFORE, &controllers.QAN{})
-	revel.InterceptFunc(getQueryId, revel.BEFORE, &controllers.Query{})
+	revel.InterceptFunc(getInstanceID, revel.BEFORE, &controllers.QAN{})
+	revel.InterceptFunc(getQueryID, revel.BEFORE, &controllers.Query{})
 }
 
 // Copied from github.com/cactus/go-statsd-client/statsd/main.go
@@ -148,7 +148,7 @@ func beforeController(connsPool *models.ConnectionsPool) revel.InterceptorFunc {
 		}
 
 		if c.Action == "Home.Ping" {
-			c.Response.Out.Header().Set("X-Percona-QAN-API-Version", APP_VERSION)
+			c.Response.Out.Header().Set("X-Percona-QAN-API-Version", AppVersion)
 		}
 
 		// Create a MySQL db manager for the controller because most need it, but
@@ -199,20 +199,6 @@ func afterController(c *revel.Controller) revel.Result {
 		revel.ERROR.Println(err)
 	}
 
-	if c.Args["t"] != nil {
-		t := c.Args["t"].(time.Time)
-		d := time.Now().Sub(t)
-		shared.RouteStats.TimingDuration( // response time
-			shared.RouteStats.Metric(c.Action+".t"),
-			d,
-			1, // sampling handled in beforeController()
-		)
-		shared.RouteStats.Inc( // call rate
-			shared.RouteStats.Metric(c.Action+".call"),
-			1,
-			1, // sampling handled in beforeController()
-		)
-	}
 	return nil
 }
 
@@ -222,30 +208,22 @@ func authAgent(c *revel.Controller) revel.Result {
 		return nil
 	}
 
-	var agentUUUD string
-	c.Params.Bind(&agentUUUD, "uuid")
+	var agentUUID string
+	c.Params.Bind(&agentUUID, "uuid")
 
-	dbm := c.Args["dbm"].(db.Manager)
-	dbh := auth.NewMySQLHandler(dbm)
-	authHandler := auth.NewAuthDb(dbh)
-
-	agentId, res, err := authHandler.Agent(agentUUUD)
-	if err != nil {
-		switch err {
-		case shared.ErrNotFound:
-			revel.INFO.Printf("auth agent: not found: %s", agentUUUD)
-		default:
-			revel.ERROR.Printf("auth agent: %s", err)
-		}
-		c.Response.Status = int(res.Code)
-		return c.RenderText(res.Error)
+	instanceMgr := models.NewInstanceManager(c.Args["connsPool"])
+	agentID, agent, err := instanceMgr.Get(agentUUID)
+	if agentID == 0 || agent.Subsystem != "agent" || err != nil {
+		c.Response.Status = http.StatusNotFound
+		return c.RenderText("Agent not found")
 	}
-	c.Args["agentId"] = agentId
+
+	c.Args["agentId"] = agentID
 
 	return nil // success
 }
 
-func getInstanceId(c *revel.Controller) revel.Result {
+func getInstanceID(c *revel.Controller) revel.Result {
 	// Get the internal (auto-inc) instance ID of the UUID.
 	var uuid string
 	c.Params.Bind(&uuid, "uuid")
@@ -255,7 +233,7 @@ func getInstanceId(c *revel.Controller) revel.Result {
 		return internalError(c, "init.getInstanceId: dbm.Open", err)
 	}
 
-	instanceId, err := instance.GetInstanceId(dbm.DB(), uuid)
+	instanceID, err := instance.GetInstanceId(dbm.DB(), uuid)
 	if err != nil {
 		switch err {
 		case shared.ErrNotFound:
@@ -265,15 +243,15 @@ func getInstanceId(c *revel.Controller) revel.Result {
 			return internalError(c, "init.getInstanceId: ih.GetInstanceId", err)
 		}
 	}
-	c.Args["instanceId"] = instanceId
+	c.Args["instanceId"] = instanceID
 
 	return nil // success
 }
 
-func getQueryId(c *revel.Controller) revel.Result {
+func getQueryID(c *revel.Controller) revel.Result {
 	// Get the internal (auto-inc) query ID.
-	var queryId string
-	c.Params.Bind(&queryId, "id")
+	var queryID string
+	c.Params.Bind(&queryID, "id")
 
 	dbm := c.Args["dbm"].(db.Manager)
 	if err := dbm.Open(); err != nil {
@@ -281,7 +259,7 @@ func getQueryId(c *revel.Controller) revel.Result {
 	}
 
 	// 92F3B1B361FB0E5B -> 5
-	classId, err := query.GetClassId(dbm.DB(), queryId)
+	classID, err := query.GetClassId(dbm.DB(), queryID)
 	if err != nil {
 		switch err {
 		case shared.ErrNotFound:
@@ -291,7 +269,7 @@ func getQueryId(c *revel.Controller) revel.Result {
 			return internalError(c, "init.getQueryId: query.GetClassId", err)
 		}
 	}
-	c.Args["classId"] = classId
+	c.Args["classId"] = classID
 
 	return nil // success
 }

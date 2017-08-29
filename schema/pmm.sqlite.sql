@@ -4,14 +4,14 @@ BEGIN TRANSACTION;
 CREATE TABLE `instances` (
   `instance_id` integer  NOT NULL PRIMARY KEY AUTOINCREMENT
 ,  `subsystem_id` integer  NOT NULL
-,  `parent_uuid` char(32) DEFAULT NULL
+,  `parent_uuid` char(32) NOT NULL
 ,  `uuid` char(32) NOT NULL
 ,  `name` varchar(100) NOT NULL
-,  `dsn` varchar(500) DEFAULT NULL
-,  `distro` varchar(100) DEFAULT NULL
-,  `version` varchar(50) DEFAULT NULL
+,  `dsn` varchar(500) NOT NULL
+,  `distro` varchar(100) NOT NULL
+,  `version` varchar(50) NOT NULL
 ,  `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-,  `deleted` timestamp NULL DEFAULT NULL
+,  `deleted` timestamp NULL DEFAULT '1970-01-01 00:00:01'
 ,  UNIQUE (`uuid`)
 ,  UNIQUE (`name`,`subsystem_id`,`deleted`)
 );
@@ -35,5 +35,14 @@ CREATE TABLE `query_examples` (
 ,  `Query_time` float NOT NULL DEFAULT '0'
 ,  `query` text NOT NULL
 ,  PRIMARY KEY (`query_class_id`,`instance_id`,`period`)
+);
+CREATE TABLE `agent_configs` (
+  `agent_instance_id` integer  NOT NULL
+,  `service` varchar(10) NOT NULL
+,  `other_instance_id` integer  NOT NULL DEFAULT 0
+,  `in_file` text NOT NULL
+,  `running` text NOT NULL
+,  `updated` timestamp NOT NULL
+,  PRIMARY KEY (`agent_instance_id`,`service`,`other_instance_id`)
 );
 END TRANSACTION;
