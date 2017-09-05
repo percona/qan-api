@@ -23,8 +23,9 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql" // register mysql driver
 	"github.com/percona/go-mysql/event"
 	"github.com/percona/pmm/proto/metrics"
 	qp "github.com/percona/pmm/proto/qan"
@@ -32,6 +33,7 @@ import (
 	"github.com/percona/qan-api/app/models"
 	"github.com/percona/qan-api/app/shared"
 	"github.com/percona/qan-api/service/query"
+	"github.com/revel/revel"
 )
 
 const (
@@ -43,11 +45,42 @@ type MySQLMetricWriter struct {
 	conns *models.ConnectionsPool
 	m     *query.Mini
 	// --
-	stmtInsertClassMetrics *sql.Stmt
-	stmtInsertQueryExample *sql.Stmt
-	stmtInsertQueryClass   *sql.Stmt
-	stmtUpdateQueryClass   *sql.Stmt
+	// stmtInsertClassMetrics *sqlx.Stmt
+	// stmtInsertQueryExample *sqlx.Stmt
+	// stmtInsertQueryClass   *sqlx.Stmt
+	// stmtUpdateQueryClass   *sqlx.Stmt
 }
+
+const queryInsertClassMetrics = `
+	INSERT INTO query_class_metrics
+	(EventDate, query_class_id, instance_id, start_ts, end_ts, query_count, lrq_count, Query_time_sum, Query_time_min, Query_time_avg,
+	Query_time_med, Query_time_p95, Query_time_max, Lock_time_sum, Lock_time_min, Lock_time_avg, Lock_time_med,
+	Lock_time_p95, Lock_time_max, Rows_sent_sum, Rows_sent_min, Rows_sent_avg, Rows_sent_med, Rows_sent_p95, Rows_sent_max,
+	Rows_examined_sum, Rows_examined_min, Rows_examined_avg, Rows_examined_med, Rows_examined_p95, Rows_examined_max,
+	Rows_affected_sum, Rows_affected_min, Rows_affected_avg, Rows_affected_med, Rows_affected_p95, Rows_affected_max,
+	Bytes_sent_sum, Bytes_sent_min, Bytes_sent_avg, Bytes_sent_med, Bytes_sent_p95, Bytes_sent_max, Tmp_tables_sum,
+	Tmp_tables_min, Tmp_tables_avg, Tmp_tables_med, Tmp_tables_p95, Tmp_tables_max, Tmp_disk_tables_sum,
+	Tmp_disk_tables_min, Tmp_disk_tables_avg, Tmp_disk_tables_med, Tmp_disk_tables_p95, Tmp_disk_tables_max,
+	Tmp_table_sizes_sum, Tmp_table_sizes_min, Tmp_table_sizes_avg, Tmp_table_sizes_med, Tmp_table_sizes_p95,
+	Tmp_table_sizes_max, QC_Hit_sum, Full_scan_sum, Full_join_sum, Tmp_table_sum, Tmp_table_on_disk_sum, Filesort_sum,
+	Filesort_on_disk_sum, Merge_passes_sum, Merge_passes_min, Merge_passes_avg, Merge_passes_med, Merge_passes_p95,
+	Merge_passes_max, InnoDB_IO_r_ops_sum, InnoDB_IO_r_ops_min, InnoDB_IO_r_ops_avg, InnoDB_IO_r_ops_med,
+	InnoDB_IO_r_ops_p95, InnoDB_IO_r_ops_max, InnoDB_IO_r_bytes_sum, InnoDB_IO_r_bytes_min, InnoDB_IO_r_bytes_avg,
+	InnoDB_IO_r_bytes_med, InnoDB_IO_r_bytes_p95, InnoDB_IO_r_bytes_max, InnoDB_IO_r_wait_sum, InnoDB_IO_r_wait_min,
+	InnoDB_IO_r_wait_avg, InnoDB_IO_r_wait_med, InnoDB_IO_r_wait_p95, InnoDB_IO_r_wait_max, InnoDB_rec_lock_wait_sum,
+	InnoDB_rec_lock_wait_min, InnoDB_rec_lock_wait_avg, InnoDB_rec_lock_wait_med, InnoDB_rec_lock_wait_p95,
+	InnoDB_rec_lock_wait_max, InnoDB_queue_wait_sum, InnoDB_queue_wait_min, InnoDB_queue_wait_avg, InnoDB_queue_wait_med,
+	InnoDB_queue_wait_p95, InnoDB_queue_wait_max, InnoDB_pages_distinct_sum, InnoDB_pages_distinct_min,
+	InnoDB_pages_distinct_avg, InnoDB_pages_distinct_med, InnoDB_pages_distinct_p95, InnoDB_pages_distinct_max,
+	Errors_sum, Warnings_sum, Select_full_range_join_sum, Select_range_sum, Select_range_check_sum, Sort_range_sum,
+	Sort_rows_sum, Sort_scan_sum, No_index_used_sum, No_good_index_used_sum, Query_length_sum, Query_length_min,
+	Query_length_avg, Query_length_med, Query_length_p95, Query_length_max)
+	VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,
+				?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,
+				?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+`
+
+// const queryInsertClassMetrics = `INSERT INTO query_class_metrics (EventDate, query_class_id, instance_id, start_ts, end_ts, query_count, lrq_count, Query_time_sum, Query_time_min, Query_time_avg, Query_time_med, Query_time_p95, Query_time_max, Lock_time_sum, Lock_time_min, Lock_time_avg, Lock_time_med, Lock_time_p95, Lock_time_max, Rows_sent_sum, Rows_sent_min, Rows_sent_avg, Rows_sent_med, Rows_sent_p95, Rows_sent_max, Rows_examined_sum, Rows_examined_min, Rows_examined_avg, Rows_examined_med, Rows_examined_p95, Rows_examined_max, Rows_affected_sum, Rows_affected_min, Rows_affected_avg, Rows_affected_med, Rows_affected_p95, Rows_affected_max, Bytes_sent_sum, Bytes_sent_min, Bytes_sent_avg, Bytes_sent_med, Bytes_sent_p95, Bytes_sent_max, Tmp_tables_sum, Tmp_tables_min, Tmp_tables_avg, Tmp_tables_med, Tmp_tables_p95, Tmp_tables_max, Tmp_disk_tables_sum, Tmp_disk_tables_min, Tmp_disk_tables_avg, Tmp_disk_tables_med, Tmp_disk_tables_p95, Tmp_disk_tables_max, Tmp_table_sizes_sum, Tmp_table_sizes_min, Tmp_table_sizes_avg, Tmp_table_sizes_med, Tmp_table_sizes_p95, Tmp_table_sizes_max, QC_Hit_sum, Full_scan_sum, Full_join_sum, Tmp_table_sum, Tmp_table_on_disk_sum, Filesort_sum, Filesort_on_disk_sum, Merge_passes_sum, Merge_passes_min, Merge_passes_avg, Merge_passes_med, Merge_passes_p95, Merge_passes_max, InnoDB_IO_r_ops_sum, InnoDB_IO_r_ops_min, InnoDB_IO_r_ops_avg, InnoDB_IO_r_ops_med, InnoDB_IO_r_ops_p95, InnoDB_IO_r_ops_max, InnoDB_IO_r_bytes_sum, InnoDB_IO_r_bytes_min, InnoDB_IO_r_bytes_avg, InnoDB_IO_r_bytes_med, InnoDB_IO_r_bytes_p95, InnoDB_IO_r_bytes_max, InnoDB_IO_r_wait_sum, InnoDB_IO_r_wait_min, InnoDB_IO_r_wait_avg, InnoDB_IO_r_wait_med, InnoDB_IO_r_wait_p95, InnoDB_IO_r_wait_max, InnoDB_rec_lock_wait_sum, InnoDB_rec_lock_wait_min, InnoDB_rec_lock_wait_avg, InnoDB_rec_lock_wait_med, InnoDB_rec_lock_wait_p95, InnoDB_rec_lock_wait_max, InnoDB_queue_wait_sum, InnoDB_queue_wait_min, InnoDB_queue_wait_avg, InnoDB_queue_wait_med, InnoDB_queue_wait_p95, InnoDB_queue_wait_max, InnoDB_pages_distinct_sum, InnoDB_pages_distinct_min, InnoDB_pages_distinct_avg, InnoDB_pages_distinct_med, InnoDB_pages_distinct_p95, InnoDB_pages_distinct_max, Errors_sum, Warnings_sum, Select_full_range_join_sum, Select_range_sum, Select_range_check_sum, Sort_range_sum, Sort_rows_sum, Sort_scan_sum, No_index_used_sum, No_good_index_used_sum, Query_length_sum, Query_length_min, Query_length_avg, Query_length_med, Query_length_p95, Query_length_max) VALUES (today(), 7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7, 7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7);`
 
 func NewMySQLMetricWriter(conns interface{}, m *query.Mini) *MySQLMetricWriter {
 	connsPool := conns.(*models.ConnectionsPool)
@@ -55,6 +88,7 @@ func NewMySQLMetricWriter(conns interface{}, m *query.Mini) *MySQLMetricWriter {
 }
 
 func (h *MySQLMetricWriter) Write(report qp.Report) error {
+
 	var err error
 	instanceMgr := models.NewInstanceManager(h.conns)
 	instanceID, in, err := instanceMgr.Get(report.UUID)
@@ -72,8 +106,8 @@ func (h *MySQLMetricWriter) Write(report qp.Report) error {
 
 	trace := fmt.Sprintf("MySQL %s", report.UUID)
 
-	h.prepareStatements()
-	defer h.closeStatements()
+	// h.prepareStatements()
+	// defer h.closeStatements()
 
 	// Default last_seen if no example query ts.
 	reportStartTs := report.StartTs.Format(shared.MYSQL_DATETIME_LAYOUT)
@@ -111,7 +145,20 @@ func (h *MySQLMetricWriter) Write(report qp.Report) error {
 
 		if id != 0 {
 			// Existing class, update it.  These update aren't fatal, but they shouldn't fail.
-			if err := h.updateQueryClass(id, lastSeen); err != nil {
+			// if err := h.updateQueryClass(id, lastSeen); err != nil {
+			// 	log.Printf("WARNING: cannot update query class, skipping: %s: %#v: %s", err, class, trace)
+			// 	continue
+			// }
+			const queryUpdateQueryClass = `
+			UPDATE query_classes 
+				SET 
+					first_seen = (CASE WHEN first_seen < ? THEN first_seen ELSE ? END),
+					last_seen = (CASE WHEN last_seen > ? THEN last_seen ELSE ? END)
+				WHERE query_class_id = ?;
+
+			`
+			_, err = h.conns.SQLite.Exec(queryUpdateQueryClass, lastSeen, lastSeen, lastSeen, lastSeen, id)
+			if err != nil {
 				log.Printf("WARNING: cannot update query class, skipping: %s: %#v: %s", err, class, trace)
 				continue
 			}
@@ -129,13 +176,25 @@ func (h *MySQLMetricWriter) Write(report qp.Report) error {
 		// but agent <= v1.0.10 don't use a pointer so the struct is always
 		// present, so "class.Example.Query != """ filters out empty examples.
 		if class.Example != nil && class.Example.Query != "" {
-			if err = h.updateQueryExample(instanceID, class, id, lastSeen); err != nil {
+			// if err = h.updateQueryExample(instanceID, class, id, lastSeen); err != nil {
+			// 	log.Printf("WARNING: cannot update query example: %s: %#v: %s", err, class, trace)
+			// }
+
+			// TODO:
+			const queryInsertQueryExample = `
+				REPLACE INTO query_examples (instance_id, query_class_id, period, ts, db, Query_time, query)
+				VALUES (?, ?, DATE(?), ?, ?, ?, ?)
+			`
+			_, err = h.conns.SQLite.Exec(queryInsertQueryExample, instanceID, id, lastSeen, lastSeen, class.Example.Db, class.Example.QueryTime, class.Example.Query)
+			if err != nil {
 				log.Printf("WARNING: cannot update query example: %s: %#v: %s", err, class, trace)
 			}
+
 		}
 
 		vals := h.getMetricValues(class.Metrics, fromSlowLog)
 		classVals := []interface{}{
+			time.Now().Format("2006-01-02"),
 			id,
 			instanceID,
 			report.StartTs,
@@ -146,7 +205,33 @@ func (h *MySQLMetricWriter) Write(report qp.Report) error {
 		classVals = append(classVals, vals...)
 
 		// INSERT query_class_metrics
-		_, err = h.stmtInsertClassMetrics.Exec(classVals...)
+		// _, err = h.stmtInsertClassMetrics.Exec(classVals...)
+
+		tx, err := h.conns.ClickHouse.Begin()
+		defer func() {
+			if err != nil {
+				tx.Rollback()
+				return
+			}
+			tx.Commit()
+		}()
+
+		if err != nil {
+			revel.ERROR.Printf("Cannot begin transaction for clickhouse: %v", err)
+		}
+
+		queryClassVals := []interface{}{}
+		for _, v := range classVals {
+			if v == nil {
+				queryClassVals = append(queryClassVals, 0)
+			} else {
+				queryClassVals = append(queryClassVals, v)
+			}
+		}
+
+		_, err = tx.Exec(queryInsertClassMetrics, queryClassVals...)
+		// _, err = tx.Exec(queryInsertClassMetrics)
+
 		if err != nil {
 			if mysql.ErrorCode(err) == mysql.ER_DUP_ENTRY {
 				classDupes++
@@ -216,9 +301,17 @@ func (h *MySQLMetricWriter) newClass(instanceID uint, subsystem string, class *e
 	// Create the query class which is internally identified by its query_class_id.
 	// The query checksum is the class is identified externally (in a QAN report).
 	// Since this is the first time we've seen the query, firstSeen=lastSeen.
-	res, err := h.stmtInsertQueryClass.Exec(class.Id, queryAbstract, queryQuery, tables, lastSeen, lastSeen)
+	const queryInsertQueryClass = `
+		INSERT INTO query_classes
+		(checksum, abstract, fingerprint, tables, first_seen, last_seen)
+		VALUES (?, ?, ?, ?, ?, ?)
+	`
+	res, err := h.conns.SQLite.Exec(queryInsertQueryClass, class.Id, queryAbstract, queryQuery, tables, lastSeen, lastSeen)
+	// res, err := h.stmtInsertQueryClass.Exec(class.Id, queryAbstract, queryQuery, tables, lastSeen, lastSeen)
 
 	if err != nil {
+		revel.ERROR.Printf("============== queryInsertQueryClass: %v", err)
+
 		if mysql.ErrorCode(err) == mysql.ER_DUP_ENTRY {
 			// Duplicate entry; someone else inserted the same server
 			// (or caller didn't check first).  Return its server_id.
@@ -236,16 +329,16 @@ func (h *MySQLMetricWriter) newClass(instanceID uint, subsystem string, class *e
 	return uint(classId), nil // success
 }
 
-func (h *MySQLMetricWriter) updateQueryClass(queryClassId uint, lastSeen string) error {
-	_, err := h.stmtUpdateQueryClass.Exec(lastSeen, lastSeen, queryClassId)
-	return mysql.Error(err, "updateQueryClass UPDATE query_classes")
-}
+// func (h *MySQLMetricWriter) updateQueryClass(queryClassId uint, lastSeen string) error {
+// 	_, err := h.stmtUpdateQueryClass.Exec(lastSeen, lastSeen, queryClassId)
+// 	return mysql.Error(err, "updateQueryClass UPDATE query_classes")
+// }
 
-func (h *MySQLMetricWriter) updateQueryExample(instanceID uint, class *event.Class, classId uint, lastSeen string) error {
-	// INSERT ON DUPLICATE KEY UPDATE
-	_, err := h.stmtInsertQueryExample.Exec(instanceID, classId, lastSeen, lastSeen, class.Example.Db, class.Example.QueryTime, class.Example.Query)
-	return mysql.Error(err, "updateQueryExample INSERT query_examples")
-}
+// func (h *MySQLMetricWriter) updateQueryExample(instanceID uint, class *event.Class, classId uint, lastSeen string) error {
+// 	// INSERT ON DUPLICATE KEY UPDATE
+// 	_, err := h.stmtInsertQueryExample.Exec(instanceID, classId, lastSeen, lastSeen, class.Example.Db, class.Example.QueryTime, class.Example.Query)
+// 	return mysql.Error(err, "updateQueryExample INSERT query_examples")
+// }
 
 func (h *MySQLMetricWriter) getMetricValues(e *event.Metrics, fromSlowLog bool) []interface{} {
 	// The "if fromSlowLog" conditionals here prevent storing zero because
@@ -273,7 +366,8 @@ func (h *MySQLMetricWriter) getMetricValues(e *event.Metrics, fromSlowLog bool) 
 				if stat == "p5" {
 					continue
 				}
-				var val interface{} = nil
+				// var val interface{} = nil
+				val := float64(0)
 				if haveMetric {
 					switch stat {
 					case "sum":
@@ -314,7 +408,8 @@ func (h *MySQLMetricWriter) getMetricValues(e *event.Metrics, fromSlowLog bool) 
 			if stat == "p5" {
 				continue
 			}
-			var val interface{} = nil
+			// var val interface{} = nil
+			val := uint64(0)
 			if haveMetric {
 				switch stat {
 				case "sum":
@@ -351,60 +446,58 @@ func (h *MySQLMetricWriter) getMetricValues(e *event.Metrics, fromSlowLog bool) 
 	return vals
 }
 
-func (h *MySQLMetricWriter) prepareStatements() {
-	var err error
+// func (h *MySQLMetricWriter) prepareStatements() {
+// var err error
 
-	// INSERT
+// INSERT
 
-	h.stmtInsertClassMetrics, err = h.conns.SQLite.Prepare(insertClassMetrics)
-	if err != nil {
-		panic("Failed to prepare stmtInsertClassMetrics: " + err.Error())
-	}
+// h.stmtInsertClassMetrics, err = h.conns.ClickHouse.Prepare(insertClassMetrics)
+// h.stmtInsertClassMetrics, err = h.conns.ClickHouse.Preparex(queryClassMetrics)
+// if err != nil {
+// 	panic("Failed to prepare stmtInsertClassMetrics: " + err.Error())
+// }
 
-	h.stmtInsertQueryExample, err = h.conns.SQLite.Prepare(
-		"INSERT INTO query_examples" +
-			" (instance_id, query_class_id, period, ts, db, Query_time, query)" +
-			" VALUES (?, ?, DATE(?), ?, ?, ?, ?)" +
-			" ON DUPLICATE KEY UPDATE" +
-			" query=IF(VALUES(Query_time) > COALESCE(Query_time, 0), VALUES(query), query)," +
-			" ts=IF(VALUES(Query_time) > COALESCE(Query_time, 0), VALUES(ts), ts)," +
-			" Query_time=IF(VALUES(Query_time) > COALESCE(Query_time, 0), VALUES(Query_time), Query_time)," +
-			" db=IF(VALUES(Query_time) > COALESCE(Query_time, 0), VALUES(db), db)")
-	if err != nil {
-		panic("Failed to prepare stmtInsertQueryExample: " + err.Error())
-	}
+// h.stmtInsertQueryExample, err = h.conns.SQLite.Preparex(
+// 	`REPLACE INTO query_examples (instance_id, query_class_id, period, ts, db, Query_time, query)
+// 		VALUES (?, ?, DATE(?), ?, ?, ?, ?)
+// 	`)
+// if err != nil {
+// 	panic("Failed to prepare stmtInsertQueryExample: " + err.Error())
+// }
 
-	/* Why use LEAST and GREATEST and update first_seen?
-	   Because of the asynchronous nature of agents communication, we can receive
-	   the same query from 2 different agents but it isn't madatory that the first
-	   one we receive, is the older one. There could have been a network error on
-	   the agent having the oldest data
-	*/
-	h.stmtInsertQueryClass, err = h.conns.SQLite.Prepare(
-		"INSERT INTO query_classes" +
-			" (checksum, abstract, fingerprint, tables, first_seen, last_seen)" +
-			" VALUES (?, ?, ?, ?, COALESCE(?, NOW()), ?)")
-	if err != nil {
-		panic("Failed to prepare stmtInsertQueryClass: " + err.Error())
-	}
+/* Why use LEAST and GREATEST and update first_seen?
+   Because of the asynchronous nature of agents communication, we can receive
+   the same query from 2 different agents but it isn't madatory that the first
+   one we receive, is the older one. There could have been a network error on
+   the agent having the oldest data
+*/
+// h.stmtInsertQueryClass, err = h.conns.SQLite.Preparex(
+// 	`INSERT INTO query_classes
+// 		(checksum, abstract, fingerprint, tables, first_seen, last_seen)
+// 		 VALUES (?, ?, ?, ?, IFNULL(?, NOW()), ?)
+// 	`)
+// if err != nil {
+// 	panic("Failed to prepare stmtInsertQueryClass: " + err.Error())
+// }
 
-	// UPDATE
-	h.stmtUpdateQueryClass, err = h.conns.SQLite.Prepare(
-		"UPDATE query_classes" +
-			" SET first_seen = LEAST(first_seen, ?), " +
-			" last_seen = GREATEST(last_seen, ?)" +
-			" WHERE query_class_id = ?")
-	if err != nil {
-		panic("Failed to prepare stmtUpdateQueryClass: " + err.Error())
-	}
-}
+// UPDATE
+// h.stmtUpdateQueryClass, err = h.conns.SQLite.Preparex(
+// 	`UPDATE query_classes
+// 		SET first_seen = LEAST(first_seen, ?),
+// 		last_seen = GREATEST(last_seen, ?)
+// 		WHERE query_class_id = ?
+// 	`)
+// if err != nil {
+// 	panic("Failed to prepare stmtUpdateQueryClass: " + err.Error())
+// }
+// }
 
-func (h *MySQLMetricWriter) closeStatements() {
-	h.stmtInsertClassMetrics.Close()
-	h.stmtInsertQueryExample.Close()
-	h.stmtInsertQueryClass.Close()
-	h.stmtUpdateQueryClass.Close()
-}
+// func (h *MySQLMetricWriter) closeStatements() {
+// 	h.stmtInsertClassMetrics.Close()
+// 	h.stmtInsertQueryExample.Close()
+// 	h.stmtInsertQueryClass.Close()
+// 	h.stmtUpdateQueryClass.Close()
+// }
 
 // --------------------------------------------------------------------------
 

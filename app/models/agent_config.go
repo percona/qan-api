@@ -74,9 +74,8 @@ func (acm *AgentConfigManager) SetConfig(agentID uint, service, otherUUID string
 
 	// in_file = set because "set" is a reserved word: https://dev.mysql.com/doc/refman/5.5/en/keywords.html
 	const query = `
-		INSERT INTO agent_configs (agent_instance_id, other_instance_id, service, in_file, running)
+		REPLACE INTO agent_configs (agent_instance_id, other_instance_id, service, in_file, running)
 		VALUES (:agent_instance_id, :other_instance_id, :service, :in_file, :running)
-		ON DUPLICATE KEY UPDATE in_file=VALUES(in_file), running=VALUES(running)
 	`
 
 	nstmt, err := acm.conns.SQLite.PrepareNamed(query)
@@ -162,25 +161,34 @@ func (acm *AgentConfigManager) UpdateConfigs(agentID uint, configs []AgentConfig
 		}
 	}
 
-	instanceMgr := NewInstanceManager(acm.conns)
-
 	const query = `
-		INSERT INTO agent_configs (agent_instance_id, service, other_instance_id, in_file, running)
+		REPLACE INTO agent_configs (agent_instance_id, service, other_instance_id, in_file, running)
 		VALUES (:agent_instance_id, :service, :other_instance_id, :in_file, :running)
-		ON DUPLICATE KEY UPDATE in_file=VALUES(in_file), running=VALUES(running)
 	`
 
 	nstmt, err := tx.PrepareNamed(query)
 	if err != nil {
 		return fmt.Errorf("Cannot prepare named fo UpdateConfigs: %v", err)
 	}
+	fmt.Printf("============\n configs: %+v \n ================ \n", configs)
 
 	for _, config := range configs {
 		if config.Running == "" {
 			log.Printf("WARN: agent_id=%d: %s running config is empty", agentID, config.Service)
 		}
 
-		otherID, err := instanceMgr.GetInstanceID(config.UUID)
+		// -----
+		// instanceMgr := NewInstanceManager(acm.conns)
+		// otherID, err := instanceMgr.GetInstanceID(config.UUID)
+		// TODO: fix this. agent or pmm-admin must send mysql or mongo instance uuid config.UUID
+		var otherID uint
+		const q = `
+			SELECT instance_id FROM instances
+			WHERE subsystem_id = 'mysql' AND
+			parent_uuid = (SELECT parent_uuid FROM instances WHERE instance_id = ?)
+		`
+		err = tx.Get(&otherID, q, agentID)
+		// -----
 		if err != nil {
 			return fmt.Errorf("Cannot get instance id to update agent config: %v", err)
 		}

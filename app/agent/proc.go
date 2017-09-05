@@ -201,6 +201,7 @@ func (p *Processor) handleGetAllConfigs(cmd *proto.Cmd, reply *proto.Reply) erro
 	// It's like GetConfig but there are configs for all internal services and
 	// whatever tools are running.
 	configs := []models.AgentConfig{}
+	fmt.Printf("====== Raw config: %v , \n\n ==== ID: %s \n", string(reply.Data), p.agentId)
 	if err := json.Unmarshal(reply.Data, &configs); err != nil {
 		return fmt.Errorf("proto.Reply.Data is not a valid list of proto.AgentConfig: %s", err)
 	}

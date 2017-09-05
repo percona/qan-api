@@ -42,7 +42,7 @@ CREATE TABLE `agent_configs` (
 ,  `other_instance_id` integer  NOT NULL DEFAULT 0
 ,  `in_file` text NOT NULL
 ,  `running` text NOT NULL
-,  `updated` timestamp NOT NULL
+,  `updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ,  PRIMARY KEY (`agent_instance_id`,`service`,`other_instance_id`)
 );
 END TRANSACTION;

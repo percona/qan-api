@@ -71,7 +71,7 @@ func (queryMgr *QueryManager) GetClassID(checksum string) (uint, error) {
 	`
 	err := queryMgr.conns.SQLite.Get(&classID, query, checksum)
 	if err != nil {
-		return 0, fmt.Errorf("GetClassId: SELECT query_classes: %v", err)
+		return 0, err
 	}
 	return classID, nil
 }

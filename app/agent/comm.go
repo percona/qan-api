@@ -25,6 +25,7 @@ import (
 	"github.com/percona/pmm/proto"
 	"github.com/percona/qan-api/app/shared"
 	"github.com/percona/qan-api/app/ws"
+	"github.com/revel/revel"
 )
 
 // A LocalAgent is a Communicator for an agent connected to this API. It uses a
@@ -50,6 +51,7 @@ func (a *LocalAgent) Start() error {
 	// Start the multiplexer which uses an agent.Processor to update the db for
 	// certain cmd/reply.
 	if err := a.mx.Start(); err != nil {
+		revel.ERROR.Printf("Failed to start a.mx.Start(): %s", err)
 		return err
 	}
 
@@ -66,17 +68,19 @@ func (a *LocalAgent) Start() error {
 		Cmd:     "Version",
 	})
 	if err != nil {
+		revel.ERROR.Printf("Failed a.Send: %s", err)
 		a.mx.Stop()
 		return fmt.Errorf("Version: %s", err)
 	}
 	ok, err := a.checkVersion(reply)
 	if err != nil {
+		revel.ERROR.Printf("Failed to checkVersion: %s", err)
 		a.mx.Stop()
 		return fmt.Errorf("checkVersion: %s", err)
 	}
 	if !ok {
 		// Agent is too old. Stop it.
-		shared.InternalStats.Inc(shared.InternalStats.Metric("agent.comm.old-agent"), 1, 1)
+		revel.ERROR.Printf("Failed to not ok: %s", err)
 		_, err := a.Send(&proto.Cmd{
 			Ts:      time.Now().UTC(),
 			User:    "api",
@@ -99,6 +103,7 @@ func (a *LocalAgent) Start() error {
 			Cmd:     cmd,
 		})
 		if err != nil {
+			revel.ERROR.Printf("Failed to _, err := a.Send(&proto.Cmd{: %s", err)
 			a.mx.Stop()
 			return fmt.Errorf("%s: %s", cmd, err)
 		}

@@ -23,6 +23,8 @@ import (
 	"log"
 	"sync"
 	"time"
+
+	"github.com/revel/revel"
 )
 
 type ConcurrentMultiplexer struct {
@@ -111,6 +113,7 @@ func (m *ConcurrentMultiplexer) Send(data interface{}) (interface{}, error) {
 	}
 	respChan := make(chan *response, 1) // must buffer so sendResponse() doesn't block
 	req := &request{data: data, respChan: respChan, ts: time.Now()}
+	revel.WARN.Printf("m.fromLocalClient <- req: req: %s |||| %s", req.data, req.respChan)
 
 	select {
 	case m.fromLocalClient <- req:
@@ -120,6 +123,7 @@ func (m *ConcurrentMultiplexer) Send(data interface{}) (interface{}, error) {
 
 	select {
 	case res := <-respChan:
+		revel.WARN.Printf("case res := <-respChan: res: %s", res.data)
 		return res.data, res.err
 	case <-time.After(20 * time.Second):
 		return nil, ErrRecvTimeout

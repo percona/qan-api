@@ -50,12 +50,14 @@ func (c Agent) SendCmd(uuid string) revel.Result {
 	if err := json.Unmarshal(body, cmd); err != nil {
 		return c.BadRequest(err, "cannot decode proto.Cmd")
 	}
-
+	fmt.Printf("AEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE: %v \n\n", cmd)
 	// Get the agent.
 	comm := shared.AgentDirectory.Get(agentID)
 	if comm == nil {
 		return c.Error(shared.ErrAgentNotConnected, "shared.AgentDirectory.Get")
 	}
+
+	fmt.Printf("BEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE: %v \n\n", cmd)
 
 	// Send the command, get the agent's reply.
 	reply, err := comm.Send(cmd)

@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"time"
 
 	"github.com/percona/pmm/proto"
 	qp "github.com/percona/pmm/proto/qan"
@@ -41,29 +40,21 @@ func SaveData(wsConn ws.Connector, agentId uint, dbh *MySQLMetricWriter, stats *
 
 	nMsgs := 0
 	for {
-		// Agent send proto.Data as []byte.
+		// Agent send proto.Data as []byte with timeout 20
 		bytes, err := wsConn.RecvBytes(20)
 		if err != nil {
 			if err == io.EOF {
 				// Agent done sending, closed websocket. Data controller ignores this
 				// error so don't change it with fmt.Errorf().
 				return err
-			} else {
-				return fmt.Errorf("wsConn.RecvBytes: %s", err)
 			}
+			return fmt.Errorf("wsConn.RecvBytes: %s", err)
 		}
-		nBytes := int64(len(bytes))
 
 		// Decode bytes back to proto.Data so we can determine which
 		// type of data this is. proto.Data is backwards compatible with proto.Data
-
-		tDecode := time.Now()
 		data, report, err := decode(bytes)
-		stats.TimingDuration(stats.System("decode"), time.Now().Sub(tDecode), stats.SampleRate)
 		if err != nil {
-			stats.SetComponent("bad-data.msg")
-			stats.Inc(stats.System("bytes"), nBytes, stats.SampleRate)
-			stats.Inc(stats.System("in"), 1, stats.SampleRate)
 
 			// Agent removes file from its spool on code >= 400.
 			resp := proto.Response{
@@ -76,20 +67,13 @@ func SaveData(wsConn ws.Connector, agentId uint, dbh *MySQLMetricWriter, stats *
 			continue // next report
 		}
 
-		stats.SetComponent(data.Service + ".msg")
-		stats.Inc(stats.System("bytes"), nBytes, stats.SampleRate)
-		stats.Inc(stats.System("in"), 1, stats.SampleRate)
-
 		if len(data.Data) > proto.MAX_DATA_SIZE {
-			stats.Inc(stats.System("too-large"), 1, stats.SampleRate)
 			log.Printf("WARN: %s: %s msg too large, dropping: %d > %d\n", prefix, data.Service, len(data.Data), proto.MAX_DATA_SIZE)
 			continue // next report
 		}
 
 		// Queue the data in a per-service queue.
-		tDb := time.Now()
 		err = dbh.Write(report)
-		stats.TimingDuration(stats.System("db"), time.Now().Sub(tDb), stats.SampleRate)
 		if err != nil {
 			if shared.IsNetworkError(err) {
 				// This is usually due to losing connection to MySQL. Return an error

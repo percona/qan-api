@@ -41,6 +41,7 @@ func (c *Instance) List() revel.Result {
 	c.Params.Bind(&parentUUID, "parent_uuid")
 	instanceMgr := models.NewInstanceManager(c.Args["connsPool"])
 	if instanceType != "" && instanceName != "" {
+		fmt.Printf("==== Instance List: instanceType: %v, instanceName: %v, parentUUID: %v", instanceType, instanceName, parentUUID)
 		_, in, err := instanceMgr.GetByName(instanceType, instanceName, parentUUID)
 		if err != nil {
 			return c.NotFound(fmt.Sprintf("Instance.List: models.InstanceManager.GetByName: %v", err))

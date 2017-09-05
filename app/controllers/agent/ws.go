@@ -53,12 +53,13 @@ func init() {
 	)
 }
 
-// WS /agents/:uuid/cmd
+// Cmd -  WS /agents/:uuid/cmd
 func (c Agent) Cmd(uuid string, conn *websocket.Conn) revel.Result {
+	fmt.Println("AGENT CMD  ---- ")
 	origin := c.Request.Header.Get("Origin")
-	agentId := c.Args["agentId"].(uint)
+	agentID := c.Args["agentId"].(uint)
 	agentVersion := c.Args["agentVersion"].(string)
-	prefix := fmt.Sprintf("[Agent.Cmd] agent_id=%d %s %s", agentId, agentVersion, origin)
+	prefix := fmt.Sprintf("[Agent.Cmd] agent_id=%d %s %s", agentID, agentVersion, origin)
 
 	wsConn := ws.ExistingConnection(origin, c.Request.URL.String(), conn)
 	defer wsConn.Disconnect()
@@ -67,22 +68,28 @@ func (c Agent) Cmd(uuid string, conn *websocket.Conn) revel.Result {
 	agentConfigMgr := models.NewAgentConfigManager(c.Args["connsPool"])
 
 	mx := ws.NewConcurrentMultiplexer(
-		fmt.Sprintf("agent_id=%d", agentId),
+		fmt.Sprintf("agent_id=%d", agentID),
 		wsConn,
-		agent.NewProcessor(agentId, agentConfigMgr),
+		agent.NewProcessor(agentID, agentConfigMgr),
 		0, // 0 = serialize, no concurrency
 	)
+
+	fmt.Printf("ws.go:NewConcurrentMultiplexer: %+v \n", mx)
 
 	// Create a local agent communicator and register it with the agent
 	// direcotry so clients and other APIs can talk with this agent:
 	//   agent <-[ws]-> this API(this controller(comm)) <-> clients
 	// The communicator runs as long as the agent is connected and alive, or
 	// until something stops it (which disconnects the agent).
-	comm := agent.NewLocalAgent(agentId, mx)
-	if err := comm.Start(); err != nil {
+	comm := agent.NewLocalAgent(agentID, mx)
+	fmt.Printf("ws.go:NewLocalAgent: %+v \n", comm)
+	err := comm.Start()
+	if err != nil {
+		fmt.Printf("ws.go:NewLocalAgent error: %+v \n", err)
 		revel.WARN.Printf("%s Failed to start: %s", prefix, err)
 		return nil
 	}
+	fmt.Println("ws.go:NewLocalAgent startrd!!!")
 	defer comm.Stop()
 
 	// Last step: register the agent with the local and global directories so
@@ -90,11 +97,13 @@ func (c Agent) Cmd(uuid string, conn *websocket.Conn) revel.Result {
 	// the race condition where agent is registered but its comm isn't ready.
 	// Also, defer removing it from the dir last so this defer is ran first
 	// (defer is LIFO) when the comm stops.
-	if err := shared.AgentDirectory.Add(agentId, comm); err != nil {
+	fmt.Println("AGENT CMD  ---- shared.AgentDirectory.Add: ", agentID, comm)
+	if err := shared.AgentDirectory.Add(agentID, comm); err != nil {
 		revel.WARN.Printf("%s Failed to add to directory: %s", prefix, err)
 		return nil
 	}
-	defer shared.AgentDirectory.Remove(agentId)
+	fmt.Println("AGENT CMD  --DONE-- shared.AgentDirectory.Add: ", agentID, comm)
+	defer shared.AgentDirectory.Remove(agentID)
 
 	revel.INFO.Printf("%s: connected", prefix)
 	defer revel.INFO.Printf("%s: disconnected", prefix)
@@ -103,9 +112,12 @@ func (c Agent) Cmd(uuid string, conn *websocket.Conn) revel.Result {
 	return nil
 }
 
+// Data - WS /agents/:uuid/data
 func (c Agent) Data(conn *websocket.Conn) revel.Result {
 	origin := c.Request.Header.Get("Origin")
 	agentID := c.Args["agentId"].(uint)
+
+	fmt.Printf("=============\n Agent websocket Data: origin: %v, agentID: %v \n", origin, agentID)
 
 	// Authenticate/authorize agent
 	wsConn := ws.ExistingConnection(origin, c.Request.URL.String(), conn)

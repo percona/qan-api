@@ -63,7 +63,7 @@ func (instanceMgr *InstanceManager) GetAll() (*[]Instance, error) {
 	const queryGetAllInstances = `
 		SELECT subsystem_id, instance_id, parent_uuid, uuid, dsn, name, distro, version, created, deleted
 			FROM instances
-			WHERE deleted IS NULL OR deleted = '1970-01-01 00:00:01'
+			WHERE deleted IS NULL OR deleted = '1970-01-01 00:00:01' OR deleted = '0001-01-01 00:00:00+00:00'
 			ORDER BY name
 	`
 	instances := []Instance{}
@@ -78,7 +78,7 @@ func (instanceMgr *InstanceManager) GetAllAgents() (*[]Instance, error) {
 		SELECT subsystem_id, instance_id, parent_uuid, uuid, dsn, name, distro, version, created, deleted
 			FROM instances
 			WHERE subsystem_id = 'agent'
-				AND (deleted IS NULL OR deleted = '1970-01-01 00:00:01')
+				AND (deleted IS NULL OR deleted = '1970-01-01 00:00:01' OR deleted = '0001-01-01 00:00:00+00:00')
 			ORDER BY name
 	`
 	instances := []Instance{}
@@ -89,25 +89,13 @@ func (instanceMgr *InstanceManager) GetAllAgents() (*[]Instance, error) {
 
 // GetByName select instace by subsystem type instance name and optionaly by parrent UUID
 func (instanceMgr *InstanceManager) GetByName(subsystemName, instanceName, parentUUID string) (uint, *Instance, error) {
-	queryGetInstanceByName := `
-		SELECT subsystem_id, instance_id, parent_uuid, uuid, dsn, name,  distro, version, created, deleted
-			FROM instances
-			WHERE subsystem_id = :subsystem_id AND name = :name
+	const query = `
+		SELECT subsystem_id, instance_id, parent_uuid, uuid, dsn, name, distro, version, created, deleted
+		FROM instances WHERE subsystem_id = ? AND name = ? AND parent_uuid = ?
 	`
-	if parentUUID != "" {
-		queryGetInstanceByName += "AND parent_uuid = :parent_uuid"
-	}
-
 	instance := Instance{}
-	m := map[string]interface{}{
-		"subsystem_id": subsystemName,
-		"name":         instanceName,
-		"parent_uuid":  parentUUID,
-	}
-	log.Println("Query from sqlite")
-	if nstmt, err := instanceMgr.conns.SQLite.PrepareNamed(queryGetInstanceByName); err != nil {
-		return 0, nil, err
-	} else if err = nstmt.Get(&instance, m); err != nil {
+	err := instanceMgr.conns.SQLite.Get(&instance, query, subsystemName, instanceName, parentUUID)
+	if err != nil {
 		return 0, nil, err
 	}
 	return instance.ID, &instance, nil
@@ -118,10 +106,10 @@ func (instanceMgr *InstanceManager) GetInstanceID(uuid string) (uint, error) {
 	var instanceID uint
 	const query = `
 		SELECT instance_id FROM instances
-		WHERE uuid = ? AND (deleted = '1970-01-01 00:00:01' OR deleted IS NULL)
+		WHERE uuid = ? AND (deleted = '1970-01-01 00:00:01' OR deleted IS NULL OR deleted = '0001-01-01 00:00:00+00:00')
 	`
 	if err := instanceMgr.conns.SQLite.Get(&instanceID, query, uuid); err != nil {
-		return 0, fmt.Errorf("SELECT instances: %v", err)
+		return 0, fmt.Errorf("GetInstanceID: SELECT instances: %v", err)
 	}
 	return instanceID, nil
 }
@@ -129,13 +117,15 @@ func (instanceMgr *InstanceManager) GetInstanceID(uuid string) (uint, error) {
 // Get get instance by instance UUID
 func (instanceMgr *InstanceManager) Get(uuid string) (uint, *Instance, error) {
 	const query = `
-		SELECT * FROM instances
-		WHERE uuid = ? AND (deleted = '1970-01-01 00:00:01' OR deleted IS NULL)
+		SELECT instance_id, subsystem_id, parent_uuid, uuid, name, dsn, distro, version, created, deleted FROM instances
+		WHERE uuid = ? AND (deleted = '1970-01-01 00:00:01' OR deleted IS NULL OR deleted = '0001-01-01 00:00:00+00:00')
 	`
 	instance := Instance{}
 	log.Println("Query from sqlite")
-	if err := instanceMgr.conns.SQLite.Get(&instance, query, uuid); err != nil {
-		return 0, nil, fmt.Errorf("SELECT instances: %v", err)
+	err := instanceMgr.conns.SQLite.Get(&instance, query, uuid)
+	if err != nil {
+		fmt.Printf("Get: SELECT instances: %v uuid: %v, \n", err, uuid)
+		return 0, nil, fmt.Errorf("Get: SELECT instances: %v", err)
 	}
 	return instance.ID, &instance, nil
 }
