@@ -22,12 +22,9 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	queryProto "github.com/percona/pmm/proto/query"
-	"github.com/percona/qan-api/app/db"
-	"github.com/percona/qan-api/app/instance"
-	"github.com/percona/qan-api/app/query"
+	"github.com/percona/qan-api/app/models"
 	"github.com/percona/qan-api/app/shared"
-	"github.com/percona/qan-api/stats"
+	queryService "github.com/percona/qan-api/service/query"
 	"github.com/revel/revel"
 )
 
@@ -36,14 +33,10 @@ type Query struct {
 	BackEnd
 }
 
-// Getis endpoint for GET /queries/:id
+// Get is endpoint for GET /queries/:id
 func (c *Query) Get(id string) revel.Result {
-	dbm := c.Args["dbm"].(db.Manager)
-	if err := dbm.Open(); err != nil {
-		return c.Error(err, "Query.Get: dbm.Open")
-	}
-	queryHandler := query.NewMySQLHandler(dbm, stats.NullStats())
-	queries, err := queryHandler.Get([]string{id})
+	queryMgr := models.NewQueryManager(c.Args["connsPool"])
+	queries, err := queryMgr.Get([]string{id})
 	if err != nil {
 		return c.Error(err, "Query.Get: queryHandler.Get")
 	}
@@ -58,13 +51,8 @@ func (c *Query) Get(id string) revel.Result {
 func (c *Query) GetTables(id string) revel.Result {
 	classID := c.Args["classId"].(uint)
 
-	dbm := c.Args["dbm"].(db.Manager)
-	if err := dbm.Open(); err != nil {
-		return c.Error(err, "Query.GetTables: dbm.Open")
-	}
-
-	queryHandler := query.NewMySQLHandler(dbm, stats.NullStats())
-	tables, _, err := queryHandler.Tables(classID, shared.TableParser)
+	queryMgr := models.NewQueryManager(c.Args["connsPool"])
+	tables, _, err := queryMgr.Tables(classID, shared.TableParser)
 	if err != nil {
 		return c.Error(err, "Query.GetTables: queryHandler.Tables")
 	}
@@ -87,19 +75,15 @@ func (c *Query) UpdateTables(id string) revel.Result {
 	// We store tables as a JSON string, so we could just store the content
 	// body as-is, but let's decode it to make sure it's valid and avoid
 	// "garbage in, garbage out".
-	var tables []queryProto.Table
+	var tables []queryService.Table
 	err = json.Unmarshal(body, &tables)
 	if err != nil {
 		return c.BadRequest(err, "cannot decode Table array")
 	}
 
-	dbm := c.Args["dbm"].(db.Manager)
-	if err := dbm.Open(); err != nil {
-		return c.Error(err, "Query.UpdateTables: dbm.Open")
-	}
-
-	queryHandler := query.NewMySQLHandler(dbm, stats.NullStats())
-	if err := queryHandler.UpdateTables(classID, tables); err != nil {
+	queryMgr := models.NewQueryManager(c.Args["connsPool"])
+	err = queryMgr.UpdateTables(classID, tables)
+	if err != nil {
 		return c.Error(err, "Query.UpdateTables: queryHandler.Tables")
 	}
 
@@ -110,18 +94,14 @@ func (c *Query) UpdateTables(id string) revel.Result {
 func (c *Query) GetExamples(id string) revel.Result {
 	classID := c.Args["classId"].(uint)
 
-	dbm := c.Args["dbm"].(db.Manager)
-	if err := dbm.Open(); err != nil {
-		return c.Error(err, "Query.GetTables: dbm.Open")
-	}
-
 	// ?instance=UUID (optional)
 	var instanceID uint
 	var instanceUUID string
 	c.Params.Bind(&instanceUUID, "instance")
 	if instanceUUID != "" {
 		var err error
-		instanceID, err = instance.GetInstanceId(dbm.DB(), instanceUUID)
+		instanceMgr := models.NewInstanceManager(c.Args["connsPool"])
+		instanceID, err = instanceMgr.GetInstanceID(instanceUUID)
 		if err != nil {
 			return c.Error(err, "Query.GetExamples: GetInstanceId")
 		}
@@ -131,8 +111,8 @@ func (c *Query) GetExamples(id string) revel.Result {
 		}
 	}
 
-	queryHandler := query.NewMySQLHandler(dbm, stats.NullStats())
-	examples, err := queryHandler.Examples(classID, instanceID)
+	queryMgr := models.NewQueryManager(c.Args["connsPool"])
+	examples, err := queryMgr.Examples(classID, instanceID)
 	if err != nil {
 		return c.Error(err, "Query.GetExamples: queryHandler.Examples")
 	}
@@ -152,24 +132,20 @@ func (c *Query) UpdateExample(id string) revel.Result {
 		return c.BadRequest(nil, "empty body (no data posted)")
 	}
 
-	var example queryProto.Example
+	var example models.Example
 	err = json.Unmarshal(body, &example)
 	if err != nil {
 		return c.BadRequest(err, "cannot decode proto.query.Example")
 	}
 
-	if example.QueryId != id {
+	if example.QueryID != id {
 		return c.BadRequest(nil,
 			fmt.Sprintf("query ID mismatch: %s (URI) != %s (proto.Query.Example.QueryId)",
-				id, example.QueryId))
+				id, example.QueryID))
 	}
 
-	dbm := c.Args["dbm"].(db.Manager)
-	if err := dbm.Open(); err != nil {
-		return c.Error(err, "Query.UpdateExample: dbm.Open")
-	}
-
-	instanceID, err := instance.GetInstanceId(dbm.DB(), example.InstanceUUID)
+	instanceMgr := models.NewInstanceManager(c.Args["connsPool"])
+	instanceID, err := instanceMgr.GetInstanceID(example.InstanceUUID)
 	if err != nil {
 		return c.Error(err, "Query.UpdateExample: GetInstanceId")
 	}
@@ -178,8 +154,9 @@ func (c *Query) UpdateExample(id string) revel.Result {
 		return c.Error(shared.ErrNotFound, "query.Example.UUID not found: "+example.InstanceUUID)
 	}
 
-	ih := query.NewMySQLHandler(dbm, stats.NullStats())
-	if err := ih.UpdateExample(classID, instanceID, example); err != nil {
+	queryMgr := models.NewQueryManager(c.Args["connsPool"])
+	err = queryMgr.UpdateExample(classID, instanceID, example)
+	if err != nil {
 		return c.Error(err, "Query.UpdateExample: UpdateExample")
 	}
 

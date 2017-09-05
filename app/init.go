@@ -33,9 +33,7 @@ import (
 	"github.com/percona/qan-api/app/controllers"
 	agentCtrl "github.com/percona/qan-api/app/controllers/agent"
 	"github.com/percona/qan-api/app/db"
-	"github.com/percona/qan-api/app/instance"
 	"github.com/percona/qan-api/app/models"
-	"github.com/percona/qan-api/app/query"
 	"github.com/percona/qan-api/app/shared"
 	"github.com/percona/qan-api/config"
 	queryService "github.com/percona/qan-api/service/query"
@@ -233,7 +231,8 @@ func getInstanceID(c *revel.Controller) revel.Result {
 		return internalError(c, "init.getInstanceId: dbm.Open", err)
 	}
 
-	instanceID, err := instance.GetInstanceId(dbm.DB(), uuid)
+	instanceMgr := models.NewInstanceManager(c.Args["connsPool"])
+	instanceID, err := instanceMgr.GetInstanceID(uuid)
 	if err != nil {
 		switch err {
 		case shared.ErrNotFound:
@@ -259,7 +258,8 @@ func getQueryID(c *revel.Controller) revel.Result {
 	}
 
 	// 92F3B1B361FB0E5B -> 5
-	classID, err := query.GetClassId(dbm.DB(), queryID)
+	queryMgr := models.NewQueryManager(c.Args["connsPool"])
+	classID, err := queryMgr.GetClassID(queryID)
 	if err != nil {
 		switch err {
 		case shared.ErrNotFound:

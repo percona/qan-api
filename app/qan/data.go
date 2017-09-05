@@ -32,8 +32,8 @@ import (
 )
 
 const (
-	MAX_DATA_MSG  = 100
-	THROTTLE_CODE = 299
+	maxDataMsg   = 100
+	throttleCode = 299
 )
 
 func SaveData(wsConn ws.Connector, agentId uint, dbh *MySQLMetricWriter, stats *stats.Stats) error {
@@ -113,8 +113,8 @@ func SaveData(wsConn ws.Connector, agentId uint, dbh *MySQLMetricWriter, stats *
 
 		// Don't let agent send too much data at once.
 		nMsgs++
-		if nMsgs >= MAX_DATA_MSG {
-			resp.Code = THROTTLE_CODE
+		if nMsgs >= maxDataMsg {
+			resp.Code = throttleCode
 		}
 
 		// Ack the data msg to the agent so it will remove it from its spool.
@@ -122,9 +122,9 @@ func SaveData(wsConn ws.Connector, agentId uint, dbh *MySQLMetricWriter, stats *
 			return fmt.Errorf("wsConn.Send: %s", err)
 		}
 
-		if resp.Code == THROTTLE_CODE {
+		if resp.Code == throttleCode {
 			log.Printf("%s: WARN: throttling agent because it has sent the max number of messages for one upload: %d."+
-				" Check the agent's status to see its data spool size.", prefix, MAX_DATA_MSG)
+				" Check the agent's status to see its data spool size.", prefix, maxDataMsg)
 			return nil
 		}
 	}

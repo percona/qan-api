@@ -25,7 +25,7 @@ import (
 	"github.com/cactus/go-statsd-client/statsd"
 	"github.com/percona/qan-api/app/agent"
 	"github.com/percona/qan-api/app/db"
-	"github.com/percona/qan-api/app/instance"
+	"github.com/percona/qan-api/app/models"
 	"github.com/percona/qan-api/app/qan"
 	"github.com/percona/qan-api/app/shared"
 	"github.com/percona/qan-api/app/ws"
@@ -64,20 +64,14 @@ func (c Agent) Cmd(uuid string, conn *websocket.Conn) revel.Result {
 	defer wsConn.Disconnect()
 
 	// When the agent disconnects, set oN.agent_configs.running=0 for the agent.
-	dbm := c.Args["dbm"].(db.Manager)
-	if err := dbm.Open(); err != nil {
-		return c.Error(err, "Agent.Cmd: dbm.Open")
-	}
-	agentHandler := agent.NewMySQLHandler(dbm, instance.NewMySQLHandler(dbm))
+	agentConfigMgr := models.NewAgentConfigManager(c.Args["connsPool"])
 
 	mx := ws.NewConcurrentMultiplexer(
 		fmt.Sprintf("agent_id=%d", agentId),
 		wsConn,
-		agent.NewProcessor(agentId, agentHandler),
+		agent.NewProcessor(agentId, agentConfigMgr),
 		0, // 0 = serialize, no concurrency
 	)
-	shared.InternalStats.Inc(shared.InternalStats.Metric("agent.comm.connect"), 1, 1)
-	defer shared.InternalStats.Inc(shared.InternalStats.Metric("agent.comm.disconnect"), 1, 1)
 
 	// Create a local agent communicator and register it with the agent
 	// direcotry so clients and other APIs can talk with this agent:
@@ -86,7 +80,6 @@ func (c Agent) Cmd(uuid string, conn *websocket.Conn) revel.Result {
 	// until something stops it (which disconnects the agent).
 	comm := agent.NewLocalAgent(agentId, mx)
 	if err := comm.Start(); err != nil {
-		shared.InternalStats.Inc(shared.InternalStats.Metric("agent.comm.err-start"), 1, shared.InternalStats.SampleRate)
 		revel.WARN.Printf("%s Failed to start: %s", prefix, err)
 		return nil
 	}
@@ -98,7 +91,6 @@ func (c Agent) Cmd(uuid string, conn *websocket.Conn) revel.Result {
 	// Also, defer removing it from the dir last so this defer is ran first
 	// (defer is LIFO) when the comm stops.
 	if err := shared.AgentDirectory.Add(agentId, comm); err != nil {
-		shared.InternalStats.Inc(shared.InternalStats.Metric("agent.comm.err-dir"), 1, shared.InternalStats.SampleRate)
 		revel.WARN.Printf("%s Failed to add to directory: %s", prefix, err)
 		return nil
 	}
@@ -113,30 +105,20 @@ func (c Agent) Cmd(uuid string, conn *websocket.Conn) revel.Result {
 
 func (c Agent) Data(conn *websocket.Conn) revel.Result {
 	origin := c.Request.Header.Get("Origin")
-	agentId := c.Args["agentId"].(uint)
+	agentID := c.Args["agentId"].(uint)
 
 	// Authenticate/authorize agent
 	wsConn := ws.ExistingConnection(origin, c.Request.URL.String(), conn)
 	defer wsConn.Disconnect()
 
-	dbStats := msgStats // copy
-	dbm := db.NewMySQLManager()
-	if err := dbm.Open(); err != nil {
-		return c.Error(err, "Agent.Data: dbm.Open")
-	}
-	defer dbm.Close()
-
-	// create instance handler
-	ih := instance.NewMySQLHandler(dbm)
-
-	dbh := qan.NewMySQLMetricWriter(dbm, ih, shared.QueryAbstracter, &dbStats)
+	dbh := qan.NewMySQLMetricWriter(c.Args["connsPool"], shared.QueryAbstracter)
 
 	// Read and queue log entries from agent.
 	dataStats := msgStats // copy
 
 	// Synchronous data transfer from agent to API: agent sends data as proto.Data,
 	// API accepts, queues, and sends data.Response; repeat.
-	if err := qan.SaveData(wsConn, agentId, dbh, &dataStats); err != nil {
+	if err := qan.SaveData(wsConn, agentID, dbh, &dataStats); err != nil {
 		switch err {
 		case io.EOF:
 			// We got everything, client disconnected.

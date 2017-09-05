@@ -24,6 +24,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/nu7hatch/gouuid"
 	"github.com/percona/pmm/proto"
+	"github.com/percona/qan-api/app/models"
 )
 
 // A Processor updates oN tables for certain commands and replies. It is
@@ -34,16 +35,16 @@ import (
 // [1] Be sure ws.NewConcurrentMultiplexer(..., concurrency=0) in NewLocalAgent()!
 //     Else the multiplexer will call AfterRecv() concurrently.
 type Processor struct {
-	agentId uint
-	version proto.Version
-	dbh     DbHandler
-	cmds    map[string]*proto.Cmd
+	agentId        uint
+	version        proto.Version
+	agentConfigMgr models.AgentConfigManager
+	cmds           map[string]*proto.Cmd
 }
 
-func NewProcessor(agentId uint, dbh DbHandler) *Processor {
+func NewProcessor(agentId uint, agentConfigMgr models.AgentConfigManager) *Processor {
 	return &Processor{
-		agentId: agentId,
-		dbh:     dbh,
+		agentId:        agentId,
+		agentConfigMgr: agentConfigMgr,
 		// --
 		cmds: make(map[string]*proto.Cmd),
 	}
@@ -170,11 +171,13 @@ func (p *Processor) updateConfig(change string, cmd *proto.Cmd, reply *proto.Rep
 
 	switch change {
 	case "set":
-		if err := p.dbh.SetConfig(p.agentId, service, otherUUID, sanitizeConfig(setConfig), runningConfig); err != nil {
+		err := p.agentConfigMgr.SetConfig(p.agentId, service, otherUUID, sanitizeConfig(setConfig), runningConfig)
+		if err != nil {
 			return err
 		}
 	case "remove":
-		if err := p.dbh.RemoveConfig(p.agentId, service, otherUUID); err != nil {
+		err := p.agentConfigMgr.RemoveConfig(p.agentId, service, otherUUID)
+		if err != nil {
 			return err
 		}
 	default:
@@ -188,12 +191,6 @@ func (p *Processor) handleVersion(cmd *proto.Cmd, reply *proto.Reply) error {
 	// because it's critical for presenting and configuring version features
 	// correctly.
 	// pctv3: update oN.instances.properties.version
-	if err := json.Unmarshal(reply.Data, &p.version); err != nil {
-		return fmt.Errorf("proto.Reply.Data is not a valid proto.Version: %s", err)
-	}
-	if err := p.dbh.UpdateVersion(p.agentId, p.version); err != nil {
-		return fmt.Errorf("Cannot update agent version: %s", err)
-	}
 	return nil
 }
 
@@ -203,12 +200,13 @@ func (p *Processor) handleGetAllConfigs(cmd *proto.Cmd, reply *proto.Reply) erro
 	// has, in case something somehow changed offline or on the agent-side.
 	// It's like GetConfig but there are configs for all internal services and
 	// whatever tools are running.
-	configs := []proto.AgentConfig{}
+	configs := []models.AgentConfig{}
 	if err := json.Unmarshal(reply.Data, &configs); err != nil {
 		return fmt.Errorf("proto.Reply.Data is not a valid list of proto.AgentConfig: %s", err)
 	}
 
-	if err := p.dbh.UpdateConfigs(p.agentId, configs, true); err != nil {
+	err := p.agentConfigMgr.UpdateConfigs(p.agentId, configs, true)
+	if err != nil {
 		return fmt.Errorf("Cannot update agent configs: %s", err)
 	}
 

@@ -23,9 +23,6 @@ import (
 	"io/ioutil"
 	"log"
 
-	"github.com/percona/pmm/proto"
-	"github.com/percona/qan-api/app/db"
-	"github.com/percona/qan-api/app/instance"
 	"github.com/percona/qan-api/app/models"
 	"github.com/percona/qan-api/app/shared"
 	"github.com/revel/revel"
@@ -133,26 +130,20 @@ func (c *Instance) Update(uuid string) revel.Result {
 		return c.BadRequest(nil, "empty body (no data posted)")
 	}
 
-	in := proto.Instance{}
-	err = json.Unmarshal(body, &in)
+	instance := models.Instance{}
+	err = json.Unmarshal(body, &instance)
 	if err != nil {
-		return c.BadRequest(err, "cannot decode proto.Instance")
+		return c.BadRequest(err, "cannot decode Instance")
 	}
 
-	// I don't want to use a different proto.Instance not having the uuid
-	// to avoid having a million of different structs, so, the body can have
-	// an uuid but I'm going to rewrite it with the value from the route.
-	dbm := c.Args["dbm"].(db.Manager)
-	if err := dbm.Open(); err != nil {
-		return c.Error(err, "Instance.Update: dbm.Open")
-	}
-	in.UUID = uuid
-	ih := instance.NewMySQLHandler(dbm)
-	if err := ih.Update(in); err != nil {
-		return c.Error(err, "Instance.Update: ih.Update")
+	instance.UUID = uuid
+	instanceMgr := models.NewInstanceManager(c.Args["connsPool"])
+	err = instanceMgr.Update(instance)
+	if err != nil {
+		return c.BadRequest(err, "cannot update Instance")
 	}
 
-	uri := c.Args["httpBase"].(string) + "/instances/" + in.UUID
+	uri := c.Args["httpBase"].(string) + "/instances/" + instance.UUID
 	c.Response.Out.Header().Set("Location", uri)
 
 	return c.RenderNoContent()
@@ -160,12 +151,9 @@ func (c *Instance) Update(uuid string) revel.Result {
 
 // Delete uses for DELETE /instances/:uuid
 func (c *Instance) Delete(uuid string) revel.Result {
-	dbm := c.Args["dbm"].(db.Manager)
-	if err := dbm.Open(); err != nil {
-		return c.Error(err, "Instance.Delete: dbm.Open")
-	}
-	ih := instance.NewMySQLHandler(dbm)
-	if err := ih.Delete(uuid); err != nil {
+	instanceMgr := models.NewInstanceManager(c.Args["connsPool"])
+	err := instanceMgr.Delete(uuid)
+	if err != nil {
 		return c.Error(err, "Instance.Delete: ih.Delete")
 	}
 	return c.RenderNoContent()

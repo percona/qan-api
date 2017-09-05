@@ -26,14 +26,19 @@ import (
 	"os/exec"
 	"strings"
 
-	queryProto "github.com/percona/pmm/proto/query"
 	"github.com/youtube/vitess/go/vt/sqlparser"
 )
 
 type QueryInfo struct {
 	Query    string
 	Abstract string
-	Tables   []queryProto.Table
+	Tables   []Table
+}
+
+// Table - tables tha involved in query.
+type Table struct {
+	Db    string
+	Table string
 }
 
 type parseTry struct {
@@ -132,7 +137,7 @@ func (m *Mini) Run() {
 
 func (m *Mini) Parse(query, defaultDb string) (QueryInfo, error) {
 	q := QueryInfo{
-		Tables: []queryProto.Table{},
+		Tables: []Table{},
 	}
 	defer func() {
 		q.Abstract = strings.TrimSpace(q.Abstract)
@@ -226,7 +231,7 @@ func (m *Mini) parse() {
 				if m.Debug {
 					fmt.Printf("struct: %#v\n", s)
 				}
-				table := queryProto.Table{
+				table := Table{
 					Db:    string(s.Table.Qualifier),
 					Table: string(s.Table.Name),
 				}
@@ -238,7 +243,7 @@ func (m *Mini) parse() {
 				if m.Debug {
 					fmt.Printf("struct: %#v\n", s)
 				}
-				table := queryProto.Table{
+				table := Table{
 					Db:    string(s.Table.Qualifier),
 					Table: string(s.Table.Name),
 				}
@@ -250,7 +255,7 @@ func (m *Mini) parse() {
 				if m.Debug {
 					fmt.Printf("struct: %#v\n", s)
 				}
-				table := queryProto.Table{
+				table := Table{
 					Db:    string(s.Table.Qualifier),
 					Table: string(s.Table.Name),
 				}
@@ -269,7 +274,7 @@ func (m *Mini) parse() {
 	}
 }
 
-func tableName(table queryProto.Table) string {
+func tableName(table Table) string {
 	if table.Db != "" && table.Table != "" {
 		return table.Db + "." + table.Table
 	} else {
@@ -299,7 +304,7 @@ func addTable(q *QueryInfo, t sqlparser.TableExpr, depth uint) error {
 		n := a.Expr.(*sqlparser.TableName)
 		db := string(n.Qualifier)
 		tbl := string(n.Name)
-		table := queryProto.Table{
+		table := Table{
 			Db:    db,
 			Table: tbl,
 		}

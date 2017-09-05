@@ -20,16 +20,26 @@ package controllers
 import (
 	"encoding/base64"
 	"fmt"
+	"time"
 
 	qp "github.com/percona/pmm/proto/qan"
-	"github.com/percona/qan-api/app/config"
-	"github.com/percona/qan-api/app/db"
 	"github.com/percona/qan-api/app/models"
-	"github.com/percona/qan-api/app/query"
 	"github.com/percona/qan-api/app/shared"
-	"github.com/percona/qan-api/stats"
 	"github.com/revel/revel"
 )
+
+// QueryReport returns report of query classes
+type QueryReport struct {
+	InstanceId string                  // UUID of MySQL instance
+	Begin      time.Time               // time range [Begin, End)
+	End        time.Time               // time range [Being, End)
+	Query      models.Query            // id, abstract, fingerprint, etc.
+	Metrics    map[string]models.Stats // keyed on metric name, e.g. Query_time
+	Example    *models.Example         // query example
+	Sparks     []interface{}           `json:",omitempty"`
+	Metrics2   interface{}             `json:",omitempty"`
+	Sparks2    interface{}             `json:",omitempty"`
+}
 
 // QAN is base for query analytics related endpoints.
 type QAN struct {
@@ -66,11 +76,6 @@ func (c QAN) Profile(UUID string) revel.Result {
 		Limit:  10,
 	}
 
-	// Get the server profile, aka query rank.
-	dbm := c.Args["dbm"].(db.Manager)
-	if err := dbm.Open(); err != nil {
-		return c.Error(err, "QAN.Profile: dbm.Open")
-	}
 	// qh := qan.NewReporter(dbm, stats.NullStats())
 	// profile, err := qh.Profile(instanceID, begin, end, r, offset, search)
 
@@ -98,9 +103,9 @@ func (c QAN) QueryReport(UUID, queryID string) revel.Result {
 	}
 
 	// Get the full query info: abstract, example, first/laset seen, etc.
-	dbm := c.Args["dbm"].(db.Manager)
-	qh := query.NewMySQLHandler(dbm, stats.NullStats())
-	queries, err := qh.Get([]string{queryID})
+	queryMgr := models.NewQueryManager(c.Args["connsPool"])
+	queries, err := queryMgr.Get([]string{queryID})
+
 	if err != nil {
 		return c.Error(err, "qh.Get")
 	}
@@ -110,12 +115,13 @@ func (c QAN) QueryReport(UUID, queryID string) revel.Result {
 	}
 
 	// Convert query ID to class ID so we can pull data from other tables.
-	classID, err := query.GetClassId(dbm.DB(), queryID)
+	classID, err := queryMgr.GetClassID(queryID)
+
 	if err != nil {
 		return c.Error(err, "qh.GetQueryId")
 	}
 
-	s, err := qh.Example(classID, instanceID, end)
+	s, err := queryMgr.Example(classID, instanceID, end)
 	if err != nil && err != shared.ErrNotFound {
 		return c.Error(err, "qh.Example")
 	}
@@ -123,7 +129,7 @@ func (c QAN) QueryReport(UUID, queryID string) revel.Result {
 	// Init the report. This info is a little redundant because the caller
 	// already knows what query and time range it requested, but it makes
 	// the report stateless in case the caller passes the data to other code.
-	report := qp.QueryReport{
+	report := QueryReport{
 		InstanceId: UUID,
 		Begin:      begin,
 		End:        end,
@@ -174,9 +180,9 @@ func (c QAN) ServerSummary(UUID string) revel.Result {
 // TODO: looks like UUID is not used
 func (c QAN) Config(UUID string) revel.Result {
 	instanceID := c.Args["instanceId"].(uint)
-	dbm := c.Args["dbm"].(db.Manager)
-	ch := config.NewMySQLHandler(dbm, stats.NullStats())
-	configs, err := ch.GetQAN(instanceID)
+
+	agentConfigMgr := models.NewAgentConfigManager(c.Args["connsPool"])
+	configs, err := agentConfigMgr.GetQAN(instanceID)
 	if err != nil {
 		return c.Error(err, "config.MySQLHandler.GetQAN")
 	}

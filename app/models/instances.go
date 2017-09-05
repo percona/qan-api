@@ -53,41 +53,10 @@ type Instance struct {
 	DSN        string            `db:"dsn"`  // type-specific DSN, if any
 	Distro     string            `db:"distro"`
 	Version    string            `db:"version"`
-	Created    time.Time         `db:"created"`
-	Deleted    time.Time         `db:"deleted"`
+	Created    *time.Time        `db:"created"`
+	Deleted    *time.Time        `db:"deleted"`
 	Links      map[string]string `json:",omitempty"`
 }
-
-// SubSystem represents an enum of instance type
-// SubSystem implements the Scanner interface so
-// it can be used as a scan destination, similar to NullString
-// type SubSystem string
-
-// // Scan implements the Scanner interface.
-// func (ss *SubSystem) Scan(src interface{}) error {
-// 	// if index, ok := src.(int64); ok {
-// 	// 	subsys, _ := GetSubsystemById(uint(index))
-// 	// 	*ss = SubSystem(subsys.Name)
-// 	// 	return nil
-// 	// }
-
-// 	if val, ok := src.(string); ok {
-// 		*ss = SubSystem(val)
-
-// 	}
-// 	return errors.New("Cannot convert Subsystem to string")
-// 	// subsys, err := GetSubsystemByName(val)
-// 	// if err != nil {
-// 	// 	return errors.New("Cannot convert Subsystem to name")
-// 	// }
-
-// }
-
-// // Value implements the driver Valuer interface.
-// func (ss *SubSystem) Value() (driver.Value, error) {
-// 	subsys, err := GetSubsystemByName(string(*ss))
-// 	return subsys.Id, err
-// }
 
 // GetAll select not deleted instances.
 func (instanceMgr *InstanceManager) GetAll() (*[]Instance, error) {
@@ -149,7 +118,7 @@ func (instanceMgr *InstanceManager) GetInstanceID(uuid string) (uint, error) {
 	var instanceID uint
 	const query = `
 		SELECT instance_id FROM instances
-		WHERE uuid = ? AND deleted = '1970-01-01 00:00:01'
+		WHERE uuid = ? AND (deleted = '1970-01-01 00:00:01' OR deleted IS NULL)
 	`
 	if err := instanceMgr.conns.SQLite.Get(&instanceID, query, uuid); err != nil {
 		return 0, fmt.Errorf("SELECT instances: %v", err)
@@ -161,7 +130,7 @@ func (instanceMgr *InstanceManager) GetInstanceID(uuid string) (uint, error) {
 func (instanceMgr *InstanceManager) Get(uuid string) (uint, *Instance, error) {
 	const query = `
 		SELECT * FROM instances
-		WHERE uuid = ? AND deleted = '1970-01-01 00:00:01'
+		WHERE uuid = ? AND (deleted = '1970-01-01 00:00:01' OR deleted IS NULL)
 	`
 	instance := Instance{}
 	log.Println("Query from sqlite")
@@ -182,6 +151,7 @@ func (instanceMgr *InstanceManager) Create(in *Instance) (*Instance, error) {
 			case when :uuid = "" then lower(hex(randomblob(16))) else :uuid end,
 			:dsn, :name, :distro, :version)
 	`
+	fmt.Println("Creating instance of ", in.Subsystem)
 	result, err := instanceMgr.conns.SQLite.NamedExec(query, in)
 	if err != nil {
 		return nil, fmt.Errorf("MySQLHandlerCreate INSERT instances: %v", err)
@@ -194,13 +164,13 @@ func (instanceMgr *InstanceManager) Create(in *Instance) (*Instance, error) {
 	const querySelectInstance = `
 		SELECT * from instances WHERE instance_id = ?
 	`
-	instance := &Instance{}
-	err = instanceMgr.conns.SQLite.Get(instance, querySelectInstance, id)
+	instance := Instance{}
+	err = instanceMgr.conns.SQLite.Get(&instance, querySelectInstance, id)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get instance by id: %v", err)
 	}
 
-	return instance, nil
+	return &instance, nil
 }
 
 // Update instance.
