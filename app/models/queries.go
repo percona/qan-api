@@ -24,15 +24,27 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/percona/qan-api/app/shared"
 	queryService "github.com/percona/qan-api/service/query"
+	"github.com/revel/revel"
 )
 
 // Query - represents query class
 type Query struct {
-	ID          string `json:"Id" db:"id"` // 9C8DEE410FA0E0C8
-	Abstract    string `db:"abstract"`     // SELECT tbl1
-	Fingerprint string `db:"fingerprint"`  // select col from tbl1 where id=?
+	ID          string `json:"Id" db:"checksum"` // 9C8DEE410FA0E0C8
+	Abstract    string `db:"abstract"`           // SELECT tbl1
+	Fingerprint string `db:"fingerprint"`        // select col from tbl1 where id=?
 	Tables      []queryService.Table
+	FirstSeen   *time.Time `db:"first_seen"`
+	LastSeen    *time.Time `db:"last_seen"`
+	Status      string     `db:"status"`
+}
+
+type QueryPlain struct {
+	ID          string    `json:"Id" db:"checksum"` // 9C8DEE410FA0E0C8
+	Abstract    string    `db:"abstract"`           // SELECT tbl1
+	Fingerprint string    `db:"fingerprint"`        // select col from tbl1 where id=?
+	TablesJSON  string    `db:"tables"`
 	FirstSeen   time.Time `db:"first_seen"`
 	LastSeen    time.Time `db:"last_seen"`
 	Status      string    `db:"status"`
@@ -78,13 +90,11 @@ func (queryMgr *QueryManager) GetClassID(checksum string) (uint, error) {
 
 // Get - select query classes for given checksums
 func (queryMgr *QueryManager) Get(checksums []string) (map[string]Query, error) {
-
 	const queryQueryClassesTemplate = `
 		SELECT checksum, abstract, fingerprint, tables, first_seen, last_seen, status
 		FROM query_classes
-		WHERE checksum IN ({{ range $index, $value := .}}{{if $index}}, {{end}}{{$value}}{{end}})
+		WHERE checksum IN ({{ range $index, $value := .}}{{if $index}}, {{end}}'{{$value}}'{{end}})
 	`
-
 	tmpl, err := template.New("queryQueryClassesTemplate").Parse(queryQueryClassesTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("Cannot prepare queryQueryClassesTemplate (%v)", err)
@@ -95,26 +105,28 @@ func (queryMgr *QueryManager) Get(checksums []string) (map[string]Query, error) 
 	if err != nil {
 		return nil, fmt.Errorf("Cannot execute queryQueryClassesBuffer (%v)", err)
 	}
-
-	queries := []struct {
-		Query
-		TablesJSON string `db:"tables"`
-	}{}
-
+	queries := []QueryPlain{}
 	err = queryMgr.conns.SQLite.Select(&queries, queryQueryClassesBuffer.String())
+	if err != nil {
+		revel.ERROR.Printf("queryQueryClassesBuffer.String() eror: %v ", err)
+	}
 
 	queriesMap := map[string]Query{}
 
 	for _, query := range queries {
+		var tables []queryService.Table
 		if query.TablesJSON != "" {
-			var tables []queryService.Table
-			err := json.Unmarshal([]byte(query.TablesJSON), &tables)
-			if err != nil {
-				return nil, err
-			}
-			query.Query.Tables = tables
+			_ = json.Unmarshal([]byte(query.TablesJSON), &tables)
 		}
-		queriesMap[query.Query.ID] = query.Query
+		queriesMap[query.ID] = Query{
+			ID:          query.ID,
+			Abstract:    query.Abstract,
+			Fingerprint: query.Fingerprint,
+			Tables:      tables,
+			FirstSeen:   query.FirstSeen,
+			LastSeen:    query.LastSeen,
+			Status:      query.Status,
+		}
 	}
 
 	return queriesMap, nil
@@ -164,7 +176,7 @@ func (queryMgr *QueryManager) Example(classID, instanceID uint, period time.Time
 	example := Example{}
 	err := queryMgr.conns.SQLite.Get(&example, query, classID, instanceID, period)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot get query Example (%v)", err)
+		return nil, shared.ErrNotFound
 	}
 	return &example, nil
 }

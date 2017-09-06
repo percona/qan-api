@@ -18,9 +18,9 @@ CREATE TABLE `instances` (
 CREATE TABLE `query_classes` (
   `query_class_id` integer  NOT NULL PRIMARY KEY AUTOINCREMENT
 ,  `checksum` char(32) NOT NULL
-,  `abstract` varchar(100) DEFAULT NULL
+,  `abstract` varchar(100) NOT NULL
 ,  `fingerprint` varchar(5000) NOT NULL
-,  `tables` text
+,  `tables` text NOT NULL
 ,  `first_seen` timestamp NULL DEFAULT NULL
 ,  `last_seen` timestamp NULL DEFAULT NULL
 ,  `status` char(3) NOT NULL DEFAULT 'new'

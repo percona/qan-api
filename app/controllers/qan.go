@@ -89,13 +89,17 @@ func (c QAN) Profile(UUID string) revel.Result {
 }
 
 // QueryReport is endpoint to get metrics for given instance and query class
-func (c QAN) QueryReport(UUID, queryID string) revel.Result {
+// func (c QAN) QueryReport(UUID, queryID string) revel.Result {
+func (c QAN) QueryReport() revel.Result {
 	instanceID := c.Args["instanceId"].(uint)
 
 	// Convert and validate the time range.
-	var beginTs, endTs string
+	var beginTs, endTs, UUID, queryID string
 	c.Params.Bind(&beginTs, "begin")
 	c.Params.Bind(&endTs, "end")
+
+	c.Params.Bind(&UUID, "uuid")
+	c.Params.Bind(&queryID, "queryId")
 
 	begin, end, err := shared.ValidateTimeRange(beginTs, endTs)
 	if err != nil {
@@ -105,7 +109,6 @@ func (c QAN) QueryReport(UUID, queryID string) revel.Result {
 	// Get the full query info: abstract, example, first/laset seen, etc.
 	queryMgr := models.NewQueryManager(c.Args["connsPool"])
 	queries, err := queryMgr.Get([]string{queryID})
-
 	if err != nil {
 		return c.Error(err, "qh.Get")
 	}
