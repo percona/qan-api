@@ -44,6 +44,18 @@ type parseTry struct {
 	crashChan chan bool
 }
 
+type protoTables []queryProto.Table
+
+func (t protoTables) String() string {
+	s := ""
+	sep := ""
+	for _, table := range t {
+		s += sep + table.String()
+		sep = " "
+	}
+	return s
+}
+
 const (
 	MAX_JOIN_DEPTH = 20
 )
@@ -54,13 +66,14 @@ var (
 )
 
 type Mini struct {
-	Debug      bool
-	cwd        string
-	queryIn    chan string
-	miniOut    chan string
-	parseChan  chan parseTry
-	onlyTables bool
-	stopChan   chan struct{}
+	Debug         bool
+	cwd           string
+	queryIn       chan string
+	miniOut       chan string
+	parseChan     chan parseTry
+	onlyTables    bool
+	stopChan      chan struct{}
+	defaultSchema string
 }
 
 func NewMini(cwd string) *Mini {
@@ -210,7 +223,7 @@ func (m *Mini) parse() {
 					fmt.Printf("struct: %#v\n", s)
 				}
 				for _, t := range s.From {
-					if err := addTable(&q, t, 0); err != nil {
+					if err := m.addTable(&q, t, 0); err != nil {
 						switch err {
 						case ErrMaxJoinDepth:
 							fmt.Printf("WARN: %s (%d): %s\n", err, MAX_JOIN_DEPTH, p.query)
@@ -221,46 +234,53 @@ func (m *Mini) parse() {
 					}
 				}
 			case *sqlparser.Insert:
-				q.Abstract = "INSERT"
+				// REPLACEs will be recognized by sqlparser as INSERTs and the Action field
+				// will have the real command
 				s := p.s.(*sqlparser.Insert)
+				q.Abstract = strings.ToUpper(s.Action)
 				if m.Debug {
 					fmt.Printf("struct: %#v\n", s)
 				}
 				table := queryProto.Table{
-					Db:    string(s.Table.Qualifier),
-					Table: string(s.Table.Name),
+					Db:    firstNonEmpty(s.Table.Qualifier.String(), m.defaultSchema),
+					Table: s.Table.Name.String(),
 				}
 				q.Tables = append(q.Tables, table)
-				q.Abstract += " " + tableName(table)
+				q.Abstract += " " + table.String()
 			case *sqlparser.Update:
 				q.Abstract = "UPDATE"
 				s := p.s.(*sqlparser.Update)
 				if m.Debug {
 					fmt.Printf("struct: %#v\n", s)
 				}
-				table := queryProto.Table{
-					Db:    string(s.Table.Qualifier),
-					Table: string(s.Table.Name),
-				}
-				q.Tables = append(q.Tables, table)
-				q.Abstract += " " + tableName(table)
+				tables := m.getTablesFromStmt(s.TableExprs)
+				q.Tables = append(q.Tables, tables...)
+				q.Abstract += " " + tables.String()
 			case *sqlparser.Delete:
 				q.Abstract = "DELETE"
 				s := p.s.(*sqlparser.Delete)
 				if m.Debug {
 					fmt.Printf("struct: %#v\n", s)
 				}
-				table := queryProto.Table{
-					Db:    string(s.Table.Qualifier),
-					Table: string(s.Table.Name),
-				}
-				q.Tables = append(q.Tables, table)
-				q.Abstract += " " + tableName(table)
+				tables := m.getTablesFromStmt(s.TableExprs)
+				q.Tables = append(q.Tables, tables...)
+				q.Abstract += " " + tables.String()
 			default:
 				if m.Debug {
 					fmt.Printf("unsupported type: %#v\n", p.s)
 				}
 				q, _ = m.usePerl(p.query, q, ErrNotSupported)
+				switch p.s.(type) {
+				case *sqlparser.Use:
+					m.defaultSchema = p.s.(*sqlparser.Use).DBName.String()
+				case *sqlparser.DDL:
+					use := p.s.(*sqlparser.DDL)
+					table := queryProto.Table{
+						Db:    firstNonEmpty(use.NewName.Qualifier.String(), m.defaultSchema),
+						Table: use.NewName.Name.String(),
+					}
+					q.Tables = append(q.Tables, table)
+				}
 			}
 			p.queryChan <- q
 		case <-m.stopChan:
@@ -269,12 +289,33 @@ func (m *Mini) parse() {
 	}
 }
 
-func tableName(table queryProto.Table) string {
-	if table.Db != "" && table.Table != "" {
-		return table.Db + "." + table.Table
-	} else {
-		return table.Table
+func (m *Mini) getTablesFromStmt(tes sqlparser.TableExprs) protoTables {
+	t := []queryProto.Table{}
+	if len(tes) > 0 {
+		for _, te := range tes {
+			if ate, ok := te.(*sqlparser.AliasedTableExpr); ok {
+				if tn, ok := ate.Expr.(sqlparser.TableName); ok {
+					tbl := tn.Name.String()
+					schema := tn.Qualifier.String()
+					table := queryProto.Table{
+						Db:    firstNonEmpty(schema, m.defaultSchema),
+						Table: tbl,
+					}
+					t = append(t, table)
+				}
+			}
+		}
 	}
+	return t
+}
+
+func firstNonEmpty(vals ...string) string {
+	for _, val := range vals {
+		if val != "" {
+			return val
+		}
+	}
+	return ""
 }
 
 func (m *Mini) usePerl(query string, q QueryInfo, originalErr error) (QueryInfo, error) {
@@ -289,22 +330,22 @@ func (m *Mini) usePerl(query string, q QueryInfo, originalErr error) (QueryInfo,
 	return q, nil
 }
 
-func addTable(q *QueryInfo, t sqlparser.TableExpr, depth uint) error {
+func (m *Mini) addTable(q *QueryInfo, t sqlparser.TableExpr, depth uint) error {
 	if depth > MAX_JOIN_DEPTH {
 		return ErrMaxJoinDepth
 	}
 	depth++
 	switch a := t.(type) {
 	case *sqlparser.AliasedTableExpr:
-		n := a.Expr.(*sqlparser.TableName)
-		db := string(n.Qualifier)
-		tbl := string(n.Name)
+		n := a.Expr.(sqlparser.TableName)
+		db := n.Qualifier.String()
+		tbl := n.Name.String()
 		table := queryProto.Table{
-			Db:    db,
+			Db:    firstNonEmpty(db, m.defaultSchema),
 			Table: tbl,
 		}
 		q.Tables = append(q.Tables, table)
-		q.Abstract += " " + tableName(table)
+		q.Abstract += " " + table.String()
 	case *sqlparser.JoinTableExpr:
 		// This case happens for JOIN clauses. It recurses to the bottom
 		// of the tree via the left expressions, then it unwinds. E.g. with
@@ -327,10 +368,10 @@ func addTable(q *QueryInfo, t sqlparser.TableExpr, depth uint) error {
 		// back to usePerl() to get the full, correct abstract (but no tables).
 		//
 		// todo: maybe a partial list is better than no list?
-		if err := addTable(q, a.LeftExpr, depth); err != nil {
+		if err := m.addTable(q, a.LeftExpr, depth); err != nil {
 			return err
 		}
-		if err := addTable(q, a.RightExpr, depth); err != nil {
+		if err := m.addTable(q, a.RightExpr, depth); err != nil {
 			return err
 		}
 	}

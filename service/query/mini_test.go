@@ -18,23 +18,15 @@
 package query_test
 
 import (
+	"reflect"
 	"testing"
 
 	qp "github.com/percona/pmm/proto/query"
 	"github.com/percona/qan-api/config"
 	"github.com/percona/qan-api/service/query"
-	"github.com/stretchr/testify/assert"
-	. "gopkg.in/check.v1"
 )
 
-func Test(t *testing.T) { TestingT(t) }
-
-type MiniTestSuite struct {
-}
-
-var _ = Suite(&MiniTestSuite{})
-
-func (s *MiniTestSuite) TestParse(t *C) {
+func TestParse(t *testing.T) {
 	m := query.NewMini(config.ApiRootDir + "/service/query")
 	go m.Run()
 	defer m.Stop()
@@ -54,12 +46,12 @@ func (s *MiniTestSuite) TestParse(t *C) {
 			"SELECT t",
 			[]qp.Table{qp.Table{Db: "", Table: "t"}},
 		},
-		example{
+		example{ // #1
 			"select c from db.t where id=?",
 			"SELECT db.t",
 			[]qp.Table{qp.Table{Db: "db", Table: "t"}},
 		},
-		example{
+		example{ // #2
 			"select c from db.t, t2 where id=?",
 			"SELECT db.t t2",
 			[]qp.Table{
@@ -67,12 +59,12 @@ func (s *MiniTestSuite) TestParse(t *C) {
 				qp.Table{Db: "", Table: "t2"},
 			},
 		},
-		example{
+		example{ // #3
 			"SELECT /*!40001 SQL_NO_CACHE */ * FROM `film`",
 			"SELECT film",
 			[]qp.Table{qp.Table{Db: "", Table: "film"}},
 		},
-		example{
+		example{ // #4
 			"select c from ta join tb on (ta.id=tb.id) where id=?",
 			"SELECT ta tb",
 			[]qp.Table{
@@ -80,7 +72,7 @@ func (s *MiniTestSuite) TestParse(t *C) {
 				qp.Table{Db: "", Table: "tb"},
 			},
 		},
-		example{
+		example{ // #5
 			"select c from ta join tb on (ta.id=tb.id) join tc on (1=1) where id=?",
 			"SELECT ta tb tc",
 			[]qp.Table{
@@ -92,12 +84,12 @@ func (s *MiniTestSuite) TestParse(t *C) {
 
 		/////////////////////////////////////////////////////////////////////
 		// INSERT
-		example{
+		example{ // #6
 			"INSERT INTO my_table (a,b,c) VALUES (1, 2, 3)",
 			"INSERT my_table",
 			[]qp.Table{qp.Table{Db: "", Table: "my_table"}},
 		},
-		example{
+		example{ // #7
 			"INSERT INTO d.t (a,b,c) VALUES (1, 2, 3)",
 			"INSERT d.t",
 			[]qp.Table{qp.Table{Db: "d", Table: "t"}},
@@ -105,7 +97,7 @@ func (s *MiniTestSuite) TestParse(t *C) {
 
 		/////////////////////////////////////////////////////////////////////
 		// UPDATE
-		example{
+		example{ // #8
 			"update t set foo=?",
 			"UPDATE t",
 			[]qp.Table{qp.Table{Db: "", Table: "t"}},
@@ -113,7 +105,7 @@ func (s *MiniTestSuite) TestParse(t *C) {
 
 		/////////////////////////////////////////////////////////////////////
 		// DELETE
-		example{
+		example{ // #9
 			"delete from t where id in (?+)",
 			"DELETE t",
 			[]qp.Table{qp.Table{Db: "", Table: "t"}},
@@ -121,7 +113,7 @@ func (s *MiniTestSuite) TestParse(t *C) {
 
 		/////////////////////////////////////////////////////////////////////
 		// Other with partial support
-		example{
+		example{ // #10
 			"show status like ?",
 			"SHOW STATUS",
 			[]qp.Table{},
@@ -129,32 +121,32 @@ func (s *MiniTestSuite) TestParse(t *C) {
 
 		/////////////////////////////////////////////////////////////////////
 		// Not support by sqlparser, falls back to mini.pl
-		example{
+		example{ // #11
 			"REPLACE INTO my_table (a,b,c) VALUES (1, 2, 3)",
 			"REPLACE my_table",
-			[]qp.Table{},
+			[]qp.Table{qp.Table{Db: "", Table: "my_table"}},
 		},
-		example{
+		example{ // #12
 			"OPTIMIZE TABLE `o2408`.`agent_log`",
 			"OPTIMIZE `o2408`.`agent_log`",
 			[]qp.Table{},
 		},
-		example{
+		example{ // #13
 			"select c from t1 join t2 using (c) where id=?",
 			"SELECT t1 t2",
 			[]qp.Table{},
 		},
-		example{
+		example{ // #14
 			"insert into data (?)",
 			"INSERT data",
 			[]qp.Table{},
 		},
-		example{
+		example{ // #15
 			"call\n pita",
 			"CALL pita",
 			[]qp.Table{},
 		},
-		example{ // exceeds MAX_JOIN_DEPTH
+		example{ // #16 exceeds MAX_JOIN_DEPTH
 			"select c from a" +
 				" join b on (1=1) join c on (1=1) join d on (1=1) join e on (1=1)" +
 				" join f on (1=1) join g on (1=1) join h on (1=1) join i on (1=1)" +
@@ -167,12 +159,73 @@ func (s *MiniTestSuite) TestParse(t *C) {
 			"SELECT a b c d e f g h i j k l m n o p q r s t u v w x y z",
 			[]qp.Table{},
 		},
+		example{ // #17 exceeds MAX_JOIN_DEPTH
+			"SELECT DISTINCT c\n FROM sbtest1\nWHERE id\nBETWEEN 1\nAND 100\nORDER BY  c\n",
+			"SELECT sbtest1",
+			[]qp.Table{qp.Table{Db: "", Table: "sbtest1"}},
+		},
+		example{ // #18 exceeds MAX_JOIN_DEPTH
+			"SELECT DISTINCT c FROM sbtest2 WHERE id BETWEEN 1 AND 100 ORDER BY c",
+			"SELECT sbtest2",
+			[]qp.Table{qp.Table{Db: "", Table: "sbtest2"}},
+		},
+		// Don't remove the ; at the end of the next query.
+		// There was an error in the past where a ; at the end was making the
+		// parser to fail and we want to ensure it works now.
+		example{ // #19
+			"SELECT * from `sysbenchtest`.`t6002_0`;",
+			"SELECT sysbenchtest.t6002_0",
+			[]qp.Table{qp.Table{Db: "sysbenchtest", Table: "t6002_0"}},
+		},
+		example{ // #20
+			"use zapp",
+			"USE",
+			[]qp.Table{},
+		},
+		// Schema was set as default from the previous USE
+		example{ // #21
+			"SELECT * from `t6003_0`;",
+			"SELECT zapp.t6003_0",
+			[]qp.Table{qp.Table{Db: "zapp", Table: "t6003_0"}},
+		},
+		example{ // #22
+			"CREATE TABLE t6004 (id int, a varchar(25)) engine=innodb",
+			"CREATE TABLE t6004",
+			[]qp.Table{qp.Table{Db: "zapp", Table: "t6004"}},
+		},
+		example{ // #23
+			"ALTER TABLE sakila.actor ADD COLUMN newcol int",
+			"ALTER TABLE sakila.actor",
+			[]qp.Table{qp.Table{Db: "sakila", Table: "actor"}},
+		},
+		// Db & Table are empty because CREATE DATABASE is not yet supported by Vitess.sqlparser
+		example{ // #24
+			"CREATE DATABASE percona",
+			"CREATE DATABASE percona",
+			[]qp.Table{},
+		},
+		example{ // #25
+			"create index idx ON percona (f1)",
+			"CREATE index",
+			[]qp.Table{qp.Table{Db: "zapp", Table: "percona"}},
+		},
+		example{ // #26 override the default USE
+			"create index idx ON brannigan.percona (f1)",
+			"CREATE index",
+			[]qp.Table{qp.Table{Db: "brannigan", Table: "percona"}},
+		},
 	}
 
-	for _, e := range examples {
+	for i, e := range examples {
 		q, err := m.Parse(e.query, "")
-		t.Check(err, IsNil)
-		t.Check(q.Abstract, Equals, e.abstract)
-		assert.Equal(t, e.tables, q.Tables)
+		if err != nil {
+			t.Errorf("Error in test # %d: %s", i, err)
+		}
+		if q.Abstract != e.abstract {
+			t.Errorf("Test # %d: abstracts are different.\nWant: %s\nGot: %s", i, e.abstract, q.Abstract)
+		}
+		if !reflect.DeepEqual(q.Tables, e.tables) {
+			t.Errorf("Test # %d: tables are different.\nWant: %v\nGot: %v", i, e.tables, q.Tables)
+		}
 	}
 }
