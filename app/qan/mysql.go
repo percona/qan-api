@@ -320,7 +320,7 @@ func (h *MySQLMetricWriter) newClass(instanceId uint, subsystem string, class *e
 	// The query checksum is the class is identified externally (in a QAN report).
 	// Since this is the first time we've seen the query, firstSeen=lastSeen.
 	t := time.Now()
-	res, err := h.stmtInsertQueryClass.Exec(class.Id, queryAbstract, queryQuery, tables, lastSeen, lastSeen, tables)
+	res, err := h.stmtInsertQueryClass.Exec(class.Id, queryAbstract, queryQuery, tables, lastSeen, lastSeen)
 
 	h.stats.TimingDuration(h.stats.System("insert-query-class"), time.Now().Sub(t), h.stats.SampleRate)
 	if err != nil {
@@ -515,9 +515,7 @@ func (h *MySQLMetricWriter) prepareStatements() {
 	h.stmtInsertQueryClass, err = h.dbm.DB().Prepare(
 		"INSERT INTO query_classes" +
 			" (checksum, abstract, fingerprint, tables, first_seen, last_seen)" +
-			" VALUES (?, ?, ?, ?, COALESCE(?, NOW()), ?)" +
-			" ON DUPLICATE KEY UPDATE " +
-			" tables=IF(tables='', ?, tables) ")
+			" VALUES (?, ?, ?, ?, COALESCE(?, NOW()), ?)")
 	if err != nil {
 		panic("Failed to prepare stmtInsertQueryClass: " + err.Error())
 	}
@@ -526,8 +524,7 @@ func (h *MySQLMetricWriter) prepareStatements() {
 	h.stmtUpdateQueryClass, err = h.dbm.DB().Prepare(
 		"UPDATE query_classes" +
 			" SET first_seen = LEAST(first_seen, ?), " +
-			" last_seen = GREATEST(last_seen, ?), " +
-			" tables = IF(tables='', ?, tables)" +
+			" last_seen = GREATEST(last_seen, ?)" +
 			" WHERE query_class_id = ?")
 	if err != nil {
 		panic("Failed to prepare stmtUpdateQueryClass: " + err.Error())
