@@ -1,5 +1,5 @@
-hash: fdc662e51cd3f32182d039c8224ae1abef80e2040b0317e42794892a2c995ccd
-updated: 2017-02-23T13:45:08.372812233+01:00
+hash: ae4d76524eee3f3c52fe11213392927efd16bfcd9ede5fba9414953625ba9b0d
+updated: 2017-09-28T10:27:45.495386568-03:00
 imports:
 - name: github.com/agtorre/gocolorize
   version: 99fea4bc9517f07eea8194702cb7076f4845b7de
@@ -9,10 +9,16 @@ imports:
   - statsd
 - name: github.com/go-sql-driver/mysql
   version: 2e00b5cd70399450106cec6431c2e2ce3cae5034
+- name: github.com/golang/glog
+  version: 23def4e6c14b4da8ac2ed8007337bc5eb5007998
 - name: github.com/golang/protobuf
   version: 69b215d01a5606c843240eab4937eab3acee6530
   subpackages:
   - proto
+  - ptypes
+  - ptypes/any
+  - ptypes/duration
+  - ptypes/timestamp
 - name: github.com/hashicorp/go-version
   version: 03c5bf6be031b6dd45afec16b1cf94fc8938bc77
 - name: github.com/jmoiron/sqlx
@@ -37,7 +43,7 @@ imports:
   - event
   - log
 - name: github.com/percona/pmm
-  version: 0af8c6479067bf89905f881e6b118d340f719d6d
+  version: 8951ae806e03cb6dc8cc01f32e8cb705a69e818c
   subpackages:
   - proto
   - proto/config
@@ -63,23 +69,39 @@ imports:
 - name: github.com/robfig/pathtree
   version: 41257a1839e945fce74afd070e02bab2ea2c776a
 - name: github.com/youtube/vitess
-  version: f729316a75213a533287dfe100b4a81177629b15
+  version: 9b42ea02086d8061f2fd49df6a00670689485fc7
   subpackages:
-  - go/cistring
+  - go/bytes2
+  - go/event
   - go/hack
   - go/sqltypes
+  - go/tb
+  - go/vt/logutil
+  - go/vt/proto/logutil
   - go/vt/proto/query
   - go/vt/proto/topodata
+  - go/vt/proto/vtgate
   - go/vt/proto/vtrpc
   - go/vt/sqlparser
+  - go/vt/vterrors
 - name: golang.org/x/net
   version: 6b27048ae5e6ad1ef927e72e437531493de612fe
   subpackages:
+  - context
   - websocket
 - name: golang.org/x/sys
   version: 075e574b89e4c2d22f2286a7e2b919519c6f3547
   subpackages:
   - unix
+- name: google.golang.org/genproto
+  version: 1e559d0a00eef8a9a43151db4665280bd8dd5886
+  subpackages:
+  - googleapis/rpc/status
+- name: google.golang.org/grpc
+  version: a68137c92756bf6ac0f9cfa5299f7dfd0af5dfe2
+  subpackages:
+  - codes
+  - status
 - name: gopkg.in/check.v1
   version: 20d25e2804050c1cd24a7eea1e7a6447dd0e74ec
 - name: gopkg.in/fsnotify.v1

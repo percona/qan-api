@@ -23,7 +23,7 @@ import:
 - package: github.com/revel/revel
 - package: github.com/robfig/config
 - package: github.com/youtube/vitess
-  version: f729316a75213a533287dfe100b4a81177629b15
+  version: 9b42ea02086d8061f2fd49df6a00670689485fc7
   subpackages:
   - go/vt/sqlparser
 - package: golang.org/x/net
