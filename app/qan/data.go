@@ -48,9 +48,8 @@ func SaveData(wsConn ws.Connector, agentId uint, dbh *MySQLMetricWriter, stats *
 				// Agent done sending, closed websocket. Data controller ignores this
 				// error so don't change it with fmt.Errorf().
 				return err
-			} else {
-				return fmt.Errorf("wsConn.RecvBytes: %s", err)
 			}
+			return fmt.Errorf("wsConn.RecvBytes: %s", err)
 		}
 		nBytes := int64(len(bytes))
 
@@ -129,7 +128,6 @@ func SaveData(wsConn ws.Connector, agentId uint, dbh *MySQLMetricWriter, stats *
 		}
 	}
 
-	return nil
 }
 
 func decode(bytes []byte) (proto.Data, qp.Report, error) {

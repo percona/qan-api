@@ -20,6 +20,7 @@ package qan_test
 import (
 	"encoding/json"
 	"io/ioutil"
+	"reflect"
 	"time"
 
 	"github.com/cactus/go-statsd-client/statsd"
@@ -160,6 +161,62 @@ func (s *MySQLTestSuite) TestQueryExample(t *C) {
 	t.Assert(err, IsNil)
 	if diff := test.TableDiff(s.testDb.DB(), "query_examples", "query_class_id", config.TestDir+"/qan/001/query_examples_2.tab"); diff != "" {
 		t.Error(diff)
+	}
+}
+
+func (s *MySQLTestSuite) TestUpdateTablesInClasses(t *C) {
+	var err error
+
+	now, _ := time.Parse("2006-01-02T15:04:05", "2014-04-16T18:17:58")
+
+	qanHandler := qan.NewMySQLMetricWriter(db.DBManager, s.ih, s.m, s.nullStats)
+
+	data1, err := ioutil.ReadFile(config.ApiRootDir + "/test/qan/001/slow001_v3.json")
+	t.Assert(err, IsNil)
+	report1 := qp.Report{}
+	err = json.Unmarshal(data1, &report1)
+	t.Assert(err, IsNil)
+	report1.StartTs = now.Add(-3 * time.Second)
+	report1.EndTs = now.Add(-2 * time.Second)
+	err = qanHandler.Write(report1)
+	t.Assert(err, IsNil)
+	if diff := test.TableDiff(s.testDb.DB(), "query_examples", "query_class_id", config.TestDir+"/qan/001/query_examples_1.tab"); diff != "" {
+		t.Error(diff)
+	}
+
+	// Cleanup tables field in query classes to test if they are getting updated
+	s.testDb.DB().Exec("UPDATE query_classes set tables = ''")
+
+	// Example should be updated when Query_time is greater.
+	data2, err := ioutil.ReadFile(config.ApiRootDir + "/test/qan/001/slow002_v3.json")
+	t.Assert(err, IsNil)
+	report2 := qp.Report{}
+	err = json.Unmarshal(data2, &report2)
+	t.Assert(err, IsNil)
+	report2.StartTs = now.Add(-2 * time.Second)
+	report2.EndTs = now.Add(-1 * time.Second)
+	err = qanHandler.Write(report2)
+	t.Assert(err, IsNil)
+	if diff := test.TableDiff(s.testDb.DB(), "query_examples", "query_class_id", config.TestDir+"/qan/001/query_examples_2.tab"); diff != "" {
+		t.Error(diff)
+	}
+
+	var gotTables []string
+	wantTables := []string{
+		"[{\"Db\":\"test\",\"Table\":\"n\"}]", "[{\"Db\":\"\",\"Table\":\"n\"}]",
+	}
+
+	rows, err := s.testDb.DB().Query("SELECT `tables` FROM query_classes")
+	t.Assert(err, IsNil)
+	for rows.Next() {
+		var tables string
+		err := rows.Scan(&tables)
+		t.Assert(err, IsNil)
+		gotTables = append(gotTables, tables)
+	}
+	t.Assert(rows.Err(), IsNil)
+	if !reflect.DeepEqual(gotTables, wantTables) {
+		t.Errorf("tables samples in query classes were not updated")
 	}
 }
 
