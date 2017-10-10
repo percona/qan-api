@@ -132,7 +132,15 @@ func (h *MySQLMetricWriter) Write(report qp.Report) error {
 
 		if id != 0 {
 			// Existing class, update it.  These update aren't fatal, but they shouldn't fail.
-			if err := h.updateQueryClass(id, lastSeen); err != nil {
+			var tables string
+			var err error
+			if in.Subsystem == instance.SubsystemNameMySQL {
+				_, tables, err = h.getQueryAndTables(class)
+				if err != nil {
+					log.Printf("WARNING: cannot parse query to update: %s", err)
+				}
+			}
+			if err := h.updateQueryClass(id, lastSeen, tables); err != nil {
 				log.Printf("WARNING: cannot update query class, skipping: %s: %#v: %s", err, class, trace)
 				continue
 			}
@@ -268,38 +276,15 @@ func (h *MySQLMetricWriter) newClass(instanceId uint, subsystem string, class *e
 
 	switch subsystem {
 	case instance.SubsystemNameMySQL:
-		// In theory the shortest valid SQL statment should be at least 2 chars
-		// (I'm not aware of any 1 char statments), so if the fingerprint is shorter
-		// than 2 then it's invalid, effectively empty, probably due to a slow log
-		// parser bug.
-		if len(class.Fingerprint) < 2 {
-			return 0, fmt.Errorf("empty fingerprint")
-		} else if class.Fingerprint[len(class.Fingerprint)-1] == '\n' {
-			// https://jira.percona.com/browse/PCT-826
-			class.Fingerprint = strings.TrimSuffix(class.Fingerprint, "\n")
-			log.Printf("WARNING: fingerprint had newline: %s: instance_id=%d", class.Fingerprint, instanceId)
-		}
-
-		// Distill the query (select c from t where id=? -> SELECT t) and extract
-		// its tables if possible. query.Query = fingerprint (cleaned up).
 		t := time.Now()
-		defaultDb := ""
-		if class.Example != nil {
-			defaultDb = class.Example.Db
-		}
-
-		query, err := h.m.Parse(class.Fingerprint, defaultDb)
-		h.stats.TimingDuration(h.stats.System("abstract-fingerprint"), time.Now().Sub(t), h.stats.SampleRate)
+		var query query.QueryInfo
+		var err error
+		query, tables, err = h.getQueryAndTables(class)
 		if err != nil {
 			return 0, err
 		}
-		if len(query.Tables) > 0 {
-			bytes, _ := json.Marshal(query.Tables)
-			tables = string(bytes)
-			h.stats.Inc(h.stats.System("parse-tables-yes"), 1, h.stats.SampleRate)
-		} else {
-			h.stats.Inc(h.stats.System("parse-tables-no"), 1, h.stats.SampleRate)
-		}
+
+		h.stats.TimingDuration(h.stats.System("abstract-fingerprint"), time.Now().Sub(t), h.stats.SampleRate)
 
 		// Truncate long fingerprints and abstracts to avoid MySQL warning 1265:
 		// Data truncated for column 'abstract'
@@ -341,9 +326,40 @@ func (h *MySQLMetricWriter) newClass(instanceId uint, subsystem string, class *e
 	return uint(classId), nil // success
 }
 
-func (h *MySQLMetricWriter) updateQueryClass(queryClassId uint, lastSeen string) error {
+func (h *MySQLMetricWriter) getQueryAndTables(class *event.Class) (query.QueryInfo, string, error) {
+	var schema, tables string
+	var queryInfo query.QueryInfo
+	// Default schema to add to the tables if there is no schema in the query like:
+	// SELECT a, b, c FROM table
+	if class.Example != nil {
+		schema = class.Example.Db
+	}
+	if len(class.Fingerprint) < 2 {
+		return queryInfo, "", fmt.Errorf("empty fingerprint")
+	}
+
+	class.Fingerprint = strings.TrimSpace(class.Fingerprint)
+	// If we have a query example, that's better to parse than a fingerprint
+	queryExample := class.Fingerprint
+	if class.Example != nil && class.Example.Query != "" {
+		queryExample = class.Example.Query
+	}
+	query, err := h.m.Parse(queryExample, schema)
+	if err != nil {
+		return queryInfo, "", err
+	}
+
+	if len(query.Tables) > 0 {
+		bytes, _ := json.Marshal(query.Tables)
+		tables = string(bytes)
+	}
+
+	return query, tables, nil
+}
+
+func (h *MySQLMetricWriter) updateQueryClass(queryClassId uint, lastSeen, tables string) error {
 	t := time.Now()
-	_, err := h.stmtUpdateQueryClass.Exec(lastSeen, lastSeen, queryClassId)
+	_, err := h.stmtUpdateQueryClass.Exec(lastSeen, lastSeen, tables, queryClassId)
 	h.stats.TimingDuration(h.stats.System("update-query-class"), time.Now().Sub(t), h.stats.SampleRate)
 	return mysql.Error(err, "updateQueryClass UPDATE query_classes")
 }
@@ -524,7 +540,8 @@ func (h *MySQLMetricWriter) prepareStatements() {
 	h.stmtUpdateQueryClass, err = h.dbm.DB().Prepare(
 		"UPDATE query_classes" +
 			" SET first_seen = LEAST(first_seen, ?), " +
-			" last_seen = GREATEST(last_seen, ?)" +
+			" last_seen = GREATEST(last_seen, ?), " +
+			" tables = COALESCE(NULLIF(tables,''),?) " +
 			" WHERE query_class_id = ?")
 	if err != nil {
 		panic("Failed to prepare stmtUpdateQueryClass: " + err.Error())

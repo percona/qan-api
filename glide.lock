@@ -1,5 +1,5 @@
 hash: ae4d76524eee3f3c52fe11213392927efd16bfcd9ede5fba9414953625ba9b0d
-updated: 2017-09-28T10:27:45.495386568-03:00
+updated: 2017-10-09T16:44:07.427251458-03:00
 imports:
 - name: github.com/agtorre/gocolorize
   version: 99fea4bc9517f07eea8194702cb7076f4845b7de
