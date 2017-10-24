@@ -541,7 +541,7 @@ func (h *MySQLMetricWriter) prepareStatements() {
 		"UPDATE query_classes" +
 			" SET first_seen = LEAST(first_seen, ?), " +
 			" last_seen = GREATEST(last_seen, ?), " +
-			" tables = COALESCE(NULLIF(tables,''),?) " +
+			" tables = ? " +
 			" WHERE query_class_id = ?")
 	if err != nil {
 		panic("Failed to prepare stmtUpdateQueryClass: " + err.Error())
