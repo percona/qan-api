@@ -18,10 +18,13 @@
 package agent
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"path"
 	"time"
 
 	"github.com/percona/pmm/proto"
@@ -29,8 +32,22 @@ import (
 	"github.com/percona/qan-api/app/db"
 	"github.com/percona/qan-api/app/shared"
 	"github.com/percona/qan-api/stats"
+	"github.com/pkg/errors"
 	"github.com/revel/revel"
+
+	"github.com/percona/qan-api/config"
 )
+
+// This is the path where we store zip files from the CollectInfo method from the agent.
+// This path should be accessible from Nginx ta let the user download these files and attach
+// them to emails for Percona Managed Services team.
+// This variable is being populated in the init() method to avoid reading the config file
+// every time we need to store a file.
+var collectInfoFileStoragePath string
+
+func init() {
+	collectInfoFileStoragePath = config.Get("api.collect.path")
+}
 
 // PUT /agents/:uuid/cmd
 func (c Agent) SendCmd(uuid string) revel.Result {
@@ -63,7 +80,39 @@ func (c Agent) SendCmd(uuid string) revel.Result {
 		return c.Error(err, "comm.Send")
 	}
 
+	dst := struct {
+		Filename string
+		Data     []byte
+	}{}
+	err = json.Unmarshal(reply.Data, &dst)
+	if dst.Filename != "" {
+		err := c.writeResponseFile(dst.Filename, dst.Data)
+		// Don't send the data to the UI
+		dst.Data = []byte{}
+		reply.Data, _ = json.Marshal(dst)
+		if err != nil {
+			reply.Error = fmt.Sprintf("cannot write output file %q: %s", dst.Filename, err.Error())
+		}
+	}
+
 	return c.RenderJson(reply)
+}
+
+func (c *Agent) writeResponseFile(filename string, data []byte) error {
+	// Te response has a zip file encoded as base64 to be able to send
+	// binary data as a json payload.
+	dbuf := make([]byte, base64.StdEncoding.DecodedLen(len(data)))
+	size, err := base64.StdEncoding.Decode(dbuf, data)
+
+	// DecodedLen(len(dst.Data)) returns the MAXIMUM possible size but
+	// the real size is the one returned by the Decode method so, we need
+	// to write only those bytes.
+	filename = path.Join(collectInfoFileStoragePath, filename)
+	err = ioutil.WriteFile(filename, dbuf[:size], os.ModePerm)
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("cannot write the file %q", filename))
+	}
+	return nil
 }
 
 // GET /agents/:uuid/status
