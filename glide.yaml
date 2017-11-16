@@ -33,3 +33,5 @@ import:
 - package: github.com/revel/modules
   subpackages:
   - testrunner/app/controllers
+- package: github.com/pkg/errors
+  version: v0.8.0

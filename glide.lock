@@ -1,5 +1,5 @@
-hash: ae4d76524eee3f3c52fe11213392927efd16bfcd9ede5fba9414953625ba9b0d
-updated: 2017-10-09T16:44:07.427251458-03:00
+hash: 1be486b25f20a515747fb6b3592bb5cb57d335b76fbc91f2bb48a70722f61e8a
+updated: 2017-11-16T12:06:25.232929011-03:00
 imports:
 - name: github.com/agtorre/gocolorize
   version: 99fea4bc9517f07eea8194702cb7076f4845b7de
@@ -50,6 +50,8 @@ imports:
   - proto/metrics
   - proto/qan
   - proto/query
+- name: github.com/pkg/errors
+  version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: github.com/revel/cmd
   version: 62fc677f3a4043183ad83ccb9cc32165e91dc72e
   subpackages:
