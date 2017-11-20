@@ -32,9 +32,9 @@ Options
 
 The install script does not use command line options, it uses these environment variables:
 
-=======     ===============
+==========  ===============
 Env Var     Purpose
-=======     ===============
+==========  ===============
 BASEDIR     Where to install the datastore. All datastore-related files are stored in this directory.
 
 LISTEN      `<IP>:<port>` to bind to and listen on (default: `0.0.0.0:9001`). The default is insecure and should be changed so that the API only listens on a private or trusted interface. Be sure that `HOSTNAME` resolves to this IP, else connections to the API will fail.
@@ -46,7 +46,7 @@ CREATE_DB   If "yes" (default), the ``percona_datastore`` schema is dropped and 
 CHECK_REQ   Check requirements before doing install (default: yes). If a check fails, installer exits 1.
 
 START       Start API after installing (default: yes).
-=======     ===============
+==========  ===============
 
 Specify environment variables like:
 
@@ -133,15 +133,15 @@ agent_configs
 
 This table contains configs from agents for agent internal services (data, log, etc.) and tools (QAN). The agent is the source of truth apropos its configs. When an agent connects to the API, the API sends a ``GetAllConfigs`` command and updates this table.
 
-===============     ===========================================
+==================  ===========================================
 Column              Purpose
-===============     ===========================================
+==================  ===========================================
 agent_instance_id   instance.instancd_id of the agent
 service             agent, data, log, qan, etc. (internals parts of the agent)
 other_instance_id   If service is a tool (e.g. qan), then this is the instance_id that the tool config applies to; else, the config is for some internal part of the agent (data, log, etc.)
 config              JSON config, specific to each service
 updated             Last time config was updated
-===============     ===========================================
+==================  ===========================================
 
 agent_log
 ---------
@@ -200,9 +200,9 @@ query_global_metrics
 
 This table contains summarized query reports for all queries in a report period (i.e. all query class metrics having the same instance_id and start_ts). Individual query classes are compared to global values, joined by instance_id and start_ts, to determine what percentage the query class comprises of the total, i.e. to establish query rankings.
 
-===============     ===========================================
+==================  ===========================================
 Column              Purpose
-===============     ===========================================
+==================  ===========================================
 instance_id         instance_id of the MySQL server where data is from
 start_ts            When data collection began
 end_ts              When data collection stopped
@@ -217,7 +217,7 @@ start_offset        File offset of log_file at start_ts
 end_offset          File offset of log_file at end_ts
 stop_ts             File offset of log_file where parsing stopped
 <metrics>           The 100+ {metric}_{stat}, most only available from Percona Server
-===============     ===========================================
+==================  ===========================================
 
 query_class_metrics
 -------------------
