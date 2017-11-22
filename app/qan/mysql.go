@@ -353,7 +353,9 @@ func (h *MySQLMetricWriter) getQueryAndTables(class *event.Class) (query.QueryIn
 		bytes, _ := json.Marshal(query.Tables)
 		tables = string(bytes)
 	}
-
+	// We still want to store the fingerprint in the database
+	// even if an example is available
+	query.Query = class.Fingerprint
 	return query, tables, nil
 }
 
