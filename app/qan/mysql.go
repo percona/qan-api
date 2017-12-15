@@ -153,7 +153,8 @@ func (h *MySQLMetricWriter) Write(report qp.Report) error {
 			UPDATE query_classes 
 				SET 
 					first_seen = (CASE WHEN first_seen < ? THEN first_seen ELSE ? END),
-					last_seen = (CASE WHEN last_seen > ? THEN last_seen ELSE ? END)
+					last_seen = (CASE WHEN last_seen > ? THEN last_seen ELSE ? END),
+					tables=IF(tables='', ?, tables)
 				WHERE query_class_id = ?;
 
 			`
@@ -305,8 +306,10 @@ func (h *MySQLMetricWriter) newClass(instanceID uint, subsystem string, class *e
 		INSERT INTO query_classes
 		(checksum, abstract, fingerprint, tables, first_seen, last_seen)
 		VALUES (?, ?, ?, ?, ?, ?)
+		ON DUPLICATE KEY UPDATE 
+		tables=IF(tables='', ?, tables)
 	`
-	res, err := h.conns.SQLite.Exec(queryInsertQueryClass, class.Id, queryAbstract, queryQuery, tables, lastSeen, lastSeen)
+	res, err := h.conns.SQLite.Exec(queryInsertQueryClass, class.Id, queryAbstract, queryQuery, tables, lastSeen, lastSeen, tables)
 	// res, err := h.stmtInsertQueryClass.Exec(class.Id, queryAbstract, queryQuery, tables, lastSeen, lastSeen)
 
 	if err != nil {
