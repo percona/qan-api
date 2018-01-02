@@ -1,8 +1,11 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -46,13 +49,14 @@ func NewWatcher() *Watcher {
 func (w *Watcher) Listen(listener Listener, roots ...string) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		ERROR.Fatal(err)
+		utilLog.Fatal("Watcher: Failed to create watcher","error",err)
 	}
 
 	// Replace the unbuffered Event channel with a buffered one.
 	// Otherwise multiple change events only come out one at a time, across
 	// multiple page views.  (There appears no way to "pump" the events out of
 	// the watcher)
+	// This causes a notification when you do a check in go, since you are modifying a buffer in use
 	watcher.Events = make(chan fsnotify.Event, 100)
 	watcher.Errors = make(chan error, 10)
 
@@ -61,7 +65,8 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 		// is the directory / file a symlink?
 		f, err := os.Lstat(p)
 		if err == nil && f.Mode()&os.ModeSymlink == os.ModeSymlink {
-			realPath, err := filepath.EvalSymlinks(p)
+			var realPath string
+			realPath, err = filepath.EvalSymlinks(p)
 			if err != nil {
 				panic(err)
 			}
@@ -70,7 +75,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 
 		fi, err := os.Stat(p)
 		if err != nil {
-			ERROR.Println("Failed to stat watched path", p, ":", err)
+			utilLog.Fatal("Watcher: Failed to stat watched path","path", p, "error", err)
 			continue
 		}
 
@@ -78,7 +83,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 		if !fi.IsDir() {
 			err = watcher.Add(p)
 			if err != nil {
-				ERROR.Println("Failed to watch", p, ":", err)
+				utilLog.Fatal("Watcher: Failed to watch","path", p, "error", err)
 			}
 			continue
 		}
@@ -87,7 +92,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 
 		watcherWalker = func(path string, info os.FileInfo, err error) error {
 			if err != nil {
-				ERROR.Println("Error walking path:", err)
+				utilLog.Fatal("Watcher: Error walking path:", "error", err)
 				return nil
 			}
 
@@ -100,7 +105,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 
 				err = watcher.Add(path)
 				if err != nil {
-					ERROR.Println("Failed to watch", path, ":", err)
+					utilLog.Fatal("Watcher: Failed to watch","path", path, "error", err)
 				}
 			}
 			return nil
@@ -109,7 +114,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 		// Else, walk the directory tree.
 		err = Walk(p, watcherWalker)
 		if err != nil {
-			ERROR.Println("Failed to walk directory", p, ":", err)
+			utilLog.Fatal("Watcher: Failed to walk directory","path", p, "error", err)
 		}
 	}
 
@@ -124,13 +129,16 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 
 // NotifyWhenUpdated notifies the watcher when a file event is received.
 func (w *Watcher) NotifyWhenUpdated(listener Listener, watcher *fsnotify.Watcher) {
+
 	for {
 		select {
 		case ev := <-watcher.Events:
 			if w.rebuildRequired(ev, listener) {
 				// Serialize listener.Refresh() calls.
 				w.notifyMutex.Lock()
-				listener.Refresh()
+				if err := listener.Refresh(); err != nil {
+					utilLog.Fatal("Watcher: Failed when listener refresh:","error", err)
+				}
 				w.notifyMutex.Unlock()
 			}
 		case <-watcher.Errors:
@@ -191,7 +199,7 @@ func (w *Watcher) eagerRebuildEnabled() bool {
 
 func (w *Watcher) rebuildRequired(ev fsnotify.Event, listener Listener) bool {
 	// Ignore changes to dotfiles.
-	if strings.HasPrefix(path.Base(ev.Name), ".") {
+	if strings.HasPrefix(filepath.Base(ev.Name), ".") {
 		return false
 	}
 
