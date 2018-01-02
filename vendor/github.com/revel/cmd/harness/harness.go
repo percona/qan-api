@@ -1,13 +1,16 @@
-// The Harness for a Revel program.
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
+// Package harness for a Revel Framework.
 //
-// It has a couple responsibilities:
+// It has a following responsibilities:
 // 1. Parse the user program, generating a main.go file that registers
 //    controller classes and starts the user's server.
 // 2. Build and run the user program.  Show compile errors.
 // 3. Monitor the user source and re-build / restart the program when necessary.
 //
 // Source files are generated in the app/tmp directory.
-
 package harness
 
 import (
@@ -26,10 +29,10 @@ import (
 	"sync/atomic"
 
 	"github.com/revel/revel"
+	"sync"
 )
 
 var (
-	watcher    *revel.Watcher
 	doNotWatch = []string{"tmp", "views", "routes"}
 
 	lastRequestHadError int32
@@ -42,12 +45,16 @@ type Harness struct {
 	serverHost string
 	port       int
 	proxy      *httputil.ReverseProxy
+	watcher    *revel.Watcher
+	mutex      *sync.Mutex
 }
 
-func renderError(w http.ResponseWriter, r *http.Request, err error) {
-	req, resp := revel.NewRequest(r), revel.NewResponse(w)
-	c := revel.NewController(req, resp)
-	c.RenderError(err).Apply(req, resp)
+func renderError(iw http.ResponseWriter, ir *http.Request, err error) {
+	context := revel.NewGoContext(nil)
+	context.Request.SetRequest(ir)
+	context.Response.SetResponse(iw)
+	c := revel.NewController(context)
+	c.RenderError(err).Apply(c.Request, c.Response)
 }
 
 // ServeHTTP handles all requests.
@@ -60,12 +67,17 @@ func (h *Harness) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Flush any change events and rebuild app if necessary.
 	// Render an error page if the rebuild / restart failed.
-	err := watcher.Notify()
+	err := h.watcher.Notify()
 	if err != nil {
+		// In a thread safe manner update the flag so that a request for
+		// /favicon.ico does not trigger a rebuild
 		atomic.CompareAndSwapInt32(&lastRequestHadError, 0, 1)
 		renderError(w, r, err)
 		return
 	}
+
+	// In a thread safe manner update the flag so that a request for
+	// /favicon.ico is allowed
 	atomic.CompareAndSwapInt32(&lastRequestHadError, 1, 0)
 
 	// Reverse proxy the request.
@@ -84,12 +96,14 @@ func NewHarness() *Harness {
 	// Prefer the app's views/errors directory, and fall back to the stock error pages.
 	revel.MainTemplateLoader = revel.NewTemplateLoader(
 		[]string{filepath.Join(revel.RevelPath, "templates")})
-	revel.MainTemplateLoader.Refresh()
+	if err := revel.MainTemplateLoader.Refresh(); err != nil {
+		revel.RevelLog.Error("Template loader error", "error", err)
+	}
 
-	addr := revel.HttpAddr
+	addr := revel.HTTPAddr
 	port := revel.Config.IntDefault("harness.port", 0)
 	scheme := "http"
-	if revel.HttpSsl {
+	if revel.HTTPSsl {
 		scheme = "https"
 	}
 
@@ -104,27 +118,32 @@ func NewHarness() *Harness {
 
 	serverURL, _ := url.ParseRequestURI(fmt.Sprintf(scheme+"://%s:%d", addr, port))
 
-	harness := &Harness{
+	serverHarness := &Harness{
 		port:       port,
 		serverHost: serverURL.String()[len(scheme+"://"):],
 		proxy:      httputil.NewSingleHostReverseProxy(serverURL),
+		mutex:      &sync.Mutex{},
 	}
 
-	if revel.HttpSsl {
-		harness.proxy.Transport = &http.Transport{
+	if revel.HTTPSsl {
+		serverHarness.proxy.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
 	}
-	return harness
+	return serverHarness
 }
 
 // Refresh method rebuilds the Revel application and run it on the given port.
 func (h *Harness) Refresh() (err *revel.Error) {
+	// Allow only one thread to rebuild the process
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+
 	if h.app != nil {
 		h.app.Kill()
 	}
 
-	revel.TRACE.Println("Rebuild")
+	revel.RevelLog.Debug("Rebuild Called")
 	h.app, err = Build()
 	if err != nil {
 		return
@@ -148,7 +167,7 @@ func (h *Harness) WatchDir(info os.FileInfo) bool {
 }
 
 // WatchFile method returns true given filename HasSuffix of ".go"
-// otheriwse false
+// otheriwse false - implements revel.DiscerningListener
 func (h *Harness) WatchFile(filename string) bool {
 	return strings.HasSuffix(filename, ".go")
 }
@@ -162,22 +181,26 @@ func (h *Harness) Run() {
 		paths = append(paths, gopaths...)
 	}
 	paths = append(paths, revel.CodePaths...)
-	watcher = revel.NewWatcher()
-	watcher.Listen(h, paths...)
+	h.watcher = revel.NewWatcher()
+	h.watcher.Listen(h, paths...)
+	h.watcher.Notify()
 
 	go func() {
-		addr := fmt.Sprintf("%s:%d", revel.HttpAddr, revel.HttpPort)
-		revel.INFO.Printf("Listening on %s", addr)
+		addr := fmt.Sprintf("%s:%d", revel.HTTPAddr, revel.HTTPPort)
+		revel.RevelLog.Infof("Listening on %s", addr)
 
 		var err error
-		if revel.HttpSsl {
-			err = http.ListenAndServeTLS(addr, revel.HttpSslCert,
-				revel.HttpSslKey, h)
+		if revel.HTTPSsl {
+			err = http.ListenAndServeTLS(
+				addr,
+				revel.HTTPSslCert,
+				revel.HTTPSslKey,
+				h)
 		} else {
 			err = http.ListenAndServe(addr, h)
 		}
 		if err != nil {
-			revel.ERROR.Fatalln("Failed to start reverse proxy:", err)
+			revel.RevelLog.Error("Failed to start reverse proxy:", "error", err)
 		}
 	}()
 
@@ -195,13 +218,13 @@ func (h *Harness) Run() {
 func getFreePort() (port int) {
 	conn, err := net.Listen("tcp", ":0")
 	if err != nil {
-		revel.ERROR.Fatal(err)
+		revel.RevelLog.Fatal("Unable to fetch a freee port address", "error", err)
 	}
 
 	port = conn.Addr().(*net.TCPAddr).Port
 	err = conn.Close()
 	if err != nil {
-		revel.ERROR.Fatal(err)
+		revel.RevelLog.Fatal("Unable to close port", "error", err)
 	}
 	return port
 }
@@ -213,7 +236,7 @@ func proxyWebsocket(w http.ResponseWriter, r *http.Request, host string) {
 		d   net.Conn
 		err error
 	)
-	if revel.HttpSsl {
+	if revel.HTTPSsl {
 		// since this proxy isn't used in production,
 		// it's OK to set InsecureSkipVerify to true
 		// no need to add another configuration option.
@@ -223,7 +246,7 @@ func proxyWebsocket(w http.ResponseWriter, r *http.Request, host string) {
 	}
 	if err != nil {
 		http.Error(w, "Error contacting backend server.", 500)
-		revel.ERROR.Printf("Error dialing websocket backend %s: %v", host, err)
+		revel.RevelLog.Error("Error dialing websocket backend ", "host", host, "error", err)
 		return
 	}
 	hj, ok := w.(http.Hijacker)
@@ -233,15 +256,21 @@ func proxyWebsocket(w http.ResponseWriter, r *http.Request, host string) {
 	}
 	nc, _, err := hj.Hijack()
 	if err != nil {
-		revel.ERROR.Printf("Hijack error: %v", err)
+		revel.RevelLog.Error("Hijack error", "error", err)
 		return
 	}
-	defer nc.Close()
-	defer d.Close()
+	defer func() {
+		if err = nc.Close(); err != nil {
+			revel.RevelLog.Error("Connection close error", "error", err)
+		}
+		if err = d.Close(); err != nil {
+			revel.RevelLog.Error("Dial close error", "error", err)
+		}
+	}()
 
 	err = r.Write(d)
 	if err != nil {
-		revel.ERROR.Printf("Error copying request to target: %v", err)
+		revel.RevelLog.Error("Error copying request to target", "error", err)
 		return
 	}
 

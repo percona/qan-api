@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
@@ -40,8 +44,8 @@ func (f Flash) Success(msg string, args ...interface{}) {
 // Within Revel, it is available as a Flash attribute on Controller instances.
 // The name of the Flash cookie is set as CookiePrefix + "_FLASH".
 func FlashFilter(c *Controller, fc []Filter) {
-	c.Flash = restoreFlash(c.Request.Request)
-	c.RenderArgs["flash"] = c.Flash.Data
+	c.Flash = restoreFlash(c.Request)
+	c.ViewArgs["flash"] = c.Flash.Data
 
 	fc[0](c, fc[1:])
 
@@ -60,13 +64,13 @@ func FlashFilter(c *Controller, fc []Filter) {
 }
 
 // restoreFlash deserializes a Flash cookie struct from a request.
-func restoreFlash(req *http.Request) Flash {
+func restoreFlash(req *Request) Flash {
 	flash := Flash{
 		Data: make(map[string]string),
 		Out:  make(map[string]string),
 	}
 	if cookie, err := req.Cookie(CookiePrefix + "_FLASH"); err == nil {
-		ParseKeyValueCookie(cookie.Value, func(key, val string) {
+		ParseKeyValueCookie(cookie.GetValue(), func(key, val string) {
 			flash.Data[key] = val
 		})
 	}

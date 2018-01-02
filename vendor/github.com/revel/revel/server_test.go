@@ -1,10 +1,14 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -44,7 +48,7 @@ func benchmarkRequest(b *testing.B, req *http.Request) {
 	b.ResetTimer()
 	resp := httptest.NewRecorder()
 	for i := 0; i < b.N; i++ {
-		handle(resp, req)
+		CurrentEngine.(*GoHttpServer).Handle(resp, req)
 	}
 }
 
@@ -55,29 +59,29 @@ func TestFakeServer(t *testing.T) {
 	resp := httptest.NewRecorder()
 
 	// First, test that the expected responses are actually generated
-	handle(resp, showRequest)
+	CurrentEngine.(*GoHttpServer).Handle(resp, showRequest)
 	if !strings.Contains(resp.Body.String(), "300 Main St.") {
 		t.Errorf("Failed to find hotel address in action response:\n%s", resp.Body)
 		t.FailNow()
 	}
 	resp.Body.Reset()
 
-	handle(resp, staticRequest)
-	sessvarsSize := getFileSize(t, path.Join(BasePath, "public", "js", "sessvars.js"))
+	CurrentEngine.(*GoHttpServer).Handle(resp, staticRequest)
+	sessvarsSize := getFileSize(t, filepath.Join(BasePath, "public", "js", "sessvars.js"))
 	if int64(resp.Body.Len()) != sessvarsSize {
 		t.Errorf("Expected sessvars.js to have %d bytes, got %d:\n%s", sessvarsSize, resp.Body.Len(), resp.Body)
 		t.FailNow()
 	}
 	resp.Body.Reset()
 
-	handle(resp, jsonRequest)
+	CurrentEngine.(*GoHttpServer).Handle(resp, jsonRequest)
 	if !strings.Contains(resp.Body.String(), `"Address":"300 Main St."`) {
 		t.Errorf("Failed to find hotel address in JSON response:\n%s", resp.Body)
 		t.FailNow()
 	}
 	resp.Body.Reset()
 
-	handle(resp, plaintextRequest)
+	CurrentEngine.(*GoHttpServer).Handle(resp, plaintextRequest)
 	if resp.Body.String() != "Hello, World!" {
 		t.Errorf("Failed to find greeting in plaintext response:\n%s", resp.Body)
 		t.FailNow()

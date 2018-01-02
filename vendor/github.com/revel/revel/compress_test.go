@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
@@ -10,8 +14,10 @@ import (
 func TestBenchmarkCompressed(t *testing.T) {
 	startFakeBookingApp()
 	resp := httptest.NewRecorder()
-	c := NewController(NewRequest(showRequest), NewResponse(resp))
-	c.SetAction("Hotels", "Show")
+	c := NewTestController(resp, showRequest)
+	if err := c.SetAction("Hotels", "Show"); err != nil {
+		t.Errorf("SetAction failed: %s", err)
+	}
 	Config.SetOption("results.compressed", "true")
 	result := Hotels{c}.Show(3)
 	result.Apply(c.Request, c.Response)
@@ -24,8 +30,10 @@ func BenchmarkRenderCompressed(b *testing.B) {
 	startFakeBookingApp()
 	resp := httptest.NewRecorder()
 	resp.Body = nil
-	c := NewController(NewRequest(showRequest), NewResponse(resp))
-	c.SetAction("Hotels", "Show")
+	c := NewTestController(resp, showRequest)
+	if err := c.SetAction("Hotels", "Show"); err != nil {
+		b.Errorf("SetAction failed: %s", err)
+	}
 	Config.SetOption("results.compressed", "true")
 	b.ResetTimer()
 
@@ -39,8 +47,10 @@ func BenchmarkRenderUnCompressed(b *testing.B) {
 	startFakeBookingApp()
 	resp := httptest.NewRecorder()
 	resp.Body = nil
-	c := NewController(NewRequest(showRequest), NewResponse(resp))
-	c.SetAction("Hotels", "Show")
+	c := NewTestController(resp, showRequest)
+	if err := c.SetAction("Hotels", "Show"); err != nil {
+		b.Errorf("SetAction failed: %s", err)
+	}
 	Config.SetOption("results.compressed", "false")
 	b.ResetTimer()
 

@@ -1,10 +1,13 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package main
 
 import (
 	"bytes"
 	"fmt"
 	"go/build"
-	"log"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -46,6 +49,7 @@ var (
 
 	// revel related paths
 	revelPkg     *build.Package
+	revelCmdPkg  *build.Package
 	appPath      string
 	appName      string
 	basePath     string
@@ -61,8 +65,6 @@ func newApp(args []string) {
 	if len(args) > 2 {
 		errorf("Too many arguments provided.\nRun 'revel help new' for usage.\n")
 	}
-
-	revel.ERROR.SetFlags(log.LstdFlags)
 
 	// checking and setting go paths
 	initGoPaths()
@@ -124,7 +126,7 @@ func initGoPaths() {
 	}
 
 	if len(srcRoot) == 0 {
-		revel.ERROR.Fatalln("Abort: could not create a Revel application outside of GOPATH.")
+		revel.RevelLog.Fatal("Abort: could not create a Revel application outside of GOPATH.")
 	}
 
 	// set go src path
@@ -143,17 +145,18 @@ func setApplicationPath(args []string) {
 			importPath)
 	}
 
+	appPath = filepath.Join(srcRoot, filepath.FromSlash(importPath))
+
 	_, err = build.Import(importPath, "", build.FindOnly)
-	if err == nil {
+	if err == nil && !empty(appPath) {
 		errorf("Abort: Import path %s already exists.\n", importPath)
 	}
 
-	revelPkg, err = build.Import(revel.REVEL_IMPORT_PATH, "", build.FindOnly)
+	revelPkg, err = build.Import(revel.RevelImportPath, "", build.FindOnly)
 	if err != nil {
 		errorf("Abort: Could not find Revel source code: %s\n", err)
 	}
 
-	appPath = filepath.Join(srcRoot, filepath.FromSlash(importPath))
 	appName = filepath.Base(appPath)
 	basePath = filepath.ToSlash(filepath.Dir(importPath))
 
@@ -190,7 +193,12 @@ func setSkeletonPath(args []string) {
 
 	} else {
 		// use the revel default
-		skeletonPath = filepath.Join(revelPkg.Dir, "skeleton")
+		revelCmdPkg, err = build.Import(RevelCmdImportPath, "", build.FindOnly)
+		if err != nil {
+			errorf("Abort: Could not find Revel Cmd source code: %s\n", err)
+		}
+
+		skeletonPath = filepath.Join(revelCmdPkg.Dir, "revel", "skeleton")
 	}
 }
 
@@ -199,7 +207,7 @@ func copyNewAppFiles() {
 	err = os.MkdirAll(appPath, 0777)
 	panicOnError(err, "Failed to create directory "+appPath)
 
-	mustCopyDir(appPath, skeletonPath, map[string]interface{}{
+	_ = mustCopyDir(appPath, skeletonPath, map[string]interface{}{
 		// app.conf
 		"AppName":  appName,
 		"BasePath": basePath,

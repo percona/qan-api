@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
@@ -13,8 +17,8 @@ import (
 // Params: Testing Multipart forms
 
 const (
-	MULTIPART_BOUNDARY  = "A"
-	MULTIPART_FORM_DATA = `--A
+	MultipartBoundary = "A"
+	MultipartFormData = `--A
 Content-Disposition: form-data; name="text1"
 
 data1
@@ -76,30 +80,28 @@ var (
 
 func getMultipartRequest() *http.Request {
 	req, _ := http.NewRequest("POST", "http://localhost/path",
-		bytes.NewBufferString(MULTIPART_FORM_DATA))
+		bytes.NewBufferString(MultipartFormData))
 	req.Header.Set(
-		"Content-Type", fmt.Sprintf("multipart/form-data; boundary=%s", MULTIPART_BOUNDARY))
+		"Content-Type", fmt.Sprintf("multipart/form-data; boundary=%s", MultipartBoundary))
 	req.Header.Set(
-		"Content-Length", fmt.Sprintf("%d", len(MULTIPART_FORM_DATA)))
+		"Content-Length", fmt.Sprintf("%d", len(MultipartFormData)))
 	return req
 }
 
 func BenchmarkParams(b *testing.B) {
-	c := Controller{
-		Request: NewRequest(getMultipartRequest()),
-		Params:  &Params{},
-	}
+	c := NewTestController(nil, showRequest)
+	c.Params = &Params{}
+
 	for i := 0; i < b.N; i++ {
-		ParamsFilter(&c, NilChain)
+		ParamsFilter(c, NilChain)
 	}
 }
 
 func TestMultipartForm(t *testing.T) {
-	c := Controller{
-		Request: NewRequest(getMultipartRequest()),
-		Params:  &Params{},
-	}
-	ParamsFilter(&c, NilChain)
+	c := NewTestController(nil, getMultipartRequest())
+	c.Params = &Params{}
+
+	ParamsFilter(c, NilChain)
 
 	if !reflect.DeepEqual(expectedValues, map[string][]string(c.Params.Values)) {
 		t.Errorf("Param values: (expected) %v != %v (actual)",
@@ -134,12 +136,12 @@ func TestBind(t *testing.T) {
 }
 
 func TestResolveAcceptLanguage(t *testing.T) {
-	request := buildHttpRequestWithAcceptLanguage("")
+	request := buildHTTPRequestWithAcceptLanguage("")
 	if result := ResolveAcceptLanguage(request); result != nil {
 		t.Errorf("Expected Accept-Language to resolve to an empty string but it was '%s'", result)
 	}
 
-	request = buildHttpRequestWithAcceptLanguage("en-GB,en;q=0.8,nl;q=0.6")
+	request = buildHTTPRequestWithAcceptLanguage("en-GB,en;q=0.8,nl;q=0.6")
 	if result := ResolveAcceptLanguage(request); len(result) != 3 {
 		t.Errorf("Unexpected Accept-Language values length of %d (expected %d)", len(result), 3)
 	} else {
@@ -154,7 +156,7 @@ func TestResolveAcceptLanguage(t *testing.T) {
 		}
 	}
 
-	request = buildHttpRequestWithAcceptLanguage("en;q=0.8,nl;q=0.6,en-AU;q=malformed")
+	request = buildHTTPRequestWithAcceptLanguage("en;q=0.8,nl;q=0.6,en-AU;q=malformed")
 	if result := ResolveAcceptLanguage(request); len(result) != 3 {
 		t.Errorf("Unexpected Accept-Language values length of %d (expected %d)", len(result), 3)
 	} else {
@@ -166,13 +168,15 @@ func TestResolveAcceptLanguage(t *testing.T) {
 
 func BenchmarkResolveAcceptLanguage(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		request := buildHttpRequestWithAcceptLanguage("en-GB,en;q=0.8,nl;q=0.6,fr;q=0.5,de-DE;q=0.4,no-NO;q=0.4,ru;q=0.2")
+		request := buildHTTPRequestWithAcceptLanguage("en-GB,en;q=0.8,nl;q=0.6,fr;q=0.5,de-DE;q=0.4,no-NO;q=0.4,ru;q=0.2")
 		ResolveAcceptLanguage(request)
 	}
 }
 
-func buildHttpRequestWithAcceptLanguage(acceptLanguage string) *http.Request {
+func buildHTTPRequestWithAcceptLanguage(acceptLanguage string) *Request {
 	request, _ := http.NewRequest("POST", "http://localhost/path", nil)
 	request.Header.Set("Accept-Language", acceptLanguage)
-	return request
+	c := NewTestController(nil, request)
+
+	return c.Request
 }
