@@ -33,7 +33,7 @@ Advanced
    pmm-admin
    amazon-rds
    Configuring MySQL for Best Results <conf-mysql>
-   Enabling MongoDB Profiling <conf-mongodb>
+   conf-mongodb
    security
    mm-dashboards
 
@@ -44,6 +44,6 @@ Reference
    :maxdepth: 1
 
    Release Notes <release-notes/index>
-   contact
-   faq
-   glossary
+   Contact Us <contact>
+   FAQ <faq>
+   Glossaries <list.glossary>
