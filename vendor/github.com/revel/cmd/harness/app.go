@@ -1,14 +1,19 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package harness
 
 import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/revel/revel"
 	"io"
 	"os"
 	"os/exec"
 	"time"
+
+	"github.com/revel/revel"
 )
 
 // App contains the configuration for running a Revel app.  (Not for the app itself)
@@ -19,11 +24,12 @@ type App struct {
 	cmd        AppCmd // The last cmd returned.
 }
 
+// NewApp returns app instance with binary path in it
 func NewApp(binPath string) *App {
 	return &App{BinaryPath: binPath}
 }
 
-// Return a command to run the app server using the current configuration.
+// Cmd returns a command to run the app server using the current configuration.
 func (a *App) Cmd() AppCmd {
 	a.cmd = NewAppCmd(a.BinaryPath, a.Port)
 	return a.cmd
@@ -40,6 +46,7 @@ type AppCmd struct {
 	*exec.Cmd
 }
 
+// NewAppCmd returns the AppCmd with parameters initialized for running app
 func NewAppCmd(binPath string, port int) AppCmd {
 	cmd := exec.Command(binPath,
 		fmt.Sprintf("-port=%d", port),
@@ -51,11 +58,11 @@ func NewAppCmd(binPath string, port int) AppCmd {
 
 // Start the app server, and wait until it is ready to serve requests.
 func (cmd AppCmd) Start() error {
-	listeningWriter := startupListeningWriter{os.Stdout, make(chan bool)}
+	listeningWriter := &startupListeningWriter{os.Stdout, make(chan bool)}
 	cmd.Stdout = listeningWriter
-	revel.TRACE.Println("Exec app:", cmd.Path, cmd.Args)
+	revel.RevelLog.Debug("Exec app:", "path", cmd.Path, "args", cmd.Args)
 	if err := cmd.Cmd.Start(); err != nil {
-		revel.ERROR.Fatalln("Error running:", err)
+		revel.RevelLog.Fatal("Error running:", "error", err)
 	}
 
 	select {
@@ -63,30 +70,33 @@ func (cmd AppCmd) Start() error {
 		return errors.New("revel/harness: app died")
 
 	case <-time.After(30 * time.Second):
+		revel.RevelLog.Debug("Killing revel server process did not respond after wait timeout", "processid", cmd.Process.Pid)
 		cmd.Kill()
 		return errors.New("revel/harness: app timed out")
 
 	case <-listeningWriter.notifyReady:
 		return nil
 	}
+
+	// TODO remove this unreachable code and document it
 	panic("Impossible")
 }
 
 // Run the app server inline.  Never returns.
 func (cmd AppCmd) Run() {
-	revel.TRACE.Println("Exec app:", cmd.Path, cmd.Args)
+	revel.RevelLog.Debug("Exec app:", "path", cmd.Path, "args", cmd.Args)
 	if err := cmd.Cmd.Run(); err != nil {
-		revel.ERROR.Fatalln("Error running:", err)
+		revel.RevelLog.Fatal("Error running:", "error", err)
 	}
 }
 
-// Terminate the app server if it's running.
+// Kill terminates the app server if it's running.
 func (cmd AppCmd) Kill() {
 	if cmd.Cmd != nil && (cmd.ProcessState == nil || !cmd.ProcessState.Exited()) {
-		revel.TRACE.Println("Killing revel server pid", cmd.Process.Pid)
+		revel.RevelLog.Debug("Killing revel server pid", "pid", cmd.Process.Pid)
 		err := cmd.Process.Kill()
 		if err != nil {
-			revel.ERROR.Fatalln("Failed to kill revel server:", err)
+			revel.RevelLog.Fatal("Failed to kill revel server:", "error", err)
 		}
 	}
 }
@@ -95,7 +105,7 @@ func (cmd AppCmd) Kill() {
 func (cmd AppCmd) waitChan() <-chan struct{} {
 	ch := make(chan struct{}, 1)
 	go func() {
-		cmd.Wait()
+		_ = cmd.Wait()
 		ch <- struct{}{}
 	}()
 	return ch
@@ -109,7 +119,7 @@ type startupListeningWriter struct {
 	notifyReady chan bool
 }
 
-func (w startupListeningWriter) Write(p []byte) (n int, err error) {
+func (w *startupListeningWriter) Write(p []byte) (n int, err error) {
 	if w.notifyReady != nil && bytes.Contains(p, []byte("Listening")) {
 		w.notifyReady <- true
 		w.notifyReady = nil

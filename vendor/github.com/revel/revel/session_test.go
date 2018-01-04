@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
@@ -16,7 +20,7 @@ func TestSessionRestore(t *testing.T) {
 		t.Error("incorrect cookie expire", cookie.Expires)
 	}
 
-	restoredSession := GetSessionFromCookie(cookie)
+	restoredSession := GetSessionFromCookie(GoCookie(*cookie))
 	for k, v := range originSession {
 		if restoredSession[k] != v {
 			t.Errorf("session restore failed session[%s] != %s", k, v)
@@ -32,7 +36,7 @@ func TestSessionExpire(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		cookie = session.Cookie()
 		time.Sleep(time.Second)
-		session = GetSessionFromCookie(cookie)
+		session = GetSessionFromCookie(GoCookie(*cookie))
 	}
 	expectExpire := time.Now().Add(expireAfterDuration)
 	if cookie.Expires.Unix() < expectExpire.Add(-time.Second).Unix() {
@@ -45,7 +49,7 @@ func TestSessionExpire(t *testing.T) {
 	session.SetNoExpiration()
 	for i := 0; i < 3; i++ {
 		cookie = session.Cookie()
-		session = GetSessionFromCookie(cookie)
+		session = GetSessionFromCookie(GoCookie(*cookie))
 	}
 	cookie = session.Cookie()
 	if !cookie.Expires.IsZero() {

@@ -1,0 +1,46 @@
+{
+  "name": "pixelfederation/vitess-php-pdo",
+  "description": "PHP PDO compliant driver for Vitess PHP client.",
+  "homepage": "https://git.pixelfederation.com/shared/Vitess.Driver.PHP",
+  "license": "BSD-3-Clause",
+  "keywords": [
+    "PDO",
+    "Vitess",
+    "driver"
+  ],
+  "repositories": [
+    {
+      "type": "git",
+      "url": "https://github.com/stanley-cheung/Protobuf-PHP.git"
+    }
+  ],
+  "minimum-stability": "dev",
+  "require": {
+    "php": ">=5.6",
+    "vitess/php-client": "dev-master",
+    "grpc/grpc": "dev-release-0_13"
+  },
+
+  "require-dev": {
+    "symfony/var-dumper": "^3.0@dev",
+    "phpunit/phpunit": "^5.1",
+    "squizlabs/php_codesniffer": "2.*",
+    "phpmd/phpmd": "@stable"
+  },
+
+  "config": {
+    "bin-dir": "bin"
+  },
+
+  "autoload": {
+    "psr-4": {
+      "VitessPdo\\": "src/VitessPdo/"
+    }
+  },
+
+  "autoload-dev": {
+    "psr-4": {
+      "VitessPdoTest\\": "tests/VitessPdoTest/"
+    }
+  }
+}

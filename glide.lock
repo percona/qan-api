@@ -1,18 +1,16 @@
 hash: 1be486b25f20a515747fb6b3592bb5cb57d335b76fbc91f2bb48a70722f61e8a
-updated: 2017-11-16T12:06:25.232929011-03:00
+updated: 2018-01-02T18:13:50.738127+01:00
 imports:
-- name: github.com/agtorre/gocolorize
-  version: 99fea4bc9517f07eea8194702cb7076f4845b7de
 - name: github.com/cactus/go-statsd-client
-  version: d8eabe07bc70ff9ba6a56836cde99d1ea3d005f7
+  version: 6e525b60e5acfc224ae1d76abdaae82246371326
   subpackages:
   - statsd
 - name: github.com/go-sql-driver/mysql
-  version: 2e00b5cd70399450106cec6431c2e2ce3cae5034
+  version: 9181e3a86a19bacd63e68d43ae8b7b36320d8092
 - name: github.com/golang/glog
   version: 23def4e6c14b4da8ac2ed8007337bc5eb5007998
 - name: github.com/golang/protobuf
-  version: 69b215d01a5606c843240eab4937eab3acee6530
+  version: 1e59b77b52bf8e4b449a57e6f79f21226d571845
   subpackages:
   - proto
   - ptypes
@@ -20,30 +18,36 @@ imports:
   - ptypes/duration
   - ptypes/timestamp
 - name: github.com/hashicorp/go-version
-  version: 03c5bf6be031b6dd45afec16b1cf94fc8938bc77
+  version: 4fe82ae3040f80a03d04d2cccb5606a626b8e1ee
+- name: github.com/inconshreveable/log15
+  version: 0decfc6c20d9ca0ad143b0e89dcaa20f810b4fb3
+  subpackages:
+  - term
 - name: github.com/jmoiron/sqlx
-  version: f4076845477b10ac2453a16377a8383467aafe72
+  version: de8647470aafe4854c976707c431dbe1eb2822c6
   subpackages:
   - reflectx
 - name: github.com/klauspost/compress
-  version: 14c9a76e3c95e47f8ccce949bba2c1101a8b85e6
+  version: ea08389e0dc46025380296f7dd04ab0e8de36adb
   subpackages:
   - flate
   - gzip
   - zlib
 - name: github.com/klauspost/cpuid
-  version: 09cded8978dc9e80714c4d85b0322337b0a1e5e0
-- name: github.com/klauspost/crc32
-  version: 1bab8b35b6bb565f92cbc97939610af9369f942a
+  version: ae832f27941af41db13bd6d8efd2493e3b22415a
+- name: github.com/mattn/go-colorable
+  version: 586e6dcca296d085100876beb6dbf02287a247f7
+- name: github.com/mattn/go-isatty
+  version: 6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c
 - name: github.com/nu7hatch/gouuid
   version: 179d4d0c4d8d407a32af483c2354df1d2c91e6c3
 - name: github.com/percona/go-mysql
-  version: 2a6037d7d809b18ebd6d735b397f2321879af611
+  version: b561fedcb9dd988e592a6fb88bdf05596e598af1
   subpackages:
   - event
   - log
 - name: github.com/percona/pmm
-  version: 8951ae806e03cb6dc8cc01f32e8cb705a69e818c
+  version: 4f6735732a7859e6fa3f2113404876f0caab08e4
   subpackages:
   - proto
   - proto/config
@@ -53,23 +57,28 @@ imports:
 - name: github.com/pkg/errors
   version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: github.com/revel/cmd
-  version: 62fc677f3a4043183ad83ccb9cc32165e91dc72e
+  version: 29e594435c59a46332d5dff89e7a6bc535db9085
   subpackages:
   - revel
 - name: github.com/revel/config
-  version: 75f5ee659b5338d1ce823536fe9b9e50b4de01b4
+  version: 662332b741dd464a886ab0901379c02b9bc5dc30
+- name: github.com/revel/log15
+  version: 793412a67da6f8d15fede4c38f5c66272478cb8a
 - name: github.com/revel/modules
-  version: c3a4c48d9f199a6f1a77a198d38f6aee3b48b4d9
+  version: d5343789b6a44790fc84c5e0df69cd36f275d6b9
   subpackages:
   - testrunner/app/controllers
+- name: github.com/revel/pathtree
+  version: 41257a1839e945fce74afd070e02bab2ea2c776a
 - name: github.com/revel/revel
-  version: 8d01a054f6bca9430b3e497fe7b4f20ec8f054ce
+  version: 3fd5bb2fbc33b2c545f3076b7c5c7f01457c2ede
   subpackages:
+  - logger
   - testing
 - name: github.com/robfig/config
   version: 0f78529c8c7e3e9a25f15876532ecbc07c7d99e6
-- name: github.com/robfig/pathtree
-  version: 41257a1839e945fce74afd070e02bab2ea2c776a
+- name: github.com/xeonx/timeago
+  version: 714e6695c468c22fb6431a914d8c5f9d19fa2367
 - name: github.com/youtube/vitess
   version: 9b42ea02086d8061f2fd49df6a00670689485fc7
   subpackages:
@@ -87,20 +96,24 @@ imports:
   - go/vt/sqlparser
   - go/vt/vterrors
 - name: golang.org/x/net
-  version: 6b27048ae5e6ad1ef927e72e437531493de612fe
+  version: d866cfc389cec985d6fda2859936a575a55a3ab6
   subpackages:
   - context
   - websocket
 - name: golang.org/x/sys
-  version: 075e574b89e4c2d22f2286a7e2b919519c6f3547
+  version: 83801418e1b59fb1880e363299581ee543af32ca
   subpackages:
   - unix
+- name: google.golang.org/appengine
+  version: 5bee14b453b4c71be47ec1781b0fa61c2ea182db
+  subpackages:
+  - cloudsql
 - name: google.golang.org/genproto
-  version: 1e559d0a00eef8a9a43151db4665280bd8dd5886
+  version: a8101f21cf983e773d0c1133ebc5424792003214
   subpackages:
   - googleapis/rpc/status
 - name: google.golang.org/grpc
-  version: a68137c92756bf6ac0f9cfa5299f7dfd0af5dfe2
+  version: 65c901e45820d9c7555afc14337b82cf53ea3e42
   subpackages:
   - codes
   - status
@@ -108,16 +121,20 @@ imports:
   version: 20d25e2804050c1cd24a7eea1e7a6447dd0e74ec
 - name: gopkg.in/fsnotify.v1
   version: 629574ca2a5df945712d3079857300b5e4da0236
+- name: gopkg.in/natefinch/lumberjack.v2
+  version: a96e63847dc3c67d17befa69c303767e2f84e54f
+- name: gopkg.in/stack.v0
+  version: 9b43fcefddd0178abdabf4d484ab0d695d0011db
 testImports:
 - name: github.com/davecgh/go-spew
-  version: 04cdfd42973bb9c8589fd6a731800cf222fde1a9
+  version: ecdeabc65495df2dec95d7c4a4c3e021903035e5
   subpackages:
   - spew
 - name: github.com/pmezard/go-difflib
-  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
+  version: 792786c7400a136282c1664665ae0a8db921c6c2
   subpackages:
   - difflib
 - name: github.com/stretchr/testify
-  version: 4d4bfba8f1d1027c4fdbe371823030df51419987
+  version: 87b1dfb5b2fa649f52695dd9eae19abe404a4308
   subpackages:
   - assert
