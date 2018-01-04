@@ -1,5 +1,5 @@
 hash: 1be486b25f20a515747fb6b3592bb5cb57d335b76fbc91f2bb48a70722f61e8a
-updated: 2017-11-16T12:06:25.232929011-03:00
+updated: 2018-01-04T14:06:25.232929011-03:00
 imports:
 - name: github.com/agtorre/gocolorize
   version: 99fea4bc9517f07eea8194702cb7076f4845b7de
@@ -43,7 +43,7 @@ imports:
   - event
   - log
 - name: github.com/percona/pmm
-  version: 8951ae806e03cb6dc8cc01f32e8cb705a69e818c
+  version: 4f6735732a7859e6fa3f2113404876f0caab08e4
   subpackages:
   - proto
   - proto/config
