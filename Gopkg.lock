@@ -10,8 +10,8 @@
 [[projects]]
   name = "github.com/cactus/go-statsd-client"
   packages = ["statsd"]
-  revision = "91c326c3f7bd20f0226d3d1c289dd9f8ce28d33d"
-  version = "v3.1.0"
+  revision = "138b925ccdf617776955904ba7759fce64406cec"
+  version = "v3.1.1"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -41,7 +41,7 @@
     "ptypes/duration",
     "ptypes/timestamp"
   ]
-  revision = "1e59b77b52bf8e4b449a57e6f79f21226d571845"
+  revision = "925541529c1fa6821df4e44ce2723319eb2be768"
 
 [[projects]]
   branch = "master"
@@ -56,7 +56,7 @@
     ".",
     "reflectx"
   ]
-  revision = "de8647470aafe4854c976707c431dbe1eb2822c6"
+  revision = "05cef0741ade10ca668982355b3f3f0bcf0ff0a8"
 
 [[projects]]
   name = "github.com/klauspost/compress"
@@ -96,6 +96,7 @@
   revision = "b561fedcb9dd988e592a6fb88bdf05596e598af1"
 
 [[projects]]
+  branch = "master"
   name = "github.com/percona/pmm"
   packages = [
     "proto",
@@ -104,7 +105,7 @@
     "proto/qan",
     "proto/query"
   ]
-  revision = "8951ae806e03cb6dc8cc01f32e8cb705a69e818c"
+  revision = "99e800552681871f9956a84bf5465a6d19455597"
 
 [[projects]]
   name = "github.com/pkg/errors"
@@ -186,19 +187,19 @@
     "context",
     "websocket"
   ]
-  revision = "d866cfc389cec985d6fda2859936a575a55a3ab6"
+  revision = "0ed95abb35c445290478a5348a7b38bb154135fd"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "28a7276518d399b9634904daad79e18b44d481bc"
+  revision = "ff2a66f350cefa5c93a634eadb5d25bb60c85a9c"
 
 [[projects]]
   branch = "master"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
-  revision = "a8101f21cf983e773d0c1133ebc5424792003214"
+  revision = "4eb30f4778eed4c258ba66527a0d4f9ec8a36c45"
 
 [[projects]]
   name = "google.golang.org/grpc"
@@ -206,8 +207,8 @@
     "codes",
     "status"
   ]
-  revision = "f3955b8e9e244dd4dd4bc4f7b7a23a8445400a76"
-  version = "v1.9.0"
+  revision = "6b51017f791ae1cfbec89c52efdf444b13b550ef"
+  version = "v1.9.2"
 
 [[projects]]
   branch = "v1"
@@ -218,12 +219,12 @@
 [[projects]]
   name = "gopkg.in/fsnotify.v1"
   packages = ["."]
-  revision = "629574ca2a5df945712d3079857300b5e4da0236"
-  version = "v1.4.2"
+  revision = "c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9"
+  version = "v1.4.7"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "85fbd181d5a5af108907afc75400b58c6b0013422dc199c9e642c1ebc718936a"
+  inputs-digest = "015a36e966a41c00ff1bbabaa9ac1ca04935ff3f21c462ab992595af5a6fd9ff"
   solver-name = "gps-cdcl"
   solver-version = 1

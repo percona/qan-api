@@ -405,6 +405,12 @@ type generalMetrics struct {
 	Rows_examined_med float32
 	Rows_examined_p95 float32
 	Rows_examined_max float32
+	Bytes_sent_sum    float32
+	Bytes_sent_min    float32
+	Bytes_sent_avg    float32
+	Bytes_sent_med    float32
+	Bytes_sent_p95    float32
+	Bytes_sent_max    float32
 
 	/* Perf Schema or Percona Server */
 
@@ -414,12 +420,6 @@ type generalMetrics struct {
 	Rows_affected_med     float32 `json:",omitempty"`
 	Rows_affected_p95     float32 `json:",omitempty"`
 	Rows_affected_max     float32 `json:",omitempty"`
-	Bytes_sent_sum        float32 `json:",omitempty"`
-	Bytes_sent_min        float32 `json:",omitempty"`
-	Bytes_sent_avg        float32 `json:",omitempty"`
-	Bytes_sent_med        float32 `json:",omitempty"`
-	Bytes_sent_p95        float32 `json:",omitempty"`
-	Bytes_sent_max        float32 `json:",omitempty"`
 	Tmp_tables_sum        float32 `json:",omitempty"`
 	Tmp_tables_min        float32 `json:",omitempty"`
 	Tmp_tables_avg        float32 `json:",omitempty"`
@@ -535,7 +535,13 @@ SELECT
  COALESCE(AVG(Rows_examined_avg), 0) AS rows_examined_avg,
  COALESCE(AVG(Rows_examined_med), 0) AS rows_examined_med,
  COALESCE(AVG(Rows_examined_p95), 0) AS rows_examined_p95,
- COALESCE(MAX(Rows_examined_max), 0) AS rows_examined_max
+ COALESCE(MAX(Rows_examined_max), 0) AS rows_examined_max,
+ COALESCE(SUM(Bytes_sent_sum), 0) AS bytes_sent_sum,
+ COALESCE(MIN(Bytes_sent_min), 0) AS bytes_sent_min,
+ COALESCE(AVG(Bytes_sent_avg), 0) AS bytes_sent_avg,
+ COALESCE(AVG(Bytes_sent_med), 0) AS bytes_sent_med,
+ COALESCE(AVG(Bytes_sent_p95), 0) AS bytes_sent_p95,
+ COALESCE(MAX(Bytes_sent_max), 0) AS bytes_sent_max
 
 {{ end }}
 
@@ -568,12 +574,6 @@ SELECT
 {{ if .PerconaServer }}
  /* Percona Server */
 
- COALESCE(SUM(Bytes_sent_sum), 0) AS bytes_sent_sum,
- COALESCE(MIN(Bytes_sent_min), 0) AS bytes_sent_min,
- COALESCE(AVG(Bytes_sent_avg), 0) AS bytes_sent_avg,
- COALESCE(AVG(Bytes_sent_med), 0) AS bytes_sent_med,
- COALESCE(AVG(Bytes_sent_p95), 0) AS bytes_sent_p95,
- COALESCE(MAX(Bytes_sent_max), 0) AS bytes_sent_max,
  COALESCE(SUM(Tmp_tables_sum), 0) AS tmp_tables_sum,
  COALESCE(MIN(Tmp_tables_min), 0) AS tmp_tables_min,
  COALESCE(AVG(Tmp_tables_avg), 0) AS tmp_tables_avg,
@@ -665,7 +665,8 @@ SELECT
         COALESCE(SUM(Query_time_sum), 0) / :interval_ts AS query_time_sum_per_sec,
 	COALESCE(SUM(Lock_time_sum), 0) / :interval_ts AS lock_time_sum_per_sec,
 	COALESCE(SUM(Rows_sent_sum), 0) / :interval_ts AS rows_sent_sum_per_sec,
-	COALESCE(SUM(Rows_examined_sum), 0) / :interval_ts AS rows_examined_sum_per_sec
+	COALESCE(SUM(Rows_examined_sum), 0) / :interval_ts AS rows_examined_sum_per_sec,
+	COALESCE(SUM(Bytes_sent_sum), 0) / :interval_ts AS bytes_sent_sum_per_sec
 	{{ end }}
 	{{ if or .PerconaServer .PerformanceSchema }}
  	/* Perf Schema or Percona Server */
@@ -679,7 +680,6 @@ SELECT
     {{ end }}
 	{{ if .PerconaServer }}
     /* Percona Server */
-	COALESCE(SUM(Bytes_sent_sum), 0) / :interval_ts AS bytes_sent_sum_per_sec,
 	COALESCE(SUM(InnoDB_IO_r_ops_sum), 0) / :interval_ts AS innodb_io_r_ops_sum_per_sec,
 
         COALESCE(SUM(InnoDB_IO_r_wait_sum), 0) / :interval_ts AS innodb_io_r_wait_sum_per_sec,

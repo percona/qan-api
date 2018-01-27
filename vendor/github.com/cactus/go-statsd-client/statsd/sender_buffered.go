@@ -32,8 +32,8 @@ type BufferedSender struct {
 // Send bytes.
 func (s *BufferedSender) Send(data []byte) (int, error) {
 	s.runmx.RLock()
-	defer s.runmx.RUnlock()
 	if !s.running {
+		s.runmx.RUnlock()
 		return 0, fmt.Errorf("BufferedSender is not running")
 	}
 
@@ -50,6 +50,7 @@ func (s *BufferedSender) Send(data []byte) (int, error) {
 			s.swapnqueue()
 		}
 	})
+	s.runmx.RUnlock()
 	return len(data), nil
 }
 
@@ -85,8 +86,8 @@ func (s *BufferedSender) Start() {
 
 func (s *BufferedSender) withBufferLock(fn func()) {
 	s.bufmx.Lock()
-	defer s.bufmx.Unlock()
 	fn()
+	s.bufmx.Unlock()
 }
 
 func (s *BufferedSender) swapnqueue() {
@@ -132,7 +133,13 @@ func (s *BufferedSender) run() {
 
 // send to remove endpoint and truncate buffer
 func (s *BufferedSender) flush(b *bytes.Buffer) (int, error) {
-	n, err := s.sender.Send(bytes.TrimSuffix(b.Bytes(), []byte("\n")))
+	bb := b.Bytes()
+	bbl := len(bb)
+	if bb[bbl-1] == '\n' {
+		bb = bb[:bbl-1]
+	}
+	//n, err := s.sender.Send(bytes.TrimSuffix(b.Bytes(), []byte("\n")))
+	n, err := s.sender.Send(bb)
 	b.Truncate(0) // clear the buffer
 	return n, err
 }
@@ -159,7 +166,7 @@ func NewBufferedSender(addr string, flushInterval time.Duration, flushBytes int)
 		flushBytes:    flushBytes,
 		flushInterval: flushInterval,
 		sender:        simpleSender,
-		buffer:        bytes.NewBuffer(make([]byte, 0, flushBytes)),
+		buffer:        senderPool.Get(),
 		shutdown:      make(chan chan error),
 	}
 
