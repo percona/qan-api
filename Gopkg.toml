@@ -27,3 +27,7 @@ required = ["github.com/revel/cmd/revel"]
 [[constraint]]
   name = "github.com/youtube/vitess"
   revision = "9b42ea02086d8061f2fd49df6a00670689485fc7"
+
+[[constraint]]
+  name = "github.com/percona/go-mysql"
+  revision = "63da60b59ae83a05a8d447a5fdf2186ff3c37f4b"

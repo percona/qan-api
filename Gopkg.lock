@@ -87,13 +87,12 @@
   revision = "179d4d0c4d8d407a32af483c2354df1d2c91e6c3"
 
 [[projects]]
-  branch = "master"
   name = "github.com/percona/go-mysql"
   packages = [
     "event",
     "log"
   ]
-  revision = "b561fedcb9dd988e592a6fb88bdf05596e598af1"
+  revision = "63da60b59ae83a05a8d447a5fdf2186ff3c37f4b"
 
 [[projects]]
   branch = "master"
@@ -225,6 +224,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "015a36e966a41c00ff1bbabaa9ac1ca04935ff3f21c462ab992595af5a6fd9ff"
+  inputs-digest = "66cf0a437f2e0598d9efce39eb52f74326def9f7ce0c2412ca8aae0bb78a49d8"
   solver-name = "gps-cdcl"
   solver-version = 1
