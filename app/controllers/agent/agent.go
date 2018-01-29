@@ -58,7 +58,7 @@ func (c Agent) List() revel.Result {
 		}
 	}
 
-	return c.RenderJson(agents)
+	return c.RenderJSON(agents)
 }
 
 // POST /agents
@@ -124,7 +124,7 @@ func (c Agent) Get(uuid string) revel.Result {
 		"data": fmt.Sprintf("%s/agents/%s/data", wsBase, uuid),
 	}
 
-	return c.RenderJson(agent)
+	return c.RenderJSON(agent)
 }
 
 // PUT /agents/:uuid

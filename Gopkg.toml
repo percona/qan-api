@@ -1,0 +1,29 @@
+# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
+# for detailed Gopkg.toml documentation.
+
+# Require `revel` command (compiled later from vendor dir)
+required = ["github.com/revel/cmd/revel"]
+[[constraint]]
+  name = "github.com/revel/cmd"
+  version = "^0.14.1"
+
+# Override version for transitive dependencies
+# otherwise we fetch the latest.
+[[override]]
+  name = "github.com/revel/config"
+  version = "^0.14.0"
+[[override]]
+  name = "github.com/revel/modules"
+  version = "^0.14.0"
+
+[[constraint]]
+  name = "github.com/pkg/errors"
+  version = "^0.8.0"
+
+[[constraint]]
+  name = "github.com/revel/revel"
+  version = "^0.14.0"
+
+[[constraint]]
+  name = "github.com/youtube/vitess"
+  revision = "9b42ea02086d8061f2fd49df6a00670689485fc7"
