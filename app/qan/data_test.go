@@ -32,10 +32,10 @@ import (
 	"github.com/percona/qan-api/config"
 	"github.com/percona/qan-api/service/query"
 	"github.com/percona/qan-api/stats"
+	"github.com/percona/qan-api/test"
 	"github.com/percona/qan-api/test/mock"
 	testDb "github.com/percona/qan-api/tests/setup/db"
 	. "gopkg.in/check.v1"
-	"github.com/percona/qan-api/test"
 )
 
 type DataTestSuite struct {
