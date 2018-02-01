@@ -134,7 +134,10 @@ func TestParse(t *testing.T) {
 		example{ // #13
 			"select c from t1 join t2 using (c) where id=?",
 			"SELECT t1 t2",
-			[]qp.Table{},
+			[]qp.Table{
+				qp.Table{Db: "", Table: "t1"},
+				qp.Table{Db: "", Table: "t2"},
+			},
 		},
 		example{ // #14
 			"insert into data (?)",
@@ -213,6 +216,52 @@ func TestParse(t *testing.T) {
 			"create index idx ON brannigan.percona (f1)",
 			"CREATE index",
 			[]qp.Table{qp.Table{Db: "brannigan", Table: "percona"}},
+		},
+	}
+
+	for i, e := range examples {
+		q, err := m.Parse(e.query, "")
+		if err != nil {
+			t.Errorf("Error in test # %d: %s", i, err)
+		}
+		if q.Abstract != e.abstract {
+			t.Errorf("Test # %d: abstracts are different.\nWant: %s\nGot: %s", i, e.abstract, q.Abstract)
+		}
+		if !reflect.DeepEqual(q.Tables, e.tables) {
+			t.Errorf("Test # %d: tables are different.\nWant: %v\nGot: %v", i, e.tables, q.Tables)
+		}
+	}
+}
+
+func TestUpgradeVitess(t *testing.T) {
+	m := query.NewMini(config.ApiRootDir + "/service/query")
+	go m.Run()
+	defer m.Stop()
+
+	//m.Debug = true
+
+	type example struct {
+		query    string
+		abstract string
+		tables   []qp.Table
+	}
+	query := "SELECT table_schema, table_name, column_name, `auto_increment`, " +
+		"pow(2, CASE data_type WHEN 'tinyint' THEN 7 WHEN 'smallint' " +
+		"THEN 15 WHEN 'mediumint' THEN 23 WHEN 'int' THEN 31 WHEN 'bigint' " +
+		"THEN 63 end+(column_type LIKE '% unsigned'))-1 AS max_int FROM " +
+		"information_schema.tables t JOIN information_schema.columns c " +
+		"USING (table_schema,table_name) WHERE c.extra = 'auto_increment' " +
+		"AND t.auto_increment IS NOT NULL"
+	examples := []example{
+		/////////////////////////////////////////////////////////////////////
+		// SELECT
+		example{
+			query,
+			"SELECT information_schema.tables information_schema.columns",
+			[]qp.Table{
+				qp.Table{Db: "information_schema", Table: "tables"},
+				qp.Table{Db: "information_schema", Table: "columns"},
+			},
 		},
 	}
 
