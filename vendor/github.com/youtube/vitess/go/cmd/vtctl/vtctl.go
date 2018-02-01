@@ -33,6 +33,7 @@ import (
 	"github.com/youtube/vitess/go/vt/topo"
 	"github.com/youtube/vitess/go/vt/vtctl"
 	"github.com/youtube/vitess/go/vt/vttablet/tmclient"
+	"github.com/youtube/vitess/go/vt/workflow"
 	"github.com/youtube/vitess/go/vt/wrangler"
 	"golang.org/x/net/context"
 )
@@ -68,19 +69,7 @@ func main() {
 	defer exit.RecoverAll()
 	defer logutil.Flush()
 
-	flag.Parse()
-	args := flag.Args()
-
-	if *servenv.Version {
-		servenv.AppVersion.Print()
-		os.Exit(0)
-	}
-
-	if len(args) == 0 {
-		flag.Usage()
-		exit.Return(1)
-	}
-
+	args := servenv.ParseFlagsWithArgs("vtctl")
 	action := args[0]
 
 	startMsg := fmt.Sprintf("USER=%v SUDO_USER=%v %v", os.Getenv("USER"), os.Getenv("SUDO_USER"), strings.Join(os.Args, " "))
@@ -95,6 +84,8 @@ func main() {
 
 	ts := topo.Open()
 	defer ts.Close()
+
+	vtctl.WorkflowManager = workflow.NewManager(ts)
 
 	ctx, cancel := context.WithTimeout(context.Background(), *waitTime)
 	wr := wrangler.New(logutil.NewConsoleLogger(), ts, tmclient.NewTabletManagerClient())

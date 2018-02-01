@@ -20,9 +20,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.util.concurrent.Futures.transformAsync;
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
-import com.google.common.util.concurrent.AsyncFunction;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import java.io.Closeable;
 import java.io.IOException;
 import java.sql.SQLDataException;
@@ -30,7 +27,12 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 import javax.annotation.Nullable;
+
+import com.google.common.util.concurrent.AsyncFunction;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 
 import io.vitess.client.cursor.Cursor;
 import io.vitess.client.cursor.CursorWithError;
@@ -60,9 +62,8 @@ import io.vitess.proto.Vtgate.StreamExecuteRequest;
  * <p>All non-streaming calls on {@code VTGateConnection} are asynchronous. Use {@link VTGateBlockingConnection} if
  * you want synchronous calls.</p>
  */
-public final class VTGateConnection implements Closeable {
+public class VTGateConnection implements Closeable {
     private final RpcClient client;
-    private SQLFuture<?> lastCall;
 
     /**
      * Creates a VTGate connection with no specific parameters.
@@ -88,7 +89,7 @@ public final class VTGateConnection implements Closeable {
      */
     public SQLFuture<Cursor> execute(Context ctx, String query, @Nullable Map<String, ?> bindVars, final VTSession vtSession) throws SQLException {
         synchronized (this) {
-            checkCallIsAllowed("execute");
+            vtSession.checkCallIsAllowed("execute");
             ExecuteRequest.Builder requestBuilder = ExecuteRequest.newBuilder()
                     .setQuery(Proto.bindQuery(checkNotNull(query), bindVars))
                     .setSession(vtSession.getSession());
@@ -107,7 +108,7 @@ public final class VTGateConnection implements Closeable {
                                     return Futures.<Cursor>immediateFuture(new SimpleCursor(response.getResult()));
                                 }
                             }, directExecutor()));
-            lastCall = call;
+            vtSession.setLastCall(call);
             return call;
         }
     }
@@ -144,7 +145,7 @@ public final class VTGateConnection implements Closeable {
      */
     public SQLFuture<List<CursorWithError>> executeBatch(Context ctx, List<String> queryList, @Nullable List<Map<String, ?>> bindVarsList, boolean asTransaction, final VTSession vtSession) throws SQLException {
         synchronized (this) {
-            checkCallIsAllowed("executeBatch");
+            vtSession.checkCallIsAllowed("executeBatch");
             List<Query.BoundQuery> queries = new ArrayList<>();
 
             if (null != bindVarsList && bindVarsList.size() != queryList.size()) {
@@ -178,7 +179,7 @@ public final class VTGateConnection implements Closeable {
                                             Proto.fromQueryResponsesToCursorList(response.getResultsList()));
                                 }
                             }, directExecutor()));
-            lastCall = call;
+            vtSession.setLastCall(call);
             return call;
         }
     }
@@ -249,24 +250,6 @@ public final class VTGateConnection implements Closeable {
     @Override
     public void close() throws IOException {
         client.close();
-    }
-
-    /**
-     * This method checks if the last SQLFuture call is complete or not.
-     * <p>
-     * <p>This should be called only in the start of the function
-     * where we modify the session cookie after the response from VTGate.
-     * This is to protect any possible loss of session modification like shard transaction.</p>
-     *
-     * @param call - The represents the callee function name.
-     * @throws IllegalStateException - Throws IllegalStateException if lastCall has not completed.
-     */
-    private void checkCallIsAllowed(String call) throws IllegalStateException {
-        // Calls are not allowed to overlap.
-        if (lastCall != null && !lastCall.isDone()) {
-            throw new IllegalStateException("Can't call " + call
-                    + "() on a VTGateTx instance until the last asynchronous call is done.");
-        }
     }
 
 }

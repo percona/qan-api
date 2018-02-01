@@ -57,16 +57,22 @@ type route struct {
 	// to resolve the ERoute Values field.
 	condition sqlparser.Expr
 
+	// weight_string keeps track of the weight_string expressions
+	// that were added additionally for each column. These expressions
+	// are added to be used for collation of text columns.
+	weightStrings map[*resultColumn]int
+
 	// ERoute is the primitive being built.
 	ERoute *engine.Route
 }
 
 func newRoute(stmt sqlparser.SelectStatement, eroute *engine.Route, condition sqlparser.Expr, vschema VSchema) *route {
 	rb := &route{
-		Select:    stmt,
-		order:     1,
-		condition: condition,
-		ERoute:    eroute,
+		Select:        stmt,
+		order:         1,
+		condition:     condition,
+		weightStrings: make(map[*resultColumn]int),
+		ERoute:        eroute,
 	}
 	rb.symtab = newSymtabWithRoute(vschema, rb)
 	return rb
@@ -125,6 +131,9 @@ func (rb *route) Join(rRoute *route, ajoin *sqlparser.JoinTableExpr) (builder, e
 	if rRoute.ERoute.Opcode == engine.SelectNext {
 		return nil, errors.New("unsupported: sequence join with another table")
 	}
+	if ajoin != nil && ajoin.Condition.Using != nil {
+		return nil, errors.New("unsupported: join with USING(column_list) clause")
+	}
 	if rb.ERoute.Keyspace.Name != rRoute.ERoute.Keyspace.Name {
 		return newJoin(rb, rRoute, ajoin)
 	}
@@ -148,7 +157,7 @@ func (rb *route) Join(rRoute *route, ajoin *sqlparser.JoinTableExpr) (builder, e
 	}
 
 	// Both route are sharded routes. Analyze join condition for merging.
-	for _, filter := range splitAndExpression(nil, ajoin.On) {
+	for _, filter := range splitAndExpression(nil, ajoin.Condition.On) {
 		if rb.isSameRoute(rRoute, filter) {
 			return rb.merge(rRoute, ajoin)
 		}
@@ -189,7 +198,10 @@ func (rb *route) merge(rhs *route, ajoin *sqlparser.JoinTableExpr) (builder, err
 	if ajoin == nil {
 		return rb, nil
 	}
-	for _, filter := range splitAndExpression(nil, ajoin.On) {
+	if ajoin.Condition.Using != nil {
+		return nil, errors.New("unsupported: join with USING(column_list) clause")
+	}
+	for _, filter := range splitAndExpression(nil, ajoin.Condition.On) {
 		// If VTGate evolves, this section should be rewritten
 		// to use processExpr.
 		_, err = findOrigin(filter, rb)
@@ -205,6 +217,7 @@ func (rb *route) merge(rhs *route, ajoin *sqlparser.JoinTableExpr) (builder, err
 // mergeable by unique vindex. The constraint has to be an equality
 // like a.id = b.id where both columns have the same unique vindex.
 func (rb *route) isSameRoute(rhs *route, filter sqlparser.Expr) bool {
+	filter = skipParenthesis(filter)
 	comparison, ok := filter.(*sqlparser.ComparisonExpr)
 	if !ok {
 		return false
@@ -443,6 +456,11 @@ func (rb *route) PushOrderByNull() {
 	rb.Select.(*sqlparser.Select).OrderBy = sqlparser.OrderBy{&sqlparser.Order{Expr: &sqlparser.NullVal{}}}
 }
 
+// PushOrderByRand satisfies the builder interface.
+func (rb *route) PushOrderByRand() {
+	rb.Select.(*sqlparser.Select).OrderBy = sqlparser.OrderBy{&sqlparser.Order{Expr: &sqlparser.FuncExpr{Name: sqlparser.NewColIdent("rand")}}}
+}
+
 // SetLimit adds a LIMIT clause to the route.
 func (rb *route) SetLimit(limit *sqlparser.Limit) {
 	rb.Select.SetLimit(limit)
@@ -484,6 +502,43 @@ func (rb *route) Wireup(bldr builder, jt *jointab) error {
 				return err
 			}
 			rb.ERoute.Values = []sqltypes.PlanValue{pv}
+		}
+	}
+
+	// If rb has to do the ordering, and if any columns are Text,
+	// we have to request the corresponding weight_string from mysql
+	// and use that value instead. This is because we cannot mimic
+	// mysql's collation behavior yet.
+	for i, orderby := range rb.ERoute.OrderBy {
+		rc := rb.resultColumns[orderby.Col]
+		if sqltypes.IsText(rc.column.typ) {
+			// If a weight string was previously requested (by OrderedAggregator),
+			// reuse it.
+			if colnum, ok := rb.weightStrings[rc]; ok {
+				rb.ERoute.OrderBy[i].Col = colnum
+				continue
+			}
+
+			// len(rb.resultColumns) does not change. No harm using the value multiple times.
+			rb.ERoute.TruncateColumnCount = len(rb.resultColumns)
+
+			// This code is partially duplicated from SupplyWeightString and PushSelect.
+			// We should not update resultColumns because it's not returned in the result.
+			// This is why we don't call PushSelect (or SupplyWeightString).
+			expr := &sqlparser.AliasedExpr{
+				Expr: &sqlparser.FuncExpr{
+					Name: sqlparser.NewColIdent("weight_string"),
+					Exprs: []sqlparser.SelectExpr{
+						rb.Select.(*sqlparser.Select).SelectExprs[orderby.Col],
+					},
+				},
+			}
+			sel := rb.Select.(*sqlparser.Select)
+			sel.SelectExprs = append(sel.SelectExprs, expr)
+			rb.ERoute.OrderBy[i].Col = len(sel.SelectExprs) - 1
+			// We don't really have to update weightStrings, but we're doing it
+			// for good measure.
+			rb.weightStrings[rc] = len(sel.SelectExprs) - 1
 		}
 	}
 
@@ -617,6 +672,24 @@ func (rb *route) SupplyCol(col *sqlparser.ColName) (rc *resultColumn, colnum int
 	sel := rb.Select.(*sqlparser.Select)
 	sel.SelectExprs = append(sel.SelectExprs, &sqlparser.AliasedExpr{Expr: col})
 	return rc, len(rb.resultColumns) - 1
+}
+
+func (rb *route) SupplyWeightString(colnum int) (weightColnum int) {
+	rc := rb.resultColumns[colnum]
+	if weightColnum, ok := rb.weightStrings[rc]; ok {
+		return weightColnum
+	}
+	expr := &sqlparser.AliasedExpr{
+		Expr: &sqlparser.FuncExpr{
+			Name: sqlparser.NewColIdent("weight_string"),
+			Exprs: []sqlparser.SelectExpr{
+				rb.Select.(*sqlparser.Select).SelectExprs[colnum],
+			},
+		},
+	}
+	_, weightColnum, _ = rb.PushSelect(expr, nil)
+	rb.weightStrings[rc] = weightColnum
+	return weightColnum
 }
 
 // BuildColName builds a *sqlparser.ColName for the resultColumn specified

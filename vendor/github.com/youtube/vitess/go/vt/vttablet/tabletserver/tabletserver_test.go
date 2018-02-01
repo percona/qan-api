@@ -83,9 +83,9 @@ func TestTabletServerAllowQueriesFailBadConn(t *testing.T) {
 	config := testUtils.newQueryServiceConfig()
 	tsv := NewTabletServerWithNilTopoServer(config)
 	checkTabletServerState(t, tsv, StateNotConnected)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.StartService(target, dbcfgs)
 	if err == nil {
 		t.Fatalf("TabletServer.StartService should fail")
 	}
@@ -99,17 +99,17 @@ func TestTabletServerAllowQueries(t *testing.T) {
 	config := testUtils.newQueryServiceConfig()
 	tsv := NewTabletServerWithNilTopoServer(config)
 	checkTabletServerState(t, tsv, StateNotConnected)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	tsv.setState(StateServing)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.StartService(target, dbcfgs)
 	tsv.StopService()
 	want := "InitDBConfig failed"
 	if err == nil || !strings.Contains(err.Error(), want) {
 		t.Fatalf("TabletServer.StartService: %v, must contain %s", err, want)
 	}
 	tsv.setState(StateShuttingDown)
-	err = tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err = tsv.StartService(target, dbcfgs)
 	if err == nil {
 		t.Fatalf("TabletServer.StartService should fail")
 	}
@@ -124,14 +124,14 @@ func TestTabletServerInitDBConfig(t *testing.T) {
 	tsv := NewTabletServerWithNilTopoServer(config)
 	tsv.setState(StateServing)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	dbconfigs := testUtils.newDBConfigs(db)
-	err := tsv.InitDBConfig(target, dbconfigs, nil)
+	dbcfgs := testUtils.newDBConfigs(db)
+	err := tsv.InitDBConfig(target, dbcfgs)
 	want := "InitDBConfig failed"
 	if err == nil || !strings.Contains(err.Error(), want) {
 		t.Errorf("InitDBConfig: %v, must contain %s", err, want)
 	}
 	tsv.setState(StateNotConnected)
-	err = tsv.InitDBConfig(target, dbconfigs, nil)
+	err = tsv.InitDBConfig(target, dbcfgs)
 	if err != nil {
 		t.Error(err)
 	}
@@ -144,8 +144,8 @@ func TestDecideAction(t *testing.T) {
 	config := testUtils.newQueryServiceConfig()
 	tsv := NewTabletServerWithNilTopoServer(config)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	dbconfigs := testUtils.newDBConfigs(db)
-	err := tsv.InitDBConfig(target, dbconfigs, nil)
+	dbcfgs := testUtils.newDBConfigs(db)
+	err := tsv.InitDBConfig(target, dbcfgs)
 	if err != nil {
 		t.Error(err)
 	}
@@ -250,9 +250,9 @@ func TestSetServingType(t *testing.T) {
 	testUtils := newTestUtils()
 	config := testUtils.newQueryServiceConfig()
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	err := tsv.InitDBConfig(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.InitDBConfig(target, dbcfgs)
 	if err != nil {
 		t.Error(err)
 	}
@@ -332,10 +332,10 @@ func TestTabletServerSingleSchemaFailure(t *testing.T) {
 	testUtils := newTestUtils()
 	config := testUtils.newQueryServiceConfig()
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
 	originalSchemaErrorCount := tabletenv.InternalErrors.Counts()["Schema"]
-	err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.StartService(target, dbcfgs)
 	defer tsv.StopService()
 	if err != nil {
 		t.Fatalf("TabletServer should successfully start even if a table's schema is unloadable, but got error: %v", err)
@@ -364,9 +364,9 @@ func TestTabletServerAllSchemaFailure(t *testing.T) {
 	testUtils := newTestUtils()
 	config := testUtils.newQueryServiceConfig()
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.StartService(target, dbcfgs)
 	defer tsv.StopService()
 	// tabletsever shouldn't start if it can't access schema for any tables
 	wantErr := "could not get schema for any tables"
@@ -381,9 +381,9 @@ func TestTabletServerCheckMysql(t *testing.T) {
 	testUtils := newTestUtils()
 	config := testUtils.newQueryServiceConfig()
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.StartService(target, dbcfgs)
 	defer tsv.StopService()
 	if err != nil {
 		t.Fatal(err)
@@ -410,9 +410,9 @@ func TestTabletServerCheckMysqlFailInvalidConn(t *testing.T) {
 	testUtils := newTestUtils()
 	config := testUtils.newQueryServiceConfig()
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.StartService(target, dbcfgs)
 	defer tsv.StopService()
 	if err != nil {
 		t.Fatalf("TabletServer.StartService should succeed, but got error: %v", err)
@@ -457,9 +457,9 @@ func TestTabletServerReconnect(t *testing.T) {
 	testUtils := newTestUtils()
 	config := testUtils.newQueryServiceConfig()
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.StartService(target, dbcfgs)
 	defer tsv.StopService()
 
 	if tsv.GetState() != "SERVING" {
@@ -488,8 +488,8 @@ func TestTabletServerReconnect(t *testing.T) {
 	db = setUpTabletServerTest(t)
 	db.AddQuery(query, want)
 	db.AddQuery("select addr from test_table where 1 != 1", &sqltypes.Result{})
-	dbconfigs = testUtils.newDBConfigs(db)
-	err = tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	dbcfgs = testUtils.newDBConfigs(db)
+	err = tsv.StartService(target, dbcfgs)
 	if err != nil {
 		t.Error(err)
 	}
@@ -505,13 +505,13 @@ func TestTabletServerTarget(t *testing.T) {
 	testUtils := newTestUtils()
 	config := testUtils.newQueryServiceConfig()
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target1 := querypb.Target{
 		Keyspace:   "test_keyspace",
 		Shard:      "test_shard",
 		TabletType: topodatapb.TabletType_MASTER,
 	}
-	err := tsv.StartService(target1, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.StartService(target1, dbcfgs)
 	if err != nil {
 		t.Fatalf("StartService failed: %v", err)
 	}
@@ -965,9 +965,9 @@ func TestTabletServerBeginFail(t *testing.T) {
 	config := testUtils.newQueryServiceConfig()
 	config.TransactionCap = 1
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.StartService(target, dbcfgs)
 	if err != nil {
 		t.Fatalf("StartService failed: %v", err)
 	}
@@ -1000,9 +1000,9 @@ func TestTabletServerCommitTransaction(t *testing.T) {
 	db.AddQuery(executeSQL, executeSQLResult)
 	config := testUtils.newQueryServiceConfig()
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.StartService(target, dbcfgs)
 	if err != nil {
 		t.Fatalf("StartService failed: %v", err)
 	}
@@ -1026,9 +1026,9 @@ func TestTabletServerCommiRollbacktFail(t *testing.T) {
 	testUtils := newTestUtils()
 	config := testUtils.newQueryServiceConfig()
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.StartService(target, dbcfgs)
 	if err != nil {
 		t.Fatalf("StartService failed: %v", err)
 	}
@@ -1063,9 +1063,9 @@ func TestTabletServerRollback(t *testing.T) {
 	db.AddQuery(executeSQL, executeSQLResult)
 	config := testUtils.newQueryServiceConfig()
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.StartService(target, dbcfgs)
 	if err != nil {
 		t.Fatalf("StartService failed: %v", err)
 	}
@@ -1167,9 +1167,9 @@ func TestTabletServerStreamExecute(t *testing.T) {
 
 	config := testUtils.newQueryServiceConfig()
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.StartService(target, dbcfgs)
 	if err != nil {
 		t.Fatalf("StartService failed: %v", err)
 	}
@@ -1194,9 +1194,9 @@ func TestTabletServerExecuteBatch(t *testing.T) {
 	db.AddQuery(expanedSQL, sqlResult)
 	config := testUtils.newQueryServiceConfig()
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.StartService(target, dbcfgs)
 	if err != nil {
 		t.Fatalf("StartService failed: %v", err)
 	}
@@ -1218,9 +1218,9 @@ func TestTabletServerExecuteBatchFailEmptyQueryList(t *testing.T) {
 	testUtils := newTestUtils()
 	config := testUtils.newQueryServiceConfig()
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.StartService(target, dbcfgs)
 	if err != nil {
 		t.Fatalf("StartService failed: %v", err)
 	}
@@ -1239,9 +1239,9 @@ func TestTabletServerExecuteBatchFailAsTransaction(t *testing.T) {
 	testUtils := newTestUtils()
 	config := testUtils.newQueryServiceConfig()
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.StartService(target, dbcfgs)
 	if err != nil {
 		t.Fatalf("StartService failed: %v", err)
 	}
@@ -1267,9 +1267,9 @@ func TestTabletServerExecuteBatchBeginFail(t *testing.T) {
 	db.AddRejectedQuery("begin", errRejected)
 	config := testUtils.newQueryServiceConfig()
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.StartService(target, dbcfgs)
 	if err != nil {
 		t.Fatalf("StartService failed: %v", err)
 	}
@@ -1293,9 +1293,9 @@ func TestTabletServerExecuteBatchCommitFail(t *testing.T) {
 	db.AddRejectedQuery("commit", errRejected)
 	config := testUtils.newQueryServiceConfig()
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.StartService(target, dbcfgs)
 	if err != nil {
 		t.Fatalf("StartService failed: %v", err)
 	}
@@ -1332,9 +1332,9 @@ func TestTabletServerExecuteBatchSqlExecFailInTransaction(t *testing.T) {
 
 	config := testUtils.newQueryServiceConfig()
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.StartService(target, dbcfgs)
 	if err != nil {
 		t.Fatalf("StartService failed: %v", err)
 	}
@@ -1375,9 +1375,9 @@ func TestTabletServerExecuteBatchSqlSucceedInTransaction(t *testing.T) {
 	config := testUtils.newQueryServiceConfig()
 	config.EnableAutoCommit = true
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.StartService(target, dbcfgs)
 	if err != nil {
 		t.Fatalf("StartService failed: %v", err)
 	}
@@ -1399,9 +1399,9 @@ func TestTabletServerExecuteBatchCallCommitWithoutABegin(t *testing.T) {
 	testUtils := newTestUtils()
 	config := testUtils.newQueryServiceConfig()
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.StartService(target, dbcfgs)
 	if err != nil {
 		t.Fatalf("StartService failed: %v", err)
 	}
@@ -1429,9 +1429,9 @@ func TestExecuteBatchNestedTransaction(t *testing.T) {
 	db.AddQuery(expanedSQL, sqlResult)
 	config := testUtils.newQueryServiceConfig()
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.StartService(target, dbcfgs)
 	if err != nil {
 		t.Fatalf("StartService failed: %v", err)
 	}
@@ -1481,9 +1481,9 @@ func TestSerializeTransactionsSameRow(t *testing.T) {
 	// Reduce the txpool to 2 because we should never consume more than two slots.
 	config.TransactionCap = 2
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	if err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs)); err != nil {
+	if err := tsv.StartService(target, dbcfgs); err != nil {
 		t.Fatalf("StartService failed: %v", err)
 	}
 	defer tsv.StopService()
@@ -1583,6 +1583,134 @@ func TestSerializeTransactionsSameRow(t *testing.T) {
 	}
 }
 
+// TestSerializeTransactionsSameRow_ExecuteBatchAsTransaction tests the same as
+// TestSerializeTransactionsSameRow but for the ExecuteBatch method with
+// asTransaction=true (i.e. vttablet wraps the query in a BEGIN/Query/COMMIT
+// sequence).
+// One subtle difference is that we have no control over the commit of tx2 and
+// therefore we cannot reproduce that tx2 is still pending after tx3 has
+// finished. Nonetheless, we check the overall serialization count and verify
+// that only tx1 and tx2, 2 transactions in total, are serialized.
+func TestSerializeTransactionsSameRow_ExecuteBatchAsTransaction(t *testing.T) {
+	// This test runs three transaction in parallel:
+	// tx1 | tx2 | tx3
+	// However, tx1 and tx2 have the same WHERE clause (i.e. target the same row)
+	// and therefore tx2 cannot start until the first query of tx1 has finished.
+	// The actual execution looks like this:
+	// tx1 | tx3
+	// tx2
+	db := setUpTabletServerTest(t)
+	defer db.Close()
+	testUtils := newTestUtils()
+	config := testUtils.newQueryServiceConfig()
+	config.EnableHotRowProtection = true
+	config.HotRowProtectionConcurrentTransactions = 1
+	// Reduce the txpool to 2 because we should never consume more than two slots.
+	config.TransactionCap = 2
+	tsv := NewTabletServerWithNilTopoServer(config)
+	dbcfgs := testUtils.newDBConfigs(db)
+	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
+	if err := tsv.StartService(target, dbcfgs); err != nil {
+		t.Fatalf("StartService failed: %v", err)
+	}
+	defer tsv.StopService()
+	countStart := tabletenv.WaitStats.Counts()["TxSerializer"]
+
+	// Fake data.
+	q1 := "update test_table set name_string = 'tx1' where pk = :pk and name = :name"
+	q2 := "update test_table set name_string = 'tx2' where pk = :pk and name = :name"
+	q3 := "update test_table set name_string = 'tx3' where pk = :pk and name = :name"
+	// Every request needs their own bind variables to avoid data races.
+	bvTx1 := map[string]*querypb.BindVariable{
+		"pk":   sqltypes.Int64BindVariable(1),
+		"name": sqltypes.Int64BindVariable(1),
+	}
+	bvTx2 := map[string]*querypb.BindVariable{
+		"pk":   sqltypes.Int64BindVariable(1),
+		"name": sqltypes.Int64BindVariable(1),
+	}
+	bvTx3 := map[string]*querypb.BindVariable{
+		"pk":   sqltypes.Int64BindVariable(2),
+		"name": sqltypes.Int64BindVariable(1),
+	}
+
+	// Make sure that tx2 and tx3 start only after tx1 is running its Execute().
+	tx1Started := make(chan struct{})
+
+	db.SetBeforeFunc("update test_table set name_string = 'tx1' where pk in (1) /* _stream test_table (pk ) (1 ); */",
+		func() {
+			close(tx1Started)
+			if err := waitForTxSerializationPendingQueries(tsv, "test_table where pk = 1 and name = 1", 2); err != nil {
+				t.Fatal(err)
+			}
+		})
+
+	// Run all three transactions.
+	ctx := context.Background()
+	wg := sync.WaitGroup{}
+
+	// tx1.
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		results, err := tsv.ExecuteBatch(ctx, &target, []*querypb.BoundQuery{{
+			Sql:           q1,
+			BindVariables: bvTx1,
+		}}, true /*asTransaction*/, 0 /*transactionID*/, nil /*options*/)
+		if err != nil {
+			t.Fatalf("failed to execute query: %s: %s", q1, err)
+		}
+		if len(results) != 1 || results[0].RowsAffected != 1 {
+			t.Fatalf("TabletServer.ExecuteBatch returned wrong results: %+v", results)
+		}
+	}()
+
+	// tx2.
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		<-tx1Started
+		results, err := tsv.ExecuteBatch(ctx, &target, []*querypb.BoundQuery{{
+			Sql:           q2,
+			BindVariables: bvTx2,
+		}}, true /*asTransaction*/, 0 /*transactionID*/, nil /*options*/)
+		if err != nil {
+			t.Fatalf("failed to execute query: %s: %s", q2, err)
+		}
+		if len(results) != 1 || results[0].RowsAffected != 1 {
+			t.Fatalf("TabletServer.ExecuteBatch returned wrong results: %+v", results)
+		}
+	}()
+
+	// tx3.
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		<-tx1Started
+		results, err := tsv.ExecuteBatch(ctx, &target, []*querypb.BoundQuery{{
+			Sql:           q3,
+			BindVariables: bvTx3,
+		}}, true /*asTransaction*/, 0 /*transactionID*/, nil /*options*/)
+		if err != nil {
+			t.Fatalf("failed to execute query: %s: %s", q3, err)
+		}
+		if len(results) != 1 || results[0].RowsAffected != 1 {
+			t.Fatalf("TabletServer.ExecuteBatch returned wrong results: %+v", results)
+		}
+	}()
+
+	wg.Wait()
+
+	got, ok := tabletenv.WaitStats.Counts()["TxSerializer"]
+	want := countStart + 1
+	if !ok || got != want {
+		t.Fatalf("only tx2 should have been serialized: ok? %v got: %v want: %v", ok, got, want)
+	}
+}
+
 func TestSerializeTransactionsSameRow_ConcurrentTransactions(t *testing.T) {
 	// This test runs three transaction in parallel:
 	// tx1 | tx2 | tx3
@@ -1598,9 +1726,9 @@ func TestSerializeTransactionsSameRow_ConcurrentTransactions(t *testing.T) {
 	// Reduce the txpool to 2 because we should never consume more than two slots.
 	config.TransactionCap = 2
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	if err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs)); err != nil {
+	if err := tsv.StartService(target, dbcfgs); err != nil {
 		t.Fatalf("StartService failed: %v", err)
 	}
 	defer tsv.StopService()
@@ -1739,9 +1867,9 @@ func TestSerializeTransactionsSameRow_TooManyPendingRequests(t *testing.T) {
 	config.HotRowProtectionMaxQueueSize = 1
 	config.HotRowProtectionConcurrentTransactions = 1
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	if err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs)); err != nil {
+	if err := tsv.StartService(target, dbcfgs); err != nil {
 		t.Fatalf("StartService failed: %v", err)
 	}
 	defer tsv.StopService()
@@ -1812,6 +1940,100 @@ func TestSerializeTransactionsSameRow_TooManyPendingRequests(t *testing.T) {
 	}
 }
 
+// TestSerializeTransactionsSameRow_TooManyPendingRequests_ExecuteBatchAsTransaction
+// tests the same thing as TestSerializeTransactionsSameRow_TooManyPendingRequests
+// but for the ExecuteBatch method with asTransaction=true.
+// We have this test to verify that the error handling in ExecuteBatch() works
+// correctly for the hot row protection integration.
+func TestSerializeTransactionsSameRow_TooManyPendingRequests_ExecuteBatchAsTransaction(t *testing.T) {
+	// This test rejects queries if more than one transaction is currently in
+	// progress for the hot row i.e. we check that tx2 actually fails.
+	db := setUpTabletServerTest(t)
+	defer db.Close()
+	testUtils := newTestUtils()
+	config := testUtils.newQueryServiceConfig()
+	config.EnableHotRowProtection = true
+	config.HotRowProtectionMaxQueueSize = 1
+	config.HotRowProtectionConcurrentTransactions = 1
+	tsv := NewTabletServerWithNilTopoServer(config)
+	dbcfgs := testUtils.newDBConfigs(db)
+	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
+	if err := tsv.StartService(target, dbcfgs); err != nil {
+		t.Fatalf("StartService failed: %v", err)
+	}
+	defer tsv.StopService()
+	countStart := tabletenv.WaitStats.Counts()["TxSerializer"]
+
+	// Fake data.
+	q1 := "update test_table set name_string = 'tx1' where pk = :pk and name = :name"
+	q2 := "update test_table set name_string = 'tx2' where pk = :pk and name = :name"
+	// Every request needs their own bind variables to avoid data races.
+	bvTx1 := map[string]*querypb.BindVariable{
+		"pk":   sqltypes.Int64BindVariable(1),
+		"name": sqltypes.Int64BindVariable(1),
+	}
+	bvTx2 := map[string]*querypb.BindVariable{
+		"pk":   sqltypes.Int64BindVariable(1),
+		"name": sqltypes.Int64BindVariable(1),
+	}
+
+	// Make sure that tx2 starts only after tx1 is running its Execute().
+	tx1Started := make(chan struct{})
+	// Signal when tx2 is done.
+	tx2Failed := make(chan struct{})
+
+	db.SetBeforeFunc("update test_table set name_string = 'tx1' where pk in (1) /* _stream test_table (pk ) (1 ); */",
+		func() {
+			close(tx1Started)
+			<-tx2Failed
+		})
+
+	// Run the two transactions.
+	ctx := context.Background()
+	wg := sync.WaitGroup{}
+
+	// tx1.
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		results, err := tsv.ExecuteBatch(ctx, &target, []*querypb.BoundQuery{{
+			Sql:           q1,
+			BindVariables: bvTx1,
+		}}, true /*asTransaction*/, 0 /*transactionID*/, nil /*options*/)
+		if err != nil {
+			t.Fatalf("failed to execute query: %s: %s", q1, err)
+		}
+		if len(results) != 1 || results[0].RowsAffected != 1 {
+			t.Fatalf("TabletServer.ExecuteBatch returned wrong results: %+v", results)
+		}
+	}()
+
+	// tx2.
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		defer close(tx2Failed)
+
+		<-tx1Started
+		results, err := tsv.ExecuteBatch(ctx, &target, []*querypb.BoundQuery{{
+			Sql:           q2,
+			BindVariables: bvTx2,
+		}}, true /*asTransaction*/, 0 /*transactionID*/, nil /*options*/)
+		if err == nil || vterrors.Code(err) != vtrpcpb.Code_RESOURCE_EXHAUSTED || err.Error() != "hot row protection: too many queued transactions (1 >= 1) for the same row (table + WHERE clause: 'test_table where pk = 1 and name = 1')" {
+			t.Fatalf("tx2 should have failed because there are too many pending requests: %v results: %+v", err, results)
+		}
+	}()
+
+	wg.Wait()
+
+	got, _ := tabletenv.WaitStats.Counts()["TxSerializer"]
+	want := countStart + 0
+	if got != want {
+		t.Fatalf("tx2 should have failed early and not tracked as serialized: got: %v want: %v", got, want)
+	}
+}
+
 func TestSerializeTransactionsSameRow_RequestCanceled(t *testing.T) {
 	// This test is similar to TestSerializeTransactionsSameRow, but tests only
 	// that a queued request unblocks itself when its context is done.
@@ -1826,9 +2048,9 @@ func TestSerializeTransactionsSameRow_RequestCanceled(t *testing.T) {
 	config.EnableHotRowProtection = true
 	config.HotRowProtectionConcurrentTransactions = 1
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	if err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs)); err != nil {
+	if err := tsv.StartService(target, dbcfgs); err != nil {
 		t.Fatalf("StartService failed: %v", err)
 	}
 	defer tsv.StopService()
@@ -2120,9 +2342,9 @@ func TestTabletServerSplitQuery(t *testing.T) {
 	testUtils := newTestUtils()
 	config := testUtils.newQueryServiceConfig()
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_RDONLY}
-	err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.StartService(target, dbcfgs)
 	if err != nil {
 		t.Fatalf("StartService failed: %v", err)
 	}
@@ -2145,15 +2367,59 @@ func TestTabletServerSplitQuery(t *testing.T) {
 	}
 }
 
+func TestTabletServerSplitQueryKeywords(t *testing.T) {
+	db := setUpTabletServerTest(t)
+	defer db.Close()
+	db.AddQuery("SELECT MIN(`by`), MAX(`by`) FROM `order`", &sqltypes.Result{
+		Fields: []*querypb.Field{
+			{Type: sqltypes.Int32},
+			{Type: sqltypes.Int32},
+		},
+		RowsAffected: 1,
+		Rows: [][]sqltypes.Value{
+			{
+				sqltypes.NewInt32(1),
+				sqltypes.NewInt32(100),
+			},
+		},
+	})
+	testUtils := newTestUtils()
+	config := testUtils.newQueryServiceConfig()
+	tsv := NewTabletServerWithNilTopoServer(config)
+	dbcfgs := testUtils.newDBConfigs(db)
+	target := querypb.Target{TabletType: topodatapb.TabletType_RDONLY}
+	err := tsv.StartService(target, dbcfgs)
+	if err != nil {
+		t.Fatalf("StartService failed: %v", err)
+	}
+	defer tsv.StopService()
+	ctx := context.Background()
+	sql := "select * from `order` where `value` > :count"
+	splits, err := tsv.SplitQuery(
+		ctx,
+		&querypb.Target{TabletType: topodatapb.TabletType_RDONLY},
+		&querypb.BoundQuery{Sql: sql},
+		[]string{}, /* splitColumns */
+		10,         /* splitCount */
+		0,          /* numRowsPerQueryPart */
+		querypb.SplitQueryRequest_EQUAL_SPLITS)
+	if err != nil {
+		t.Fatalf("TabletServer.SplitQuery should succeed: %v, but get error: %v", sql, err)
+	}
+	if len(splits) != 10 {
+		t.Fatalf("got: %v, want: %v.\nsplits: %+v", len(splits), 10, splits)
+	}
+}
+
 func TestTabletServerSplitQueryInvalidQuery(t *testing.T) {
 	db := setUpTabletServerTest(t)
 	defer db.Close()
 	testUtils := newTestUtils()
 	config := testUtils.newQueryServiceConfig()
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_RDONLY}
-	err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.StartService(target, dbcfgs)
 	if err != nil {
 		t.Fatalf("StartService failed: %v", err)
 	}
@@ -2181,9 +2447,9 @@ func TestTabletServerSplitQueryInvalidParams(t *testing.T) {
 	testUtils := newTestUtils()
 	config := testUtils.newQueryServiceConfig()
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_RDONLY}
-	err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.StartService(target, dbcfgs)
 	if err != nil {
 		t.Fatalf("StartService failed: %v", err)
 	}
@@ -2210,9 +2476,9 @@ func TestTabletServerSplitQueryEqualSplitsOnStringColumn(t *testing.T) {
 	testUtils := newTestUtils()
 	config := testUtils.newQueryServiceConfig()
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_RDONLY}
-	err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.StartService(target, dbcfgs)
 	if err != nil {
 		t.Fatalf("StartService failed: %v", err)
 	}
@@ -2337,18 +2603,22 @@ func TestTerseErrorsBindVars(t *testing.T) {
 	tsv := NewTabletServerWithNilTopoServer(config)
 	setupTestLogger()
 	defer clearTestLogger()
+
+	sqlErr := mysql.NewSQLError(10, "HY000", "sensitive message")
+	sqlErr.Query = "select * from test_table where a = 1"
+
 	err := tsv.convertAndLogError(
 		ctx,
-		"select * from test_table",
+		"select * from test_table where a = :a",
 		map[string]*querypb.BindVariable{"a": sqltypes.Int64BindVariable(1)},
-		mysql.NewSQLError(10, "HY000", "sensitive message"),
+		sqlErr,
 		nil,
 	)
-	want := "(errno 10) (sqlstate HY000) during query: select * from test_table"
+	want := "(errno 10) (sqlstate HY000) during query: select * from test_table where a = :a"
 	if err == nil || err.Error() != want {
 		t.Errorf("%v, want '%s'", err, want)
 	}
-	wantLog := "sensitive message (errno 10) (sqlstate HY000): Sql: \"select * from test_table\", BindVars: {a: \"type:INT64 value:\\\"1\\\" \"}"
+	wantLog := "sensitive message (errno 10) (sqlstate HY000) during query: select * from test_table where a = 1: Sql: \"select * from test_table where a = :a\", BindVars: {a: \"type:INT64 value:\\\"1\\\" \"}"
 	if wantLog != getTestLog(0) {
 		t.Errorf("error log '%s', want '%s'", getTestLog(0), wantLog)
 	}
@@ -2378,25 +2648,50 @@ func TestTruncateErrors(t *testing.T) {
 	testUtils := newTestUtils()
 	config := testUtils.newQueryServiceConfig()
 	config.TerseErrors = true
-	*sqlparser.TruncateErrLen = 20
 	tsv := NewTabletServerWithNilTopoServer(config)
 	setupTestLogger()
 	defer clearTestLogger()
+
+	*sqlparser.TruncateErrLen = 52
+	sql := "select * from test_table where xyz = :vtg1 order by abc desc"
+	sqlErr := mysql.NewSQLError(10, "HY000", "sensitive message")
+	sqlErr.Query = "select * from test_table where xyz = 'this is kinda long eh'"
 	err := tsv.convertAndLogError(
 		ctx,
-		"select * from test_table",
-		map[string]*querypb.BindVariable{"this is kinda long eh": sqltypes.Int64BindVariable(1)},
-		mysql.NewSQLError(10, "HY000", "sensitive message"),
+		sql,
+		map[string]*querypb.BindVariable{"vtg1": sqltypes.StringBindVariable("this is kinda long eh")},
+		sqlErr,
 		nil,
 	)
-	want := "(errno 10) (sqlstate HY000) during query: select * [TRUNCATED]"
-	if err == nil || err.Error() != want {
-		t.Errorf("%v, want '%s'", err, want)
+	wantErr := "(errno 10) (sqlstate HY000) during query: select * from test_table where xyz = :vt [TRUNCATED]"
+	if err == nil || err.Error() != wantErr {
+		t.Errorf("%v, want '%s'", err, wantErr)
 	}
-	wantLog := "sensitive message (errno 10) (sqlstate HY000): Sql: \"se [TRUNCATED]"
+
+	wantLog := "sensitive message (errno 10) (sqlstate H [TRUNCATED]"
 	if wantLog != getTestLog(0) {
 		t.Errorf("error log '%s', want '%s'", getTestLog(0), wantLog)
 	}
+
+	*sqlparser.TruncateErrLen = 140
+	err = tsv.convertAndLogError(
+		ctx,
+		sql,
+		map[string]*querypb.BindVariable{"vtg1": sqltypes.StringBindVariable("this is kinda long eh")},
+		sqlErr,
+		nil,
+	)
+
+	wantErr = "(errno 10) (sqlstate HY000) during query: select * from test_table where xyz = :vtg1 order by abc desc"
+	if err == nil || err.Error() != wantErr {
+		t.Errorf("%v, want '%s'", err, wantErr)
+	}
+
+	wantLog = "sensitive message (errno 10) (sqlstate HY000) during query: select * from test_table where xyz = 'this is kinda long eh': Sql: \" [TRUNCATED]"
+	if wantLog != getTestLog(1) {
+		t.Errorf("error log '%s', want '%s'", getTestLog(1), wantLog)
+	}
+
 	*sqlparser.TruncateErrLen = 0
 }
 
@@ -2429,9 +2724,9 @@ func TestConfigChanges(t *testing.T) {
 	testUtils := newTestUtils()
 	config := testUtils.newQueryServiceConfig()
 	tsv := NewTabletServerWithNilTopoServer(config)
-	dbconfigs := testUtils.newDBConfigs(db)
+	dbcfgs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	err := tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	err := tsv.StartService(target, dbcfgs)
 	if err != nil {
 		t.Fatalf("StartService failed: %v", err)
 	}
@@ -2472,12 +2767,12 @@ func TestConfigChanges(t *testing.T) {
 		t.Errorf("tsv.te.txPool.Timeout: %v, want %v", val, newDuration)
 	}
 
-	tsv.SetQueryCacheCap(newSize)
-	if val := tsv.QueryCacheCap(); val != newSize {
-		t.Errorf("QueryCacheCap: %d, want %d", val, newSize)
+	tsv.SetQueryPlanCacheCap(newSize)
+	if val := tsv.QueryPlanCacheCap(); val != newSize {
+		t.Errorf("QueryPlanCacheCap: %d, want %d", val, newSize)
 	}
-	if val := int(tsv.qe.QueryCacheCap()); val != newSize {
-		t.Errorf("tsv.qe.QueryCacheCap: %d, want %d", val, newSize)
+	if val := int(tsv.qe.QueryPlanCacheCap()); val != newSize {
+		t.Errorf("tsv.qe.QueryPlanCacheCap: %d, want %d", val, newSize)
 	}
 
 	tsv.SetAutoCommit(true)
@@ -2602,6 +2897,15 @@ func getSupportedQueries() map[string]*sqltypes.Result {
 				{sqltypes.NewVarBinary("1")},
 			},
 		},
+		"select @@sql_auto_is_null": {
+			Fields: []*querypb.Field{{
+				Type: sqltypes.Uint64,
+			}},
+			RowsAffected: 1,
+			Rows: [][]sqltypes.Value{
+				{sqltypes.NewVarBinary("0")},
+			},
+		},
 		"show variables like 'binlog_format'": {
 			Fields: []*querypb.Field{{
 				Type: sqltypes.VarChar,
@@ -2613,6 +2917,15 @@ func getSupportedQueries() map[string]*sqltypes.Result {
 				sqltypes.NewVarBinary("binlog_format"),
 				sqltypes.NewVarBinary("STATEMENT"),
 			}},
+		},
+		mysql.BaseShowTables: {
+			Fields:       mysql.BaseShowTablesFields,
+			RowsAffected: 2,
+			Rows: [][]sqltypes.Value{
+				mysql.BaseShowTablesRow("test_table", false, ""),
+				mysql.BaseShowTablesRow("order", false, ""),
+				mysql.BaseShowTablesRow("msg", false, "vitess_message,vt_ack_wait=30,vt_purge_after=120,vt_batch_size=1,vt_cache_size=10,vt_poller_interval=30"),
+			},
 		},
 		"select * from test_table where 1 != 1": {
 			Fields: []*querypb.Field{{
@@ -2629,14 +2942,6 @@ func getSupportedQueries() map[string]*sqltypes.Result {
 				Type: sqltypes.VarChar,
 			}},
 		},
-		mysql.BaseShowTables: {
-			Fields:       mysql.BaseShowTablesFields,
-			RowsAffected: 2,
-			Rows: [][]sqltypes.Value{
-				mysql.BaseShowTablesRow("test_table", false, ""),
-				mysql.BaseShowTablesRow("msg", false, "vitess_message,vt_ack_wait=30,vt_purge_after=120,vt_batch_size=1,vt_cache_size=10,vt_poller_interval=30"),
-			},
-		},
 		"describe test_table": {
 			Fields:       mysql.DescribeTableFields,
 			RowsAffected: 4,
@@ -2647,6 +2952,13 @@ func getSupportedQueries() map[string]*sqltypes.Result {
 				mysql.DescribeTableRow("name_string", "varchar(10)", false, "", "foo"),
 			},
 		},
+		mysql.BaseShowTablesForTable("test_table"): {
+			Fields:       mysql.BaseShowTablesFields,
+			RowsAffected: 1,
+			Rows: [][]sqltypes.Value{
+				mysql.BaseShowTablesRow("test_table", false, ""),
+			},
+		},
 		// for SplitQuery because it needs a primary key column
 		"show index from test_table": {
 			Fields:       mysql.ShowIndexFromTableFields,
@@ -2655,6 +2967,38 @@ func getSupportedQueries() map[string]*sqltypes.Result {
 				mysql.ShowIndexFromTableRow("test_table", true, "PRIMARY", 1, "pk", false),
 				mysql.ShowIndexFromTableRow("test_table", false, "index", 1, "name", true),
 				mysql.ShowIndexFromTableRow("test_table", false, "name_string_INDEX", 1, "name_string", true),
+			},
+		},
+		// Define table that uses keywords to test SplitQuery escaping.
+		"select * from `order` where 1 != 1": {
+			Fields: []*querypb.Field{{
+				Name: "by",
+				Type: sqltypes.Int32,
+			}, {
+				Name: "value",
+				Type: sqltypes.Int32,
+			}},
+		},
+		"describe `order`": {
+			Fields:       mysql.DescribeTableFields,
+			RowsAffected: 4,
+			Rows: [][]sqltypes.Value{
+				mysql.DescribeTableRow("by", "int(11)", false, "PRI", "0"),
+				mysql.DescribeTableRow("value", "int(11)", false, "", "0"),
+			},
+		},
+		mysql.BaseShowTablesForTable("order"): {
+			Fields:       mysql.BaseShowTablesFields,
+			RowsAffected: 1,
+			Rows: [][]sqltypes.Value{
+				mysql.BaseShowTablesRow("order", false, ""),
+			},
+		},
+		"show index from `order`": {
+			Fields:       mysql.ShowIndexFromTableFields,
+			RowsAffected: 1,
+			Rows: [][]sqltypes.Value{
+				mysql.ShowIndexFromTableRow("order", true, "PRIMARY", 1, "by", false),
 			},
 		},
 		"select * from msg where 1 != 1": {
@@ -2712,13 +3056,6 @@ func getSupportedQueries() map[string]*sqltypes.Result {
 		"begin":    {},
 		"commit":   {},
 		"rollback": {},
-		mysql.BaseShowTablesForTable("test_table"): {
-			Fields:       mysql.BaseShowTablesFields,
-			RowsAffected: 1,
-			Rows: [][]sqltypes.Value{
-				mysql.BaseShowTablesRow("test_table", false, ""),
-			},
-		},
 		fmt.Sprintf(sqlReadAllRedo, "`_vt`", "`_vt`"): {},
 	}
 }

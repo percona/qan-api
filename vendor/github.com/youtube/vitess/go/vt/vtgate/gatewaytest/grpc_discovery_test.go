@@ -28,6 +28,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/youtube/vitess/go/vt/discovery"
+	"github.com/youtube/vitess/go/vt/srvtopo"
 	"github.com/youtube/vitess/go/vt/vtgate/gateway"
 	"github.com/youtube/vitess/go/vt/vtgate/l2vtgate"
 	"github.com/youtube/vitess/go/vt/vttablet/grpcqueryservice"
@@ -65,8 +66,9 @@ func TestGRPCDiscovery(t *testing.T) {
 
 	// VTGate: create the discovery healthcheck, and the gateway.
 	// Wait for the right tablets to be present.
-	hc := discovery.NewHealthCheck(30*time.Second, 10*time.Second, 2*time.Minute)
-	dg := gateway.GetCreator()(hc, ts, ts, cell, 2)
+	hc := discovery.NewHealthCheck(10*time.Second, 2*time.Minute)
+	rs := srvtopo.NewResilientServer(ts, "TestGRPCDiscovery")
+	dg := gateway.GetCreator()(hc, ts, rs, cell, 2)
 	hc.AddTablet(&topodatapb.Tablet{
 		Alias: &topodatapb.TabletAlias{
 			Cell: cell,
@@ -116,8 +118,9 @@ func TestL2VTGateDiscovery(t *testing.T) {
 
 	// L2VTGate: Create the discovery healthcheck, and the gateway.
 	// Wait for the right tablets to be present.
-	hc := discovery.NewHealthCheck(30*time.Second, 10*time.Second, 2*time.Minute)
-	l2vtgate := l2vtgate.Init(hc, ts, ts, "", cell, 2, nil)
+	hc := discovery.NewHealthCheck(10*time.Second, 2*time.Minute)
+	rs := srvtopo.NewResilientServer(ts, "TestL2VTGateDiscovery")
+	l2vtgate := l2vtgate.Init(hc, ts, rs, "", cell, 2, nil)
 	hc.AddTablet(&topodatapb.Tablet{
 		Alias: &topodatapb.TabletAlias{
 			Cell: cell,
@@ -134,7 +137,7 @@ func TestL2VTGateDiscovery(t *testing.T) {
 	ctx := context.Background()
 	err = l2vtgate.Gateway().WaitForTablets(ctx, []topodatapb.TabletType{tabletconntest.TestTarget.TabletType})
 	if err != nil {
-		t.Fatalf("WaitForAllServingTablets failed: %v", err)
+		t.Fatalf("WaitForTablets failed: %v", err)
 	}
 
 	// L2VTGate: listen on a random port.

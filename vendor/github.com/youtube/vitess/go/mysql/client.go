@@ -24,9 +24,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/youtube/vitess/go/vt/vttls"
 	"golang.org/x/net/context"
-
-	"github.com/youtube/vitess/go/vt/servenv/grpcutils"
 )
 
 // connectResult is used by Connect.
@@ -237,7 +236,7 @@ func (c *Conn) clientHandshake(characterSet uint8, params *ConnParams) error {
 		}
 
 		// Build the TLS config.
-		clientConfig, err := grpcutils.TLSClientConfig(params.SslCert, params.SslKey, params.SslCa, serverName)
+		clientConfig, err := vttls.ClientConfig(params.SslCert, params.SslKey, params.SslCa, serverName)
 		if err != nil {
 			return NewSQLError(CRSSLConnectionError, SSUnknownSQLState, "error loading client cert and ca: %v", err)
 		}
@@ -623,8 +622,5 @@ func (c *Conn) writeClearTextPassword(params *ConnParams) error {
 	if pos != len(data) {
 		return fmt.Errorf("error building ClearTextPassword packet: got %v bytes expected %v", pos, len(data))
 	}
-	if err := c.writeEphemeralPacket(true); err != nil {
-		return err
-	}
-	return nil
+	return c.writeEphemeralPacket(true)
 }

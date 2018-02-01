@@ -19,7 +19,6 @@ package main
 import (
 	"flag"
 	"math/rand"
-	"os"
 	"strings"
 	"time"
 
@@ -30,6 +29,7 @@ import (
 	"github.com/youtube/vitess/go/exit"
 	"github.com/youtube/vitess/go/vt/discovery"
 	"github.com/youtube/vitess/go/vt/servenv"
+	"github.com/youtube/vitess/go/vt/srvtopo"
 	"github.com/youtube/vitess/go/vt/topo"
 	"github.com/youtube/vitess/go/vt/topo/topoproto"
 	"github.com/youtube/vitess/go/vt/vtgate"
@@ -38,15 +38,14 @@ import (
 )
 
 var (
-	cell                   = flag.String("cell", "test_nj", "cell to use")
-	retryCount             = flag.Int("retry-count", 2, "retry count")
-	healthCheckConnTimeout = flag.Duration("healthcheck_conn_timeout", 3*time.Second, "healthcheck connection timeout")
-	healthCheckRetryDelay  = flag.Duration("healthcheck_retry_delay", 2*time.Millisecond, "health check retry delay")
-	healthCheckTimeout     = flag.Duration("healthcheck_timeout", time.Minute, "the health check timeout period")
-	tabletTypesToWait      = flag.String("tablet_types_to_wait", "", "wait till connected for specified tablet types during Gateway initialization")
+	cell                  = flag.String("cell", "test_nj", "cell to use")
+	retryCount            = flag.Int("retry-count", 2, "retry count")
+	healthCheckRetryDelay = flag.Duration("healthcheck_retry_delay", 2*time.Millisecond, "health check retry delay")
+	healthCheckTimeout    = flag.Duration("healthcheck_timeout", time.Minute, "the health check timeout period")
+	tabletTypesToWait     = flag.String("tablet_types_to_wait", "", "wait till connected for specified tablet types during Gateway initialization")
 )
 
-var resilientSrvTopoServer *vtgate.ResilientSrvTopoServer
+var resilientServer *srvtopo.ResilientServer
 var healthCheck discovery.HealthCheck
 
 var initFakeZK func()
@@ -59,13 +58,8 @@ func init() {
 func main() {
 	defer exit.Recover()
 
-	flag.Parse()
+	servenv.ParseFlags("vtgate")
 	servenv.Init()
-
-	if *servenv.Version {
-		servenv.AppVersion.Print()
-		os.Exit(0)
-	}
 
 	if initFakeZK != nil {
 		initFakeZK()
@@ -73,9 +67,9 @@ func main() {
 	ts := topo.Open()
 	defer ts.Close()
 
-	resilientSrvTopoServer = vtgate.NewResilientSrvTopoServer(ts, "ResilientSrvTopoServer")
+	resilientServer = srvtopo.NewResilientServer(ts, "ResilientSrvTopoServer")
 
-	healthCheck = discovery.NewHealthCheck(*healthCheckConnTimeout, *healthCheckRetryDelay, *healthCheckTimeout)
+	healthCheck = discovery.NewHealthCheck(*healthCheckRetryDelay, *healthCheckTimeout)
 	healthCheck.RegisterStats()
 
 	tabletTypes := make([]topodatapb.TabletType, 0, 1)
@@ -90,7 +84,7 @@ func main() {
 		}
 	}
 
-	vtg := vtgate.Init(context.Background(), healthCheck, ts, resilientSrvTopoServer, *cell, *retryCount, tabletTypes)
+	vtg := vtgate.Init(context.Background(), healthCheck, ts, resilientServer, *cell, *retryCount, tabletTypes)
 
 	servenv.OnRun(func() {
 		addStatusParts(vtg)

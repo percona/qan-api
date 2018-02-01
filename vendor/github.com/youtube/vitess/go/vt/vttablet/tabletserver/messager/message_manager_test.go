@@ -17,8 +17,10 @@ limitations under the License.
 package messager
 
 import (
+	"errors"
 	"reflect"
 	"runtime"
+	"sync"
 	"testing"
 	"time"
 
@@ -218,9 +220,15 @@ func TestMessageManagerSend(t *testing.T) {
 	}
 
 	// Verify item has been removed from cache.
-	if _, ok := mm.cache.messages["1"]; ok {
-		t.Error("Message 1 is still present in cache")
+	// Need to obtain lock to prevent data race.
+	mm.cache.mu.Lock()
+	if _, ok := mm.cache.inQueue["1"]; ok {
+		t.Error("Message 1 is still present in inQueue cache")
 	}
+	if _, ok := mm.cache.inFlight["1"]; ok {
+		t.Error("Message 1 is still present in inFlight cache")
+	}
+	mm.cache.mu.Unlock()
 
 	// Test that mm stops sending to a canceled receiver.
 	r2 := newTestReceiver(1)
@@ -299,7 +307,7 @@ func TestMessageManagerPostponeThrottle(t *testing.T) {
 		runtime.Gosched()
 		time.Sleep(10 * time.Millisecond)
 	}
-	if got, want := tsv.postponeCount.Get(), int64(2); got != want {
+	if got, want := tsv.postponeCount.Get(), int64(1); got != want {
 		t.Errorf("tsv.postponeCount: %d, want %d", got, want)
 	}
 	<-ch
@@ -308,8 +316,30 @@ func TestMessageManagerPostponeThrottle(t *testing.T) {
 func TestMessageManagerSendEOF(t *testing.T) {
 	db := fakesqldb.New(t)
 	defer db.Close()
-	tsv := newFakeTabletServer()
-	mm := newMessageManager(tsv, mmTable, newMMConnPool(db), sync2.NewSemaphore(1, 0))
+	db.AddQueryPattern(
+		"select time_next, epoch, time_created, id, time_scheduled, message from foo.*",
+		&sqltypes.Result{
+			Fields: []*querypb.Field{
+				{Type: sqltypes.Int64},
+				{Type: sqltypes.Int64},
+				{Type: sqltypes.Int64},
+				{Type: sqltypes.Int64},
+				{Type: sqltypes.VarBinary},
+			},
+			Rows: [][]sqltypes.Value{{
+				sqltypes.NewInt64(1),
+				sqltypes.NewInt64(0),
+				sqltypes.NewInt64(2),
+				sqltypes.NewInt64(10),
+				sqltypes.NewVarBinary("a"),
+			}},
+		},
+	)
+	// Set a large polling interval.
+	ti := newMMTable()
+	ti.MessageInfo.CacheSize = 2
+	ti.MessageInfo.PollInterval = 30 * time.Second
+	mm := newMessageManager(newFakeTabletServer(), ti, newMMConnPool(db), sync2.NewSemaphore(1, 0))
 	mm.Open()
 	defer mm.Close()
 	r1 := newTestReceiver(0)
@@ -318,28 +348,82 @@ func TestMessageManagerSendEOF(t *testing.T) {
 	// Pull field info.
 	<-r1.ch
 
+	r2 := newTestReceiver(0)
+	mm.Subscribe(context.Background(), r2.rcv)
+	// Pull field info.
+	<-r2.ch
+
 	mm.Add(&MessageRow{Row: []sqltypes.Value{sqltypes.NewVarBinary("1"), sqltypes.NULL}})
-	// Wait for send to enqueue
+	// Wait for send to enqueue.
+	// After this is enquened, runSend will go into a wait state because
+	// there's nothing more to send.
 	r1.WaitForCount(2)
 
 	// Now cancel, which will send an EOF to the sender.
 	cancel()
-	// messagesPending should get turned on.
-	messagesWerePending := false
-	for i := 0; i < 10; i++ {
-		runtime.Gosched()
-		mm.mu.Lock()
-		if mm.messagesPending {
-			messagesWerePending = true
-			mm.mu.Unlock()
-			break
+
+	// The EOF should immediately trigger the poller, which will result
+	// in a message being sent on r2. Verify that this happened in a timely fashion.
+	start := time.Now()
+	<-r2.ch
+	if d := time.Since(start); d > 15*time.Second {
+		t.Errorf("pending work trigger did not happen. Duration: %v", d)
+	}
+}
+
+func TestMessageManagerSendError(t *testing.T) {
+	db := fakesqldb.New(t)
+	defer db.Close()
+	tsv := newFakeTabletServer()
+	mm := newMessageManager(tsv, mmTable, newMMConnPool(db), sync2.NewSemaphore(1, 0))
+	mm.Open()
+	defer mm.Close()
+	ctx := context.Background()
+
+	ch := make(chan *sqltypes.Result)
+	fieldSent := false
+	mm.Subscribe(ctx, func(qr *sqltypes.Result) error {
+		ch <- qr
+		if !fieldSent {
+			fieldSent = true
+			return nil
 		}
-		mm.mu.Unlock()
-		time.Sleep(10 * time.Millisecond)
+		return errors.New("non-eof")
+	})
+	// Pull field info.
+	<-ch
+
+	postponech := make(chan string, 20)
+	tsv.SetChannel(postponech)
+	mm.Add(&MessageRow{Row: []sqltypes.Value{sqltypes.NewVarBinary("1"), sqltypes.NULL}})
+	<-ch
+
+	// Ensure Postpone got called.
+	if got, want := <-postponech, "postpone"; got != want {
+		t.Errorf("Postpone: %s, want %v", got, want)
 	}
-	if !messagesWerePending {
-		t.Error("Send with EOF did not trigger pending messages")
-	}
+}
+
+func TestMessageManagerFieldSendError(t *testing.T) {
+	db := fakesqldb.New(t)
+	defer db.Close()
+	tsv := newFakeTabletServer()
+	mm := newMessageManager(tsv, mmTable, newMMConnPool(db), sync2.NewSemaphore(1, 0))
+	mm.Open()
+	defer mm.Close()
+	ctx := context.Background()
+
+	ch := make(chan *sqltypes.Result)
+	done := mm.Subscribe(ctx, func(qr *sqltypes.Result) error {
+		ch <- qr
+		return errors.New("non-eof")
+	})
+	// Pull field info.
+	<-ch
+
+	// This should not hang because a field send error must terminate
+	// subscription.
+	<-done
 }
 
 func TestMessageManagerBatchSend(t *testing.T) {
@@ -662,7 +746,9 @@ func TestMMGenerate(t *testing.T) {
 type fakeTabletServer struct {
 	postponeCount sync2.AtomicInt64
 	purgeCount    sync2.AtomicInt64
-	ch            chan string
+
+	mu sync.Mutex
+	ch chan string
 }
 
 func newFakeTabletServer() *fakeTabletServer { return &fakeTabletServer{} }
@@ -670,21 +756,29 @@ func newFakeTabletServer() *fakeTabletServer { return &fakeTabletServer{} }
 func (fts *fakeTabletServer) CheckMySQL() {}
 
 func (fts *fakeTabletServer) SetChannel(ch chan string) {
+	fts.mu.Lock()
 	fts.ch = ch
+	fts.mu.Unlock()
 }
 
 func (fts *fakeTabletServer) PostponeMessages(ctx context.Context, target *querypb.Target, name string, ids []string) (count int64, err error) {
 	fts.postponeCount.Add(1)
-	if fts.ch != nil {
-		fts.ch <- "postpone"
+	fts.mu.Lock()
+	ch := fts.ch
+	fts.mu.Unlock()
+	if ch != nil {
+		ch <- "postpone"
 	}
 	return 0, nil
 }
 
 func (fts *fakeTabletServer) PurgeMessages(ctx context.Context, target *querypb.Target, name string, timeCutoff int64) (count int64, err error) {
 	fts.purgeCount.Add(1)
-	if fts.ch != nil {
-		fts.ch <- "purge"
+	fts.mu.Lock()
+	ch := fts.ch
+	fts.mu.Unlock()
+	if ch != nil {
+		ch <- "purge"
 	}
 	return 0, nil
 }

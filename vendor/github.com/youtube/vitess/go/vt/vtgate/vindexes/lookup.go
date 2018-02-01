@@ -24,10 +24,10 @@ import (
 )
 
 var (
-	_ NonUnique = (*LookupNonUnique)(nil)
-	_ Lookup    = (*LookupNonUnique)(nil)
 	_ Unique    = (*LookupUnique)(nil)
 	_ Lookup    = (*LookupUnique)(nil)
+	_ NonUnique = (*LookupNonUnique)(nil)
+	_ Lookup    = (*LookupNonUnique)(nil)
 )
 
 func init() {
@@ -35,18 +35,11 @@ func init() {
 	Register("lookup_unique", NewLookupUnique)
 }
 
-// LookupNonUnique defines a vindex that uses a lookup table and create a mapping between id and KeyspaceId.
-//It's NonUnique and a Lookup.
+// LookupNonUnique defines a vindex that uses a lookup table and create a mapping between from ids and KeyspaceId.
+// It's NonUnique and a Lookup.
 type LookupNonUnique struct {
 	name string
 	lkp  lookupInternal
-}
-
-// NewLookup creates a LookupNonUnique vindex.
-func NewLookup(name string, m map[string]string) (Vindex, error) {
-	lookup := &LookupNonUnique{name: name}
-	lookup.lkp.Init(m)
-	return lookup, nil
 }
 
 // String returns the name of the vindex.
@@ -82,18 +75,25 @@ func (ln *LookupNonUnique) Verify(vcursor VCursor, ids []sqltypes.Value, ksids [
 }
 
 // Create reserves the id by inserting it into the vindex table.
-func (ln *LookupNonUnique) Create(vcursor VCursor, ids []sqltypes.Value, ksids [][]byte, ignoreMode bool) error {
-	return ln.lkp.Create(vcursor, ids, ksidsToValues(ksids), ignoreMode)
+func (ln *LookupNonUnique) Create(vcursor VCursor, rowsColValues [][]sqltypes.Value, ksids [][]byte, ignoreMode bool) error {
+	return ln.lkp.Create(vcursor, rowsColValues, ksidsToValues(ksids), ignoreMode)
 }
 
 // Delete deletes the entry from the vindex table.
-func (ln *LookupNonUnique) Delete(vcursor VCursor, ids []sqltypes.Value, ksid []byte) error {
-	return ln.lkp.Delete(vcursor, ids, sqltypes.MakeTrusted(sqltypes.VarBinary, ksid))
+func (ln *LookupNonUnique) Delete(vcursor VCursor, rowsColValues [][]sqltypes.Value, ksid []byte) error {
+	return ln.lkp.Delete(vcursor, rowsColValues, sqltypes.MakeTrusted(sqltypes.VarBinary, ksid))
 }
 
 // MarshalJSON returns a JSON representation of LookupHash.
 func (ln *LookupNonUnique) MarshalJSON() ([]byte, error) {
 	return json.Marshal(ln.lkp)
+}
+
+// NewLookup creates a LookupNonUnique vindex.
+func NewLookup(name string, m map[string]string) (Vindex, error) {
+	lookup := &LookupNonUnique{name: name}
+	lookup.lkp.Init(m)
+	return lookup, nil
 }
 
 func ksidsToValues(ksids [][]byte) []sqltypes.Value {
@@ -114,7 +114,7 @@ type LookupUnique struct {
 	lkp  lookupInternal
 }
 
-// NewLookupUnique creates a LookupHashUnique vindex.
+// NewLookupUnique creates a LookupUnique vindex.
 func NewLookupUnique(name string, m map[string]string) (Vindex, error) {
 	lu := &LookupUnique{name: name}
 	lu.lkp.Init(m)
@@ -145,7 +145,7 @@ func (lu *LookupUnique) Map(vcursor VCursor, ids []sqltypes.Value) ([][]byte, er
 		case 1:
 			out = append(out, result.Rows[0][0].ToBytes())
 		default:
-			return nil, fmt.Errorf("LookupHash.Map: unexpected multiple results from vindex %s: %v", lu.lkp.Table, ids[i])
+			return nil, fmt.Errorf("Lookup.Map: unexpected multiple results from vindex %s: %v", lu.lkp.Table, ids[i])
 		}
 	}
 	return out, nil
@@ -157,16 +157,16 @@ func (lu *LookupUnique) Verify(vcursor VCursor, ids []sqltypes.Value, ksids [][]
 }
 
 // Create reserves the id by inserting it into the vindex table.
-func (lu *LookupUnique) Create(vcursor VCursor, ids []sqltypes.Value, ksids [][]byte, ignoreMode bool) error {
-	return lu.lkp.Create(vcursor, ids, ksidsToValues(ksids), ignoreMode)
+func (lu *LookupUnique) Create(vcursor VCursor, rowsColValues [][]sqltypes.Value, ksids [][]byte, ignoreMode bool) error {
+	return lu.lkp.Create(vcursor, rowsColValues, ksidsToValues(ksids), ignoreMode)
 }
 
 // Delete deletes the entry from the vindex table.
-func (lu *LookupUnique) Delete(vcursor VCursor, ids []sqltypes.Value, ksid []byte) error {
-	return lu.lkp.Delete(vcursor, ids, sqltypes.MakeTrusted(sqltypes.VarBinary, ksid))
+func (lu *LookupUnique) Delete(vcursor VCursor, rowsColValues [][]sqltypes.Value, ksid []byte) error {
+	return lu.lkp.Delete(vcursor, rowsColValues, sqltypes.MakeTrusted(sqltypes.VarBinary, ksid))
 }
 
-// MarshalJSON returns a JSON representation of LookupHashUnique.
+// MarshalJSON returns a JSON representation of LookupUnique.
 func (lu *LookupUnique) MarshalJSON() ([]byte, error) {
 	return json.Marshal(lu.lkp)
 }

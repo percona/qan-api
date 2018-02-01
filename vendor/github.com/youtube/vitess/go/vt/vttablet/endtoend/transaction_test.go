@@ -106,7 +106,7 @@ func TestCommit(t *testing.T) {
 		tag:  "Transactions/TotalCount",
 		diff: 2,
 	}, {
-		tag:  "Transactions/Histograms/Completed/Count",
+		tag:  "Transactions/Histograms/commit/Count",
 		diff: 2,
 	}, {
 		tag:  "Queries/TotalCount",
@@ -187,7 +187,7 @@ func TestRollback(t *testing.T) {
 		tag:  "Transactions/TotalCount",
 		diff: 1,
 	}, {
-		tag:  "Transactions/Histograms/Aborted/Count",
+		tag:  "Transactions/Histograms/rollback/Count",
 		diff: 1,
 	}, {
 		tag:  "Queries/Histograms/BEGIN/Count",
@@ -269,7 +269,7 @@ func TestAutoCommit(t *testing.T) {
 		tag:  "Transactions/TotalCount",
 		diff: 2,
 	}, {
-		tag:  "Transactions/Histograms/Completed/Count",
+		tag:  "Transactions/Histograms/commit/Count",
 		diff: 2,
 	}, {
 		tag:  "Queries/TotalCount",
@@ -307,7 +307,7 @@ func TestAutoCommitOff(t *testing.T) {
 	defer framework.Server.SetAutoCommit(true)
 
 	_, err := framework.NewClient().Execute("insert into vitess_test values(4, null, null, null)", nil)
-	want := "disallowed outside transaction"
+	want := "INSERT_PK disallowed outside transaction"
 	if err == nil || !strings.HasPrefix(err.Error(), want) {
 		t.Errorf("%v, must start with %s", err, want)
 	}
@@ -395,7 +395,7 @@ func TestForUpdate(t *testing.T) {
 		client := framework.NewClient()
 		query := fmt.Sprintf("select * from vitess_test where intval=2 %s", mode)
 		_, err := client.Execute(query, nil)
-		want := "disallowed"
+		want := "SELECT_LOCK disallowed outside transaction"
 		if err == nil || !strings.HasPrefix(err.Error(), want) {
 			t.Errorf("%v, must have prefix %s", err, want)
 		}

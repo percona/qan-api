@@ -59,7 +59,8 @@ func TestExecDBA(t *testing.T) {
 	query := "select * from INFORMATION_SCHEMA.foo"
 	_, err := executor.Execute(
 		context.Background(),
-		&vtgatepb.Session{TargetString: "TestExecutor"},
+		"TestExecDBA",
+		NewSafeSession(&vtgatepb.Session{TargetString: "TestExecutor"}),
 		query,
 		map[string]*querypb.BindVariable{},
 	)
@@ -191,6 +192,8 @@ func TestUnshardedComments(t *testing.T) {
 
 func TestStreamUnsharded(t *testing.T) {
 	executor, _, _, _ := createExecutorEnv()
+	logChan := QueryLogger.Subscribe("Test")
+	defer QueryLogger.Unsubscribe(logChan)
 
 	sql := "select id from music_user_map where id = 1"
 	result, err := executorStream(executor, sql)
@@ -201,6 +204,7 @@ func TestStreamUnsharded(t *testing.T) {
 	if !result.Equal(wantResult) {
 		t.Errorf("result: %+v, want %+v", result, wantResult)
 	}
+	testQueryLog(t, logChan, "TestExecuteStream", "SELECT", sql, 1)
 }
 
 func TestStreamBuffering(t *testing.T) {
@@ -225,7 +229,8 @@ func TestStreamBuffering(t *testing.T) {
 	results := make(chan *sqltypes.Result, 10)
 	err := executor.StreamExecute(
 		context.Background(),
-		masterSession,
+		"TestStreamBuffering",
+		NewSafeSession(masterSession),
 		"select id from music_user_map where id = 1",
 		nil,
 		querypb.Target{
@@ -282,8 +287,11 @@ func TestShardFail(t *testing.T) {
 
 func TestSelectBindvars(t *testing.T) {
 	executor, sbc1, sbc2, _ := createExecutorEnv()
+	logChan := QueryLogger.Subscribe("Test")
+	defer QueryLogger.Unsubscribe(logChan)
 
-	_, err := executorExec(executor, "select id from user where id = :id", map[string]*querypb.BindVariable{
+	sql := "select id from user where id = :id"
+	_, err := executorExec(executor, sql, map[string]*querypb.BindVariable{
 		"id": sqltypes.Int64BindVariable(1),
 	})
 	if err != nil {
@@ -300,8 +308,10 @@ func TestSelectBindvars(t *testing.T) {
 		t.Errorf("sbc2.Queries: %+v, want nil\n", sbc2.Queries)
 	}
 	sbc1.Queries = nil
+	testQueryLog(t, logChan, "TestExecute", "SELECT", sql, 1)
 
-	_, err = executorExec(executor, "select id from user where name in (:name1, :name2)", map[string]*querypb.BindVariable{
+	sql = "select id from user where name in (:name1, :name2)"
+	_, err = executorExec(executor, sql, map[string]*querypb.BindVariable{
 		"name1": sqltypes.StringBindVariable("foo1"),
 		"name2": sqltypes.StringBindVariable("foo2"),
 	})
@@ -320,8 +330,12 @@ func TestSelectBindvars(t *testing.T) {
 		t.Errorf("sbc1.Queries: %+v, want %+v\n", sbc1.Queries, wantQueries)
 	}
 	sbc1.Queries = nil
+	testQueryLog(t, logChan, "VindexLookup", "SELECT", "select user_id from name_user_map where name = :name", 1)
+	testQueryLog(t, logChan, "VindexLookup", "SELECT", "select user_id from name_user_map where name = :name", 1)
+	testQueryLog(t, logChan, "TestExecute", "SELECT", sql, 1)
 
-	_, err = executorExec(executor, "select id from user where name in (:name1, :name2)", map[string]*querypb.BindVariable{
+	sql = "select id from user where name in (:name1, :name2)"
+	_, err = executorExec(executor, sql, map[string]*querypb.BindVariable{
 		"name1": sqltypes.BytesBindVariable([]byte("foo1")),
 		"name2": sqltypes.BytesBindVariable([]byte("foo2")),
 	})
@@ -339,6 +353,10 @@ func TestSelectBindvars(t *testing.T) {
 	if !reflect.DeepEqual(sbc1.Queries, wantQueries) {
 		t.Errorf("sbc1.Queries: %+v, want %+v\n", sbc1.Queries, wantQueries)
 	}
+
+	testQueryLog(t, logChan, "VindexLookup", "SELECT", "select user_id from name_user_map where name = :name", 1)
+	testQueryLog(t, logChan, "VindexLookup", "SELECT", "select user_id from name_user_map where name = :name", 1)
+	testQueryLog(t, logChan, "TestExecute", "SELECT", sql, 1)
 }
 
 func TestSelectEqual(t *testing.T) {
@@ -536,7 +554,7 @@ func TestSelectEqualNotFound(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	wantResult := &sqltypes.Result{}
+	wantResult := sandboxconn.SingleRowResult
 	if !result.Equal(wantResult) {
 		t.Errorf("result: %+v, want %+v", result, wantResult)
 	}
@@ -546,7 +564,6 @@ func TestSelectEqualNotFound(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	wantResult = &sqltypes.Result{}
 	if !result.Equal(wantResult) {
 		t.Errorf("result: %+v, want %+v", result, wantResult)
 	}
@@ -614,8 +631,8 @@ func TestSelectEqualFail(t *testing.T) {
 	s.ShardSpec = "80-"
 	_, err = executorExec(executor, "select id from user where name = 'foo'", nil)
 	want = "paramsSelectEqual: KeyspaceId 166b40b44aba4bd6 didn't match any shards"
-	if err == nil || !strings.HasPrefix(err.Error(), want) {
-		t.Errorf("executorExec: %v, want prefix %v", err, want)
+	if err == nil || !strings.Contains(err.Error(), want) {
+		t.Errorf("executorExec: %v, must contain %v", err, want)
 	}
 	s.ShardSpec = DefaultShardSpec
 }
@@ -821,7 +838,9 @@ func TestSelectScatter(t *testing.T) {
 		sbc := hc.AddTestTablet(cell, shard, 1, "TestExecutor", shard, topodatapb.TabletType_MASTER, true, 1, nil)
 		conns = append(conns, sbc)
 	}
-	executor := NewExecutor(context.Background(), serv, cell, "", resolver, false, testBufferSize)
+	executor := NewExecutor(context.Background(), serv, cell, "", resolver, false, testBufferSize, testCacheSize, false)
+	logChan := QueryLogger.Subscribe("Test")
+	defer QueryLogger.Unsubscribe(logChan)
 
 	_, err := executorExec(executor, "select id from user", nil)
 	if err != nil {
@@ -836,6 +855,7 @@ func TestSelectScatter(t *testing.T) {
 			t.Errorf("conn.Queries = %#v, want %#v", conn.Queries, wantQueries)
 		}
 	}
+	testQueryLog(t, logChan, "TestExecute", "SELECT", wantQueries[0].Sql, 8)
 }
 
 func TestStreamSelectScatter(t *testing.T) {
@@ -853,7 +873,7 @@ func TestStreamSelectScatter(t *testing.T) {
 		sbc := hc.AddTestTablet(cell, shard, 1, "TestExecutor", shard, topodatapb.TabletType_MASTER, true, 1, nil)
 		conns = append(conns, sbc)
 	}
-	executor := NewExecutor(context.Background(), serv, cell, "", resolver, false, testBufferSize)
+	executor := NewExecutor(context.Background(), serv, cell, "", resolver, false, testBufferSize, testCacheSize, false)
 
 	sql := "select id from user"
 	result, err := executorStream(executor, sql)
@@ -894,7 +914,7 @@ func TestSelectScatterFail(t *testing.T) {
 	}
 	serv := new(sandboxTopo)
 	resolver := newTestResolver(hc, serv, cell)
-	executor := NewExecutor(context.Background(), serv, cell, "", resolver, false, testBufferSize)
+	executor := NewExecutor(context.Background(), serv, cell, "", resolver, false, testBufferSize, testCacheSize, false)
 
 	_, err := executorExec(executor, "select id from user", nil)
 	want := "paramsAllShards: keyspace TestExecutor fetch error: topo error GetSrvKeyspace"
@@ -934,7 +954,7 @@ func TestSelectScatterOrderBy(t *testing.T) {
 		}})
 		conns = append(conns, sbc)
 	}
-	executor := NewExecutor(context.Background(), serv, cell, "", resolver, false, testBufferSize)
+	executor := NewExecutor(context.Background(), serv, cell, "", resolver, false, testBufferSize, testCacheSize, false)
 
 	query := "select col1, col2 from user order by col2 desc"
 	gotResult, err := executorExec(executor, query, nil)
@@ -975,6 +995,79 @@ func TestSelectScatterOrderBy(t *testing.T) {
 	}
 }
 
+// TestSelectScatterOrderByVarChar will run an ORDER BY query that will scatter out to 8 shards and return the 8 rows (one per shard) sorted.
+func TestSelectScatterOrderByVarChar(t *testing.T) {
+	// Special setup: Don't use createExecutorEnv.
+	cell := "aa"
+	hc := discovery.NewFakeHealthCheck()
+	s := createSandbox("TestExecutor")
+	s.VSchema = executorVSchema
+	getSandbox(KsTestUnsharded).VSchema = unshardedVSchema
+	serv := new(sandboxTopo)
+	resolver := newTestResolver(hc, serv, cell)
+	shards := []string{"-20", "20-40", "40-60", "60-80", "80-a0", "a0-c0", "c0-e0", "e0-"}
+	var conns []*sandboxconn.SandboxConn
+	for i, shard := range shards {
+		sbc := hc.AddTestTablet(cell, shard, 1, "TestExecutor", shard, topodatapb.TabletType_MASTER, true, 1, nil)
+		sbc.SetResults([]*sqltypes.Result{{
+			Fields: []*querypb.Field{
+				{Name: "col1", Type: sqltypes.Int32},
+				{Name: "textcol", Type: sqltypes.VarChar},
+			},
+			RowsAffected: 1,
+			InsertID:     0,
+			Rows: [][]sqltypes.Value{{
+				sqltypes.NewInt32(1),
+				// i%4 ensures that there are duplicates across shards.
+				// This will allow us to test that cross-shard ordering
+				// still works correctly.
+				sqltypes.NewVarChar(fmt.Sprintf("%d", i%4)),
+				sqltypes.NewVarBinary(fmt.Sprintf("%d", i%4)),
+			}},
+		}})
+		conns = append(conns, sbc)
+	}
+	executor := NewExecutor(context.Background(), serv, cell, "", resolver, false, testBufferSize, testCacheSize, false)
+
+	query := "select col1, textcol from user order by textcol desc"
+	gotResult, err := executorExec(executor, query, nil)
+	if err != nil {
+		t.Error(err)
+	}
+
+	wantQueries := []*querypb.BoundQuery{{
+		Sql:           "select col1, textcol, weight_string(textcol) from user order by textcol desc",
+		BindVariables: map[string]*querypb.BindVariable{},
+	}}
+	for _, conn := range conns {
+		if !reflect.DeepEqual(conn.Queries, wantQueries) {
+			t.Errorf("conn.Queries = %#v, want %#v", conn.Queries, wantQueries)
+		}
+	}
+
+	wantResult := &sqltypes.Result{
+		Fields: []*querypb.Field{
+			{Name: "col1", Type: sqltypes.Int32},
+			{Name: "textcol", Type: sqltypes.VarChar},
+		},
+		RowsAffected: 8,
+		InsertID:     0,
+	}
+	for i := 0; i < 4; i++ {
+		// There should be a duplicate for each row returned.
+		for j := 0; j < 2; j++ {
+			row := []sqltypes.Value{
+				sqltypes.NewInt32(1),
+				sqltypes.NewVarChar(fmt.Sprintf("%d", 3-i)),
+			}
+			wantResult.Rows = append(wantResult.Rows, row)
+		}
+	}
+	if !reflect.DeepEqual(gotResult, wantResult) {
+		t.Errorf("scatter order by:\n%v, want\n%v", gotResult, wantResult)
+	}
+}
+
 func TestStreamSelectScatterOrderBy(t *testing.T) {
 	// Special setup: Don't use createExecutorEnv.
 	cell := "aa"
@@ -1002,7 +1095,7 @@ func TestStreamSelectScatterOrderBy(t *testing.T) {
 		}})
 		conns = append(conns, sbc)
 	}
-	executor := NewExecutor(context.Background(), serv, cell, "", resolver, false, 10)
+	executor := NewExecutor(context.Background(), serv, cell, "", resolver, false, testBufferSize, testCacheSize, false)
 
 	query := "select id, col from user order by col desc"
 	gotResult, err := executorStream(executor, query)
@@ -1038,6 +1131,70 @@ func TestStreamSelectScatterOrderBy(t *testing.T) {
 	}
 }
 
+func TestStreamSelectScatterOrderByVarChar(t *testing.T) {
+	// Special setup: Don't use createExecutorEnv.
+	cell := "aa"
+	hc := discovery.NewFakeHealthCheck()
+	s := createSandbox("TestExecutor")
+	s.VSchema = executorVSchema
+	getSandbox(KsTestUnsharded).VSchema = unshardedVSchema
+	serv := new(sandboxTopo)
+	resolver := newTestResolver(hc, serv, cell)
+	shards := []string{"-20", "20-40", "40-60", "60-80", "80-a0", "a0-c0", "c0-e0", "e0-"}
+	var conns []*sandboxconn.SandboxConn
+	for i, shard := range shards {
+		sbc := hc.AddTestTablet(cell, shard, 1, "TestExecutor", shard, topodatapb.TabletType_MASTER, true, 1, nil)
+		sbc.SetResults([]*sqltypes.Result{{
+			Fields: []*querypb.Field{
+				{Name: "id", Type: sqltypes.Int32},
+				{Name: "textcol", Type: sqltypes.VarChar},
+			},
+			RowsAffected: 1,
+			InsertID:     0,
+			Rows: [][]sqltypes.Value{{
+				sqltypes.NewInt32(1),
+				sqltypes.NewVarChar(fmt.Sprintf("%d", i%4)),
+				sqltypes.NewVarBinary(fmt.Sprintf("%d", i%4)),
+			}},
+		}})
+		conns = append(conns, sbc)
+	}
+	executor := NewExecutor(context.Background(), serv, cell, "", resolver, false, testBufferSize, testCacheSize, false)
+
+	query := "select id, textcol from user order by textcol desc"
+	gotResult, err := executorStream(executor, query)
+	if err != nil {
+		t.Error(err)
+	}
+
+	wantQueries := []*querypb.BoundQuery{{
+		Sql:           "select id, textcol, weight_string(textcol) from user order by textcol desc",
+		BindVariables: map[string]*querypb.BindVariable{},
+	}}
+	for _, conn := range conns {
+		if !reflect.DeepEqual(conn.Queries, wantQueries) {
+			t.Errorf("conn.Queries = %#v, want %#v", conn.Queries, wantQueries)
+		}
+	}
+
+	wantResult := &sqltypes.Result{
+		Fields: []*querypb.Field{
+			{Name: "id", Type: sqltypes.Int32},
+			{Name: "textcol", Type: sqltypes.VarChar},
+		},
+	}
+	for i := 0; i < 4; i++ {
+		row := []sqltypes.Value{
+			sqltypes.NewInt32(1),
+			sqltypes.NewVarChar(fmt.Sprintf("%d", 3-i)),
+		}
+		wantResult.Rows = append(wantResult.Rows, row, row)
+	}
+	if !reflect.DeepEqual(gotResult, wantResult) {
+		t.Errorf("scatter order by:\n%v, want\n%v", gotResult, wantResult)
+	}
+}
+
 // TestSelectScatterOrderByFail will run an ORDER BY query that will scatter out to 8 shards, with
 // the order by column as VarChar, which is unsupported.
 func TestSelectScatterOrderByFail(t *testing.T) {
@@ -1065,12 +1222,12 @@ func TestSelectScatterOrderByFail(t *testing.T) {
 			}},
 		}})
 	}
-	executor := NewExecutor(context.Background(), serv, cell, "", resolver, false, testBufferSize)
+	executor := NewExecutor(context.Background(), serv, cell, "", resolver, false, testBufferSize, testCacheSize, false)
 
 	_, err := executorExec(executor, "select id, col from user order by col asc", nil)
 	want := "types are not comparable: VARCHAR vs VARCHAR"
-	if err == nil || err.Error() != want {
-		t.Errorf("scatter order by error: %v, want %s", err, want)
+	if err == nil || !strings.Contains(err.Error(), want) {
+		t.Errorf("scatter order by error: %v, must contain %s", err, want)
 	}
 }
 
@@ -1102,7 +1259,7 @@ func TestSelectScatterAggregate(t *testing.T) {
 		}})
 		conns = append(conns, sbc)
 	}
-	executor := NewExecutor(context.Background(), serv, cell, "", resolver, false, testBufferSize)
+	executor := NewExecutor(context.Background(), serv, cell, "", resolver, false, testBufferSize, testCacheSize, false)
 
 	query := "select col, sum(foo) from user group by col"
 	gotResult, err := executorExec(executor, query, nil)
@@ -1167,7 +1324,7 @@ func TestStreamSelectScatterAggregate(t *testing.T) {
 		}})
 		conns = append(conns, sbc)
 	}
-	executor := NewExecutor(context.Background(), serv, cell, "", resolver, false, 10)
+	executor := NewExecutor(context.Background(), serv, cell, "", resolver, false, testBufferSize, testCacheSize, false)
 
 	query := "select col, sum(foo) from user group by col"
 	gotResult, err := executorStream(executor, query)
@@ -1232,7 +1389,7 @@ func TestSelectScatterLimit(t *testing.T) {
 		}})
 		conns = append(conns, sbc)
 	}
-	executor := NewExecutor(context.Background(), serv, cell, "", resolver, false, 10)
+	executor := NewExecutor(context.Background(), serv, cell, "", resolver, false, testBufferSize, testCacheSize, false)
 
 	query := "select col1, col2 from user order by col2 desc limit 3"
 	gotResult, err := executorExec(executor, query, nil)
@@ -1306,7 +1463,7 @@ func TestStreamSelectScatterLimit(t *testing.T) {
 		}})
 		conns = append(conns, sbc)
 	}
-	executor := NewExecutor(context.Background(), serv, cell, "", resolver, false, 10)
+	executor := NewExecutor(context.Background(), serv, cell, "", resolver, false, testBufferSize, testCacheSize, false)
 
 	query := "select col1, col2 from user order by col2 desc limit 3"
 	gotResult, err := executorStream(executor, query)
@@ -1353,7 +1510,11 @@ func TestStreamSelectScatterLimit(t *testing.T) {
 // Could reuse code,
 func TestSimpleJoin(t *testing.T) {
 	executor, sbc1, sbc2, _ := createExecutorEnv()
-	result, err := executorExec(executor, "select u1.id, u2.id from user u1 join user u2 where u1.id = 1 and u2.id = 3", nil)
+	logChan := QueryLogger.Subscribe("Test")
+	defer QueryLogger.Unsubscribe(logChan)
+
+	sql := "select u1.id, u2.id from user u1 join user u2 where u1.id = 1 and u2.id = 3"
+	result, err := executorExec(executor, sql, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -1387,11 +1548,17 @@ func TestSimpleJoin(t *testing.T) {
 	if !result.Equal(wantResult) {
 		t.Errorf("result: %+v, want %+v", result, wantResult)
 	}
+
+	testQueryLog(t, logChan, "TestExecute", "SELECT", sql, 2)
 }
 
 func TestJoinComments(t *testing.T) {
 	executor, sbc1, sbc2, _ := createExecutorEnv()
-	_, err := executorExec(executor, "select u1.id, u2.id from user u1 join user u2 where u1.id = 1 and u2.id = 3 /* trailing */", nil)
+	logChan := QueryLogger.Subscribe("Test")
+	defer QueryLogger.Unsubscribe(logChan)
+
+	sql := "select u1.id, u2.id from user u1 join user u2 where u1.id = 1 and u2.id = 3 /* trailing */"
+	_, err := executorExec(executor, sql, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -1409,11 +1576,17 @@ func TestJoinComments(t *testing.T) {
 	if !reflect.DeepEqual(sbc2.Queries, wantQueries) {
 		t.Errorf("sbc2.Queries: %+v, want %+v\n", sbc2.Queries, wantQueries)
 	}
+
+	testQueryLog(t, logChan, "TestExecute", "SELECT", sql, 2)
 }
 
 func TestSimpleJoinStream(t *testing.T) {
 	executor, sbc1, sbc2, _ := createExecutorEnv()
-	result, err := executorStream(executor, "select u1.id, u2.id from user u1 join user u2 where u1.id = 1 and u2.id = 3")
+	logChan := QueryLogger.Subscribe("Test")
+	defer QueryLogger.Unsubscribe(logChan)
+
+	sql := "select u1.id, u2.id from user u1 join user u2 where u1.id = 1 and u2.id = 3"
+	result, err := executorStream(executor, sql)
 	if err != nil {
 		t.Error(err)
 	}
@@ -1447,10 +1620,15 @@ func TestSimpleJoinStream(t *testing.T) {
 	if !result.Equal(wantResult) {
 		t.Errorf("result: %+v, want %+v", result, wantResult)
 	}
+
+	testQueryLog(t, logChan, "TestExecuteStream", "SELECT", sql, 2)
 }
 
 func TestVarJoin(t *testing.T) {
 	executor, sbc1, sbc2, _ := createExecutorEnv()
+	logChan := QueryLogger.Subscribe("Test")
+	defer QueryLogger.Unsubscribe(logChan)
+
 	result1 := []*sqltypes.Result{{
 		Fields: []*querypb.Field{
 			{Name: "id", Type: sqltypes.Int32},
@@ -1464,7 +1642,8 @@ func TestVarJoin(t *testing.T) {
 		}},
 	}}
 	sbc1.SetResults(result1)
-	_, err := executorExec(executor, "select u1.id, u2.id from user u1 join user u2 on u2.id = u1.col where u1.id = 1", nil)
+	sql := "select u1.id, u2.id from user u1 join user u2 on u2.id = u1.col where u1.id = 1"
+	_, err := executorExec(executor, sql, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -1481,10 +1660,15 @@ func TestVarJoin(t *testing.T) {
 	if got != want {
 		t.Errorf("sbc2.Queries: %s, want %s\n", got, want)
 	}
+
+	testQueryLog(t, logChan, "TestExecute", "SELECT", sql, 2)
 }
 
 func TestVarJoinStream(t *testing.T) {
 	executor, sbc1, sbc2, _ := createExecutorEnv()
+	logChan := QueryLogger.Subscribe("Test")
+	defer QueryLogger.Unsubscribe(logChan)
+
 	result1 := []*sqltypes.Result{{
 		Fields: []*querypb.Field{
 			{Name: "id", Type: sqltypes.Int32},
@@ -1498,7 +1682,8 @@ func TestVarJoinStream(t *testing.T) {
 		}},
 	}}
 	sbc1.SetResults(result1)
-	_, err := executorStream(executor, "select u1.id, u2.id from user u1 join user u2 on u2.id = u1.col where u1.id = 1")
+	sql := "select u1.id, u2.id from user u1 join user u2 on u2.id = u1.col where u1.id = 1"
+	_, err := executorStream(executor, sql)
 	if err != nil {
 		t.Error(err)
 	}
@@ -1519,10 +1704,14 @@ func TestVarJoinStream(t *testing.T) {
 	if got != want {
 		t.Errorf("sbc2.Queries: %s, want %s\n", got, want)
 	}
+
+	testQueryLog(t, logChan, "TestExecuteStream", "SELECT", sql, 2)
 }
 
 func TestLeftJoin(t *testing.T) {
 	executor, sbc1, sbc2, _ := createExecutorEnv()
+	logChan := QueryLogger.Subscribe("Test")
+	defer QueryLogger.Unsubscribe(logChan)
 	result1 := []*sqltypes.Result{{
 		Fields: []*querypb.Field{
 			{Name: "id", Type: sqltypes.Int32},
@@ -1542,7 +1731,8 @@ func TestLeftJoin(t *testing.T) {
 	}}
 	sbc1.SetResults(result1)
 	sbc2.SetResults(emptyResult)
-	result, err := executorExec(executor, "select u1.id, u2.id from user u1 left join user u2 on u2.id = u1.col where u1.id = 1", nil)
+	sql := "select u1.id, u2.id from user u1 left join user u2 on u2.id = u1.col where u1.id = 1"
+	result, err := executorExec(executor, sql, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -1562,6 +1752,9 @@ func TestLeftJoin(t *testing.T) {
 	if !result.Equal(wantResult) {
 		t.Errorf("result: %+v, want %+v", result, wantResult)
 	}
+
+	testQueryLog(t, logChan, "TestExecute", "SELECT", sql, 2)
+
 }
 
 func TestLeftJoinStream(t *testing.T) {

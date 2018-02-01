@@ -120,9 +120,9 @@ func newV3ResolverFromTableDefinition(keyspaceSchema *vindexes.KeyspaceSchema, t
 	}
 
 	// Find the sharding key column index.
-	columnIndex, ok := tmutils.TableDefinitionGetColumn(td, colVindex.Column.String())
+	columnIndex, ok := tmutils.TableDefinitionGetColumn(td, colVindex.Columns[0].String())
 	if !ok {
-		return nil, fmt.Errorf("table %v has a Vindex on unknown column %v", td.Name, colVindex.Column)
+		return nil, fmt.Errorf("table %v has a Vindex on unknown column %v", td.Name, colVindex.Columns[0])
 	}
 
 	return &v3Resolver{
@@ -154,13 +154,13 @@ func newV3ResolverFromColumnList(keyspaceSchema *vindexes.KeyspaceSchema, name s
 	// Find the sharding key column index.
 	columnIndex := -1
 	for i, n := range columns {
-		if colVindex.Column.EqualString(n) {
+		if colVindex.Columns[0].EqualString(n) {
 			columnIndex = i
 			break
 		}
 	}
 	if columnIndex == -1 {
-		return nil, fmt.Errorf("table %v has a Vindex on unknown column %v", name, colVindex.Column)
+		return nil, fmt.Errorf("table %v has a Vindex on unknown column %v", name, colVindex.Columns[0])
 	}
 
 	return &v3Resolver{
@@ -178,7 +178,10 @@ func (r *v3Resolver) keyspaceID(row []sqltypes.Value) ([]byte, error) {
 		return nil, err
 	}
 	if len(ksids) != 1 {
-		return nil, fmt.Errorf("maping row to keyspace id returned an invalid array of keyspace ids: %v", ksids)
+		return nil, fmt.Errorf("mapping row to keyspace id returned an invalid array of keyspace ids: %v", ksids)
+	}
+	if ksids[0] == nil {
+		return nil, fmt.Errorf("could not map %v to a keyspace id", v)
 	}
 	return ksids[0], nil
 }

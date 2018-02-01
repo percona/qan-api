@@ -31,10 +31,13 @@ import (
 	"github.com/youtube/vitess/go/vt/vtgate/vtgateconn"
 	"github.com/youtube/vitess/go/vt/vttablet/tabletserver/connpool"
 	"github.com/youtube/vitess/go/vt/vttablet/tabletserver/tabletenv"
+	"github.com/youtube/vitess/go/vt/vttablet/tabletserver/txlimiter"
 )
 
 // TxEngine handles transactions.
 type TxEngine struct {
+	dbconfigs dbconfigs.DBConfigs
+
 	isOpen, twopcEnabled bool
 	shutdownGracePeriod  time.Duration
 	coordinatorAddress   string
@@ -51,6 +54,16 @@ func NewTxEngine(checker connpool.MySQLChecker, config tabletenv.TabletConfig) *
 	te := &TxEngine{
 		shutdownGracePeriod: time.Duration(config.TxShutDownGracePeriod * 1e9),
 	}
+	limiter := txlimiter.New(
+		config.TransactionCap,
+		config.TransactionLimitPerUser,
+		config.EnableTransactionLimit,
+		config.EnableTransactionLimitDryRun,
+		config.TransactionLimitByUsername,
+		config.TransactionLimitByPrincipal,
+		config.TransactionLimitByComponent,
+		config.TransactionLimitBySubcomponent,
+	)
 	te.txPool = NewTxPool(
 		config.PoolNamePrefix,
 		config.TransactionCap,
@@ -58,6 +71,7 @@ func NewTxEngine(checker connpool.MySQLChecker, config tabletenv.TabletConfig) *
 		time.Duration(config.TransactionTimeout*1e9),
 		time.Duration(config.IdleTimeout*1e9),
 		checker,
+		limiter,
 	)
 	te.twopcEnabled = config.TwoPCEnable
 	if te.twopcEnabled {
@@ -90,28 +104,33 @@ func NewTxEngine(checker connpool.MySQLChecker, config tabletenv.TabletConfig) *
 	return te
 }
 
+// InitDBConfig must be called before Init.
+func (te *TxEngine) InitDBConfig(dbcfgs dbconfigs.DBConfigs) {
+	te.dbconfigs = dbcfgs
+}
+
 // Init must be called once when vttablet starts for setting
 // up the metadata tables.
-func (te *TxEngine) Init(dbconfigs dbconfigs.DBConfigs) error {
+func (te *TxEngine) Init() error {
 	if te.twopcEnabled {
-		return te.twoPC.Init(dbconfigs.SidecarDBName, &dbconfigs.Dba)
+		return te.twoPC.Init(te.dbconfigs.SidecarDBName, &te.dbconfigs.Dba)
 	}
 	return nil
 }
 
 // Open opens the TxEngine. If 2pc is enabled, it restores
 // all previously prepared transactions from the redo log.
-func (te *TxEngine) Open(dbconfigs dbconfigs.DBConfigs) {
+func (te *TxEngine) Open() {
 	if te.isOpen {
 		return
 	}
-	te.txPool.Open(&dbconfigs.App, &dbconfigs.Dba, &dbconfigs.AppDebug)
+	te.txPool.Open(&te.dbconfigs.App, &te.dbconfigs.Dba, &te.dbconfigs.AppDebug)
 	if !te.twopcEnabled {
 		te.isOpen = true
 		return
 	}
 
-	te.twoPC.Open(dbconfigs)
+	te.twoPC.Open(te.dbconfigs)
 	if err := te.prepareFromRedo(); err != nil {
 		// If this operation fails, we choose to raise an alert and
 		// continue anyway. Serving traffic is considered more important
@@ -284,7 +303,7 @@ func (te *TxEngine) startWatchdog() {
 			return
 		}
 
-		coordConn, err := vtgateconn.Dial(ctx, te.coordinatorAddress, te.abandonAge/4)
+		coordConn, err := vtgateconn.Dial(ctx, te.coordinatorAddress)
 		if err != nil {
 			tabletenv.InternalErrors.Add("WatchdogFail", 1)
 			log.Errorf("Error connecting to coordinator '%v': %v", te.coordinatorAddress, err)

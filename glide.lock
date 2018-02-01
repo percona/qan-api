@@ -1,5 +1,5 @@
-hash: 1be486b25f20a515747fb6b3592bb5cb57d335b76fbc91f2bb48a70722f61e8a
-updated: 2018-01-04T14:06:25.232929011-03:00
+hash: b037e40a92c001b86ad79a533972e89eac8ddfc3465980aa6ded4397acaf20ec
+updated: 2018-02-01T16:24:56.086551329-03:00
 imports:
 - name: github.com/agtorre/gocolorize
   version: 99fea4bc9517f07eea8194702cb7076f4845b7de
@@ -71,15 +71,11 @@ imports:
 - name: github.com/robfig/pathtree
   version: 41257a1839e945fce74afd070e02bab2ea2c776a
 - name: github.com/youtube/vitess
-  version: 9b42ea02086d8061f2fd49df6a00670689485fc7
+  version: 98f9189aa016e2a3afafa9ff42cde55bde421d3c
   subpackages:
   - go/bytes2
-  - go/event
   - go/hack
   - go/sqltypes
-  - go/tb
-  - go/vt/logutil
-  - go/vt/proto/logutil
   - go/vt/proto/query
   - go/vt/proto/topodata
   - go/vt/proto/vtgate

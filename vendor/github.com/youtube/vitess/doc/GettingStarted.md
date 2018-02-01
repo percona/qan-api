@@ -73,7 +73,7 @@ OS X 10.11 (El Capitan) should work as well, the installation instructions are b
 
 In addition, Vitess requires the software and libraries listed below.
 
-1.  [Install Go 1.8+](http://golang.org/doc/install).
+1.  [Install Go 1.9+](http://golang.org/doc/install).
 
 2.  Install [MariaDB 10.0](https://downloads.mariadb.org/) or
     [MySQL 5.6](http://dev.mysql.com/downloads/mysql). You can use any
@@ -96,17 +96,36 @@ In addition, Vitess requires the software and libraries listed below.
     ```
 	[mysqld]
 	sql_mode=NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES
-	```
+    ```
 
-3.  Select a lock service from the options listed below. It is technically
+3.  Uninstall or disable `AppArmor`. Some versions of MySQL come with default
+    AppArmor configurations that the Vitess tools don't recognize yet. This causes
+    various permission failures when Vitess initializes MySQL instances through
+    the `mysqlctl` tool. This is only an issue for a test environment. If AppArmor
+    is necessary in production, you can configure the MySQL instances appropriately
+    without going through mysqlctl.
+
+    ``` sh
+    $ sudo service apparmor stop
+    $ sudo service apparmor teardown
+    $ sudo update-rc.d -f apparmor remove
+    ```
+
+    Reboot, just to be sure that `AppArmor` is fully disabled.
+
+
+4.  Select a lock service from the options listed below. It is technically
     possible to use another lock server, but plugins currently exist only
-    for ZooKeeper and etcd.
-    - ZooKeeper 3.3.5 is included by default. 
+    for ZooKeeper, etcd and consul.
+    - ZooKeeper 3.4.10 is included by default. 
     - [Install etcd v3.0+](https://github.com/coreos/etcd/releases).
       If you use etcd, remember to include the `etcd` command
       on your path.
+    - [Install Consul](https://www.consul.io/).
+      If you use consul, remember to include the `consul` command
+      on your path.
 
-4.  Install the following other tools needed to build and run Vitess:
+5.  Install the following other tools needed to build and run Vitess:
     - make
     - automake
     - libtool
@@ -127,7 +146,7 @@ In addition, Vitess requires the software and libraries listed below.
     $ sudo apt-get install make automake libtool python-dev python-virtualenv python-mysqldb libssl-dev g++ git pkg-config bison curl unzip
     ```
 
-5.  If you decided to use ZooKeeper in step 3, you also need to install a
+6.  If you decided to use ZooKeeper in step 3, you also need to install a
     Java Runtime, such as OpenJDK.
 
     ``` sh
@@ -280,7 +299,13 @@ In addition, Vitess requires the software and libraries listed below.
 **Note:** If you are using etcd, set the following environment variable:
 
 ``` sh
-export VT_TEST_FLAGS='--topo-server-flavor=etcd'
+export VT_TEST_FLAGS='--topo-server-flavor=etcd2'
+```
+
+**Note:** If you are using consul, set the following environment variable:
+
+``` sh
+export VT_TEST_FLAGS='--topo-server-flavor=consul
 ```
 
 The default targets when running `make test` contain a full set of
@@ -288,6 +313,12 @@ tests intended to help Vitess developers to verify code changes. Those tests
 simulate a small Vitess cluster by launching many servers on the local
 machine. To do so, they require a lot of resources; a minimum of 8GB RAM
 and SSD is recommended to run the tests.
+
+Some tests require extra packages. For example, on Ubuntu:
+
+``` sh
+$ sudo apt-get install chromium-browser mvn xvfb
+```
 
 If you want only to check that Vitess is working in your environment,
 you can run a lighter set of tests:

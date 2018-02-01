@@ -33,6 +33,7 @@ import (
 	"net/url"
 	"os"
 	"runtime"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -83,7 +84,7 @@ func Init() {
 	// Once you run as root, you pretty much destroy the chances of a
 	// non-privileged user starting the program correctly.
 	if uid := os.Getuid(); uid == 0 {
-		log.Fatalf("servenv.Init: running this as root makes no sense")
+		log.Exitf("servenv.Init: running this as root makes no sense")
 	}
 
 	runtime.MemProfileRate = *memProfileRate
@@ -108,7 +109,7 @@ func populateListeningURL() {
 	if err != nil {
 		host, err = os.Hostname()
 		if err != nil {
-			log.Fatalf("os.Hostname() failed: %v", err)
+			log.Exitf("os.Hostname() failed: %v", err)
 		}
 	}
 	ListeningURL = url.URL{
@@ -192,4 +193,38 @@ func RegisterDefaultFlags() {
 // RunDefault calls Run() with the parameters from the flags.
 func RunDefault() {
 	Run(*Port)
+}
+
+// ParseFlags initializes flags and handles the common case when no positional
+// arguments are expected.
+func ParseFlags(cmd string) {
+	flag.Parse()
+
+	if *Version {
+		AppVersion.Print()
+		os.Exit(0)
+	}
+
+	args := flag.Args()
+	if len(args) > 0 {
+		flag.Usage()
+		log.Exitf("%s doesn't take any positional arguments, got '%s'", cmd, strings.Join(args, " "))
+	}
+}
+
+// ParseFlagsWithArgs initializes flags and returns the positional arguments
+func ParseFlagsWithArgs(cmd string) []string {
+	flag.Parse()
+
+	if *Version {
+		AppVersion.Print()
+		os.Exit(0)
+	}
+
+	args := flag.Args()
+	if len(args) == 0 {
+		log.Exitf("%s expected at least one positional argument", cmd)
+	}
+
+	return args
 }

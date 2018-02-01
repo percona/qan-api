@@ -19,7 +19,7 @@
 				}
 			},
 			"name_user_map": {
-				"type": "lookup_hash",
+				"type": "lookup_hash_unique",
 				"owner": "user",
 				"params": {
 					"table": "name_user_map",
@@ -59,7 +59,23 @@
 					}
 				]
 			},
+			"music_extra": {
+				"column_vindexes": [
+					{
+						"column": "id",
+						"name": "hash"
+					}
+				]
+			},
 			"name_user_map": {
+				"column_vindexes": [
+					{
+						"column": "name",
+						"name": "md5"
+					}
+				]
+			},
+			"name_info": {
 				"column_vindexes": [
 					{
 						"column": "name",
