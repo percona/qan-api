@@ -18,9 +18,10 @@
 package mock
 
 import (
-	"golang.org/x/net/websocket"
 	"log"
 	"net/http"
+
+	"golang.org/x/net/websocket"
 )
 
 type WebsocketClient struct {

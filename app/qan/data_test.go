@@ -32,9 +32,9 @@ import (
 	"github.com/percona/qan-api/config"
 	"github.com/percona/qan-api/service/query"
 	"github.com/percona/qan-api/stats"
+	"github.com/percona/qan-api/test"
 	"github.com/percona/qan-api/test/mock"
 	testDb "github.com/percona/qan-api/tests/setup/db"
-	"github.com/stretchr/testify/assert"
 	. "gopkg.in/check.v1"
 )
 
@@ -128,7 +128,7 @@ func (s *DataTestSuite) TestSaveData(t *C) {
 	err = <-errChan
 	t.Check(err, Equals, io.EOF)
 
-	expected := s.testDb.TableExpected(config.ApiRootDir + "/test/qan/002/qcm.tab")
-	got := s.testDb.TableGot("query_class_metrics", "query_class_id,instance_id")
-	assert.Equal(t, expected, got)
+	if diff := test.TableDiff(s.testDb.DB(), "query_class_metrics", "query_class_id,instance_id", config.TestDir+"/qan/002/qcm.tab"); diff != "" {
+		t.Error(diff)
+	}
 }
