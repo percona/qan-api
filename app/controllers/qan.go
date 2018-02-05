@@ -75,7 +75,7 @@ func (c QAN) Profile(uuid string) revel.Result {
 		return c.Error(err, "qh.Profile")
 	}
 
-	return c.RenderJson(profile)
+	return c.RenderJSON(profile)
 }
 
 func (c QAN) QueryReport(uuid, queryId string) revel.Result {
@@ -129,7 +129,7 @@ func (c QAN) QueryReport(uuid, queryId string) revel.Result {
 	report.Metrics2 = metrics2
 	report.Sparks2 = sparks2
 
-	return c.RenderJson(report)
+	return c.RenderJSON(report)
 }
 
 func (c QAN) ServerSummary(uuid string) revel.Result {
@@ -158,7 +158,7 @@ func (c QAN) ServerSummary(uuid string) revel.Result {
 	summary.Metrics2 = metrics2
 	summary.Sparks2 = sparks2
 
-	return c.RenderJson(summary)
+	return c.RenderJSON(summary)
 }
 
 func (c QAN) Config(uuid string) revel.Result {
@@ -175,5 +175,5 @@ func (c QAN) Config(uuid string) revel.Result {
 	if len(configs) > 1 {
 		return c.Error(fmt.Errorf("got %d QAN configs, expected 1", len(configs)), "QAN.Config")
 	}
-	return c.RenderJson(configs[0])
+	return c.RenderJSON(configs[0])
 }

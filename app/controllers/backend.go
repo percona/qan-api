@@ -53,19 +53,19 @@ func (c BackEnd) Error(err error, op string) revel.Result {
 			Error: op,
 		}
 		c.Response.Status = http.StatusNonAuthoritativeInfo // 203
-		return c.RenderJson(res)
+		return c.RenderJSON(res)
 	case shared.ErrAgentNotConnected:
 		res := proto.Error{
 			Error: shared.ErrAgentNotConnected.Error(),
 		}
 		c.Response.Status = http.StatusNotFound // 404
-		return c.RenderJson(res)
+		return c.RenderJSON(res)
 	case shared.ErrReadOnlyDb:
 		res := proto.Error{
 			Error: "database is in read-only mode",
 		}
 		c.Response.Status = http.StatusServiceUnavailable // 503
-		return c.RenderJson(res)
+		return c.RenderJSON(res)
 
 	// //////////////////////////////////////////////////////////////////////
 	// 500 error, something blew up
@@ -77,7 +77,7 @@ func (c BackEnd) Error(err error, op string) revel.Result {
 			Error: errMsg,
 		}
 		c.Response.Status = http.StatusInternalServerError
-		return c.RenderJson(res)
+		return c.RenderJSON(res)
 	}
 	return nil
 }
@@ -90,7 +90,7 @@ func (c BackEnd) BadRequest(err error, msg string) revel.Result {
 		Error: msg,
 	}
 	c.Response.Status = http.StatusBadRequest // 400
-	return c.RenderJson(res)
+	return c.RenderJSON(res)
 }
 
 type NoContent struct {

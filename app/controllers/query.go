@@ -50,7 +50,7 @@ func (c *Query) Get(id string) revel.Result {
 	if !ok {
 		return c.Error(shared.ErrNotFound, "")
 	}
-	return c.RenderJson(query)
+	return c.RenderJSON(query)
 }
 
 // GET /queries/:id/tables
@@ -68,7 +68,7 @@ func (c *Query) GetTables(id string) revel.Result {
 		return c.Error(err, "Query.GetTables: queryHandler.Tables")
 	}
 
-	return c.RenderJson(tables)
+	return c.RenderJSON(tables)
 }
 
 // PUT /queries/:id/tables
@@ -136,7 +136,7 @@ func (c *Query) GetExamples(id string) revel.Result {
 		return c.Error(err, "Query.GetExamples: queryHandler.Examples")
 	}
 
-	return c.RenderJson(examples)
+	return c.RenderJSON(examples)
 }
 
 // PUT /queries/:id/example

@@ -9,6 +9,8 @@ In |qan.intro|, you can monitor |mongodb| metrics and |mongodb| queries with the
 accordingly. Run the |pmm-admin.add| command to use these monitoring services
 (for more information, see :ref:`pmm-admin.add`).
 
+.. _pmm/qan/mongodb/conf/essential-permission.setting-up:
+
 Setting Up the Essential Permissions
 ================================================================================
 
@@ -23,6 +25,21 @@ The following example that you can run in the |mongodb| shell, adds the
 .. include:: .res/code/js.org
    :start-after: +db.get-sibling-db.create-user+
    :end-before: #+end-block
+
+Then, you need to pass the user name and password in the value of the
+|opt.uri| option when adding the |opt.mongodb-metrics| monitoring
+service in the |pmm-admin.add| command:
+
+|tip.run-this.root|.
+
+.. include:: .res/code/sh.org
+   :start-after: +pmm-admin.add.mongodb-metrics.uri+
+   :end-before: #+end-block
+
+.. seealso::
+
+   Adding a |opt.mongodb-metrics| monitoring service
+      :ref:`pmm-admin.add.mongodb-metrics`
 
 Enabling Profiling
 ================================================================================
@@ -59,10 +76,16 @@ operations. The |opt.slowms| option sets the minimum time for a slow
 operation. In the given example, any operation which takes longer than **200**
 milliseconds is a slow operation.
 
-The |opt.rate-limit| option refers to the number of queries that the |mongodb|
-profiler collects. The lower the rate limit, the less impact on the
-performance. However, the accuracy of the collected information decreases as
-well.
+The |opt.rate-limit| option, which is available if you use
+|psmdb.name| instead of |mongodb|, refers to the number of queries
+that the |mongodb| profiler collects. The lower the rate limit, the
+less impact on the performance. However, the accuracy of the collected
+information decreases as well.
+
+.. seealso::
+
+   |opt.rate-limit| in |psmdb.name| documentation
+       https://www.percona.com/doc/percona-server-for-mongodb/LATEST/rate-limit.html
 
 Enabling Profiling in the Configuration File
 --------------------------------------------------------------------------------
