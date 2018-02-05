@@ -95,7 +95,7 @@ func (c Agent) SendCmd(uuid string) revel.Result {
 		}
 	}
 
-	return c.RenderJson(reply)
+	return c.RenderJSON(reply)
 }
 
 func (c *Agent) writeResponseFile(filename string, data []byte) error {
@@ -155,7 +155,7 @@ func (c Agent) Status(uuid string) revel.Result {
 		}
 	}
 
-	return c.RenderJson(status)
+	return c.RenderJSON(status)
 }
 
 // GET /agents/:uuid/logs
@@ -202,5 +202,5 @@ func (c Agent) GetLog(uuid string) revel.Result {
 		return c.Error(err, "logHandler.GetLog")
 	}
 
-	return c.RenderJson(logs)
+	return c.RenderJSON(logs)
 }

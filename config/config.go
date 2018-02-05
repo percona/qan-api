@@ -27,7 +27,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/robfig/config"
+	"github.com/revel/config"
 )
 
 var gConfig *config.Config
@@ -42,7 +42,7 @@ var portSuffix *regexp.Regexp = regexp.MustCompile(`:\d+$`)
 func init() {
 	configFile := os.Getenv("PERCONA_DATASTORE_CONF")
 	if configFile == "" {
-		configFile = "dev.conf"
+		configFile = "test.conf"
 	}
 	var err error
 	gConfig, err = loadConfig(configFile)

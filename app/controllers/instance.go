@@ -54,13 +54,13 @@ func (c *Instance) List() revel.Result {
 		if in == nil {
 			return c.Error(shared.ErrNotFound, "Instance.List: ih.GetByName")
 		}
-		return c.RenderJson(in)
+		return c.RenderJSON(in)
 	} else {
 		instances, err := instanceHandler.GetAll()
 		if err != nil {
 			return c.Error(err, "Instance.List: ih.GetAll")
 		}
-		return c.RenderJson(instances)
+		return c.RenderJSON(instances)
 	}
 }
 
@@ -120,7 +120,7 @@ func (c *Instance) Get(uuid string) revel.Result {
 	if err != nil {
 		return c.Error(err, "Instance.Get: ih.Get")
 	}
-	return c.RenderJson(instance)
+	return c.RenderJSON(instance)
 }
 
 // PUT /instances/:uuid

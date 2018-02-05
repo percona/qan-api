@@ -34,7 +34,7 @@ func (c Home) Links() revel.Result {
 			"instances": httpBase + "/instances",
 		},
 	}
-	return c.RenderJson(links)
+	return c.RenderJSON(links)
 }
 
 func (c Home) Ping() revel.Result {

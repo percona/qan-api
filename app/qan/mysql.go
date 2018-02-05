@@ -96,17 +96,6 @@ func (h *MySQLMetricWriter) Write(report qp.Report) error {
 	// Default last_seen if no example query ts.
 	reportStartTs := report.StartTs.Format(shared.MYSQL_DATETIME_LAYOUT)
 
-	// Metrics from slow log vs. from Performance Schema differ. For example,
-	// from slow log we get all Lock_time stats: sum, min, max, avg, p95, med.
-	// Perf Schema only has Log_time_sum. In this case, we want to store NULL
-	// for the other stats, not zero. We can't detect this from input because
-	// Go will default those stats to zero because event.TimeStats.Min is float
-	// not interface.
-	fromSlowLog := true
-	if report.SlowLogFile == "" {
-		fromSlowLog = false // from perf schema
-	}
-
 	// Internal metrics
 	h.stats.SetComponent("db")
 	t := time.Now()
@@ -163,7 +152,7 @@ func (h *MySQLMetricWriter) Write(report qp.Report) error {
 			}
 		}
 
-		vals := h.getMetricValues(class.Metrics, fromSlowLog)
+		vals := h.getMetricValues(class.Metrics)
 		classVals := []interface{}{
 			id,
 			instanceId,
@@ -203,7 +192,7 @@ func (h *MySQLMetricWriter) Write(report qp.Report) error {
 	// the global metrics. This makes QAN show data for the time range but no
 	// queries.
 
-	vals := h.getMetricValues(report.Global.Metrics, fromSlowLog)
+	vals := h.getMetricValues(report.Global.Metrics)
 
 	// Use NULL for Percona Server rate limit values unless set.
 	var (
@@ -223,7 +212,7 @@ func (h *MySQLMetricWriter) Write(report qp.Report) error {
 		endOffset       interface{} = nil
 		stopOffset      interface{} = nil
 	)
-	if fromSlowLog {
+	if report.SlowLogFile != "" {
 		slowLogFile = report.SlowLogFile
 		slowLogFileSize = report.SlowLogFileSize
 		startOffset = report.StartOffset
@@ -372,16 +361,12 @@ func (h *MySQLMetricWriter) updateQueryExample(instanceId uint, class *event.Cla
 	return mysql.Error(err, "updateQueryExample INSERT query_examples")
 }
 
-func (h *MySQLMetricWriter) getMetricValues(e *event.Metrics, fromSlowLog bool) []interface{} {
+func (h *MySQLMetricWriter) getMetricValues(e *event.Metrics) []interface{} {
 	t := time.Now()
 	defer func() {
 		h.stats.TimingDuration(h.stats.System("get-metric-values"), time.Now().Sub(t), h.stats.SampleRate)
 	}()
 
-	// The "if fromSlowLog" conditionals here prevent storing zero because
-	// metrics from Perf Schema don't have most stats, usually just _sum.
-	// Since zero is a valid value (e.g. Rows_examined_min=0) we need to
-	// clearly distinguish between real zero values and vals not reported.
 	vals := make([]interface{}, len(metricColumns))
 	i := 0
 	for _, m := range metrics.Query {
@@ -409,25 +394,15 @@ func (h *MySQLMetricWriter) getMetricValues(e *event.Metrics, fromSlowLog bool) 
 					case "sum":
 						val = stats.Sum
 					case "min":
-						if fromSlowLog || m.Name == "Query_time" {
-							val = stats.Min
-						}
+						val = stats.Min
 					case "max":
-						if fromSlowLog || m.Name == "Query_time" {
-							val = stats.Max
-						}
+						val = stats.Max
 					case "avg":
-						if fromSlowLog || m.Name == "Query_time" {
-							val = stats.Avg
-						}
+						val = stats.Avg
 					case "p95":
-						if fromSlowLog {
-							val = stats.P95
-						}
+						val = stats.P95
 					case "med":
-						if fromSlowLog {
-							val = stats.Med
-						}
+						val = stats.Med
 					default:
 						log.Printf("ERROR: unknown stat: %s %s\n", m.Name, stat)
 					}
@@ -450,25 +425,15 @@ func (h *MySQLMetricWriter) getMetricValues(e *event.Metrics, fromSlowLog bool) 
 				case "sum":
 					val = stats.Sum
 				case "min":
-					if fromSlowLog || m.Name == "Query_time" {
-						val = stats.Min
-					}
+					val = stats.Min
 				case "max":
-					if fromSlowLog || m.Name == "Query_time" {
-						val = stats.Max
-					}
+					val = stats.Max
 				case "avg":
-					if fromSlowLog || m.Name == "Query_time" {
-						val = stats.Avg
-					}
+					val = stats.Avg
 				case "p95":
-					if fromSlowLog {
-						val = stats.P95
-					}
+					val = stats.P95
 				case "med":
-					if fromSlowLog {
-						val = stats.Med
-					}
+					val = stats.Med
 				default:
 					log.Printf("ERROR: unknown stat: %s %s\n", m.Name, stat)
 				}

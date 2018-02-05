@@ -48,7 +48,7 @@ func (s *QueryTestSuite) SetUpSuite(t *C) {
 	dsn := config.Get("mysql.dsn")
 	s.testDb = testDb.NewDb(dsn, config.SchemaDir, config.TestDir)
 	if err := s.testDb.Start(); err != nil {
-		t.Fatalf("Could not prepare org db: %s", err)
+		t.Fatalf("Could not prepare org db for %s: %s", dsn, err)
 	}
 
 	nullStats := stats.NewStats(&statsd.NoopClient{}, "test", "localhost", "mm", "1.0")
