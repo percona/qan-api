@@ -42,9 +42,16 @@ import (
 	"github.com/revel/revel"
 )
 
-// Do not set this var. It's set by scripts/build. The official version is set
-// in conf/app.conf.
-var APP_VERSION = ""
+// Do not set this var.
+// It's set from linker flags set by revel/cmd:
+//   https://github.com/revel/cmd/blob/97ec1422620f1a83cd13738708a109fe092364ca/harness/build.go#L132
+// The value for this variable is taken from os environment variable `APP_VERSION`:
+//   https://github.com/revel/cmd/blob/97ec1422620f1a83cd13738708a109fe092364ca/harness/build.go#L212
+// The value of `APP_VERSION` environment variable is set during package build:
+//   https://github.com/percona/pmm-server-packaging/blob/611b8a2e372c9a399cedf2371157e78c3efa7bc8/rhel/SPECS/percona-qan-api.spec#L50
+// The variable is used to create `X-Percona-QAN-API-Version` header, and it's important for pmm-client:
+//   https://github.com/percona/pmm-client/blob/9420a44412f82d2e05f1e263492ca9a23345a55f/pmm/check_network.go#L43
+var AppVersion = ""
 
 func init() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
@@ -144,7 +151,7 @@ func beforeController(c *revel.Controller) revel.Result {
 	}
 
 	if c.Action == "Home.Ping" {
-		c.Response.Out.Header().Set("X-Percona-QAN-API-Version", APP_VERSION)
+		c.Response.Out.Header().Set("X-Percona-QAN-API-Version", AppVersion)
 	}
 
 	// Create a MySQL db manager for the controller because most need it, but
