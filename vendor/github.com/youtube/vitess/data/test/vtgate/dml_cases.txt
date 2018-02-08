@@ -76,6 +76,20 @@
   }
 }
 
+# update with join subquery
+"update unsharded as foo left join (select id from unsharded where col is not null order by col desc limit 10) as keepers on foo.id = keepers.id set col1 = 'asdf' where keepers.id is null and foo.col is not null and foo.col < 1000"
+{
+  "Original": "update unsharded as foo left join (select id from unsharded where col is not null order by col desc limit 10) as keepers on foo.id = keepers.id set col1 = 'asdf' where keepers.id is null and foo.col is not null and foo.col \u003c 1000",
+  "Instructions": {
+    "Opcode": "UpdateUnsharded",
+    "Keyspace": {
+      "Name": "main",
+      "Sharded": false
+    },
+    "Query": "update unsharded as foo left join (select id from unsharded where col is not null order by col desc limit 10) as keepers on foo.id = keepers.id set col1 = 'asdf' where keepers.id is null and foo.col is not null and foo.col \u003c 1000"
+  }
+}
+
 # delete unsharded
 "delete from unsharded"
 {
@@ -104,6 +118,130 @@
     "Vindex": "user_index",
     "Values": [1],
     "Table": "user"
+  }
+}
+
+
+# update by primary keyspace id with alias
+"update user as user_alias set val = 1 where user_alias.id = 1"
+{
+  "Original": "update user as user_alias set val = 1 where user_alias.id = 1",
+  "Instructions": {
+    "Opcode": "UpdateEqual",
+    "Keyspace": {
+      "Name": "user",
+      "Sharded": true
+    },
+    "Query": "update user as user_alias set val = 1 where user_alias.id = 1",
+    "Vindex": "user_index",
+    "Values": [1],
+    "Table": "user"
+  }
+}
+
+# update by primary keyspace id with parenthesized expression
+"update user set val = 1 where (id = 1)"
+{
+  "Original": "update user set val = 1 where (id = 1)",
+  "Instructions": {
+    "Opcode": "UpdateEqual",
+    "Keyspace": {
+      "Name": "user",
+      "Sharded": true
+    },
+    "Query": "update user set val = 1 where (id = 1)",
+    "Vindex": "user_index",
+    "Values": [
+      1
+    ],
+    "Table": "user"
+  }
+}
+
+# update by primary keyspace id with multi-part where clause with parens
+"update user set val = 1 where (name = 'foo' and id = 1)"
+{
+  "Original": "update user set val = 1 where (name = 'foo' and id = 1)",
+  "Instructions": {
+    "Opcode": "UpdateEqual",
+    "Keyspace": {
+      "Name": "user",
+      "Sharded": true
+    },
+    "Query": "update user set val = 1 where (name = 'foo' and id = 1)",
+    "Vindex": "user_index",
+    "Values": [1],
+    "Table": "user"
+  }
+}
+
+# update with unsupported multi-shard where clause with parens
+"update user set val = 1 where (name = 'foo' or id = 1)"
+"unsupported: multi-shard where clause in DML"
+
+# update by primary keyspace id, changing one vindex column
+"update user_metadata set email = 'juan@vitess.io' where user_id = 1"
+{
+  "Original": "update user_metadata set email = 'juan@vitess.io' where user_id = 1",
+  "Instructions": {
+    "Opcode": "UpdateEqual",
+    "Keyspace": {
+      "Name": "user",
+      "Sharded": true
+    },
+    "Query": "update user_metadata set email = 'juan@vitess.io' where user_id = 1",
+    "Vindex": "user_index",
+    "Values": [1],
+    "ChangedVindexValues": {
+      "email_user_map": ["juan@vitess.io"]
+    },
+    "Table": "user_metadata",
+    "Subquery": "select email, address from user_metadata where user_id = 1 for update"
+  }
+}
+
+# update by primary keyspace id, changing multiple vindex columns
+"update user_metadata set email = 'juan@vitess.io', address = '155 5th street' where user_id = 1"
+{
+  "Original": "update user_metadata set email = 'juan@vitess.io', address = '155 5th street' where user_id = 1",
+  "Instructions": {
+    "Opcode": "UpdateEqual",
+    "Keyspace": {
+      "Name": "user",
+      "Sharded": true
+    },
+    "Query": "update user_metadata set email = 'juan@vitess.io', address = '155 5th street' where user_id = 1",
+    "Vindex": "user_index",
+    "Values": [1],
+    "ChangedVindexValues": {
+      "address_user_map": ["155 5th street"],
+      "email_user_map": ["juan@vitess.io"]
+    },
+    "Table": "user_metadata",
+    "Subquery": "select email, address from user_metadata where user_id = 1 for update"
+  }
+}
+
+# update by primary keyspace id, changing one vindex column, using order by and limit
+"update user_metadata set email = 'juan@vitess.io' where user_id = 1 order by user_id asc limit 10"
+{
+  "Original": "update user_metadata set email = 'juan@vitess.io' where user_id = 1 order by user_id asc limit 10",
+  "Instructions": {
+    "Opcode": "UpdateEqual",
+    "Keyspace": {
+      "Name": "user",
+      "Sharded": true
+    },
+    "Query": "update user_metadata set email = 'juan@vitess.io' where user_id = 1 order by user_id asc limit 10",
+    "Vindex": "user_index",
+    "Values": [
+      1
+    ],
+    "ChangedVindexValues": {
+      "email_user_map": ["juan@vitess.io"]
+    },
+    "Table": "user_metadata",
+    "Subquery": "select email, address from user_metadata where user_id = 1 order by user_id asc limit 10 for update"
   }
 }
 
@@ -184,6 +322,20 @@
       "Sharded": false
     },
     "Query": "delete a from unsharded_a as a join unsharded_b as b on a.id = b.id where b.val = 1"
+  }
+}
+
+#delete with join from subquery
+"delete foo from unsharded as foo left join (select id from unsharded where col is not null order by col desc limit 10) as keepers on foo.id = keepers.id where keepers.id is null and foo.col is not null and foo.col < 1000"
+{
+  "Original": "delete foo from unsharded as foo left join (select id from unsharded where col is not null order by col desc limit 10) as keepers on foo.id = keepers.id where keepers.id is null and foo.col is not null and foo.col \u003c 1000",
+  "Instructions": {
+    "Opcode": "DeleteUnsharded",
+    "Keyspace": {
+      "Name": "main",
+      "Sharded": false
+    },
+    "Query": "delete foo from unsharded as foo left join (select id from unsharded where col is not null order by col desc limit 10) as keepers on foo.id = keepers.id where keepers.id is null and foo.col is not null and foo.col \u003c 1000"
   }
 }
 
@@ -323,6 +475,21 @@
       "Sharded": false
     },
     "Query": "insert into unsharded select id from unsharded_auto",
+    "Table": "unsharded"
+  }
+}
+
+# insert unsharded with select with join
+"insert into unsharded select id from unsharded join unsharded_auto"
+{
+  "Original": "insert into unsharded select id from unsharded join unsharded_auto",
+  "Instructions": {
+    "Opcode": "InsertUnsharded",
+    "Keyspace": {
+      "Name": "main",
+      "Sharded": false
+    },
+    "Query": "insert into unsharded select id from unsharded join unsharded_auto",
     "Table": "unsharded"
   }
 }
@@ -471,11 +638,7 @@
       "Sharded": true
     },
     "Query": "insert into user(id, Name, Costly) values (:_Id0, :_Name0, :_Costly0)",
-    "Values": [
-      [":__seq0"],
-      [null],
-      [null]
-    ],
+    "Values": [[[":__seq0"]],[[null]],[[null]]],
     "Table": "user",
     "Generate": {
       "Keyspace": {
@@ -501,11 +664,7 @@
       "Sharded": true
     },
     "Query": "insert ignore into user(id, Name, Costly) values (:_Id0, :_Name0, :_Costly0)",
-    "Values": [
-      [":__seq0"],
-      [null],
-      [null]
-    ],
+    "Values": [[[":__seq0"]],[[null]],[[null]]],
     "Table": "user",
     "Generate": {
       "Keyspace": {
@@ -531,17 +690,7 @@
       "Sharded": true
     },
     "Query": "insert into user(id, Name, Costly) values (:_Id0, :_Name0, :_Costly0) on duplicate key update col = 2",
-    "Values": [
-      [
-        ":__seq0"
-      ],
-      [
-        null
-      ],
-      [
-        null
-      ]
-    ],
+    "Values": [[[":__seq0"]],[[null]],[[null]]],
     "Table": "user",
     "Generate": {
       "Keyspace": {
@@ -572,11 +721,7 @@
       "Sharded": true
     },
     "Query": "insert into user(id, Name, Costly) values (:_Id0, :_Name0, :_Costly0)",
-    "Values": [
-      [":__seq0"],
-      [null],
-      [null]
-    ],
+    "Values": [[[":__seq0"]],[[null]],[[null]]],
     "Table": "user",
     "Generate": {
       "Keyspace": {
@@ -606,11 +751,7 @@
       "Sharded": true
     },
     "Query": "insert into user(nonid, id, Name, Costly) values (2, :_Id0, :_Name0, :_Costly0)",
-    "Values": [
-      [":__seq0"],
-      [null],
-      [null]
-    ],
+    "Values": [[[":__seq0"]],[[null]],[[null]]],
     "Table": "user",
     "Generate": {
       "Keyspace": {
@@ -636,11 +777,7 @@
       "Sharded": true
     },
     "Query": "insert into user(nonid, id, Name, Costly) values (true, :_Id0, :_Name0, :_Costly0)",
-    "Values": [
-      [":__seq0"],
-      [null],
-      [null]
-    ],
+    "Values": [[[":__seq0"]],[[null]],[[null]]],
     "Table": "user",
     "Generate": {
       "Keyspace": {
@@ -666,11 +803,7 @@
       "Sharded": true
     },
     "Query": "insert into user(nonid, name, id, Costly) values (2, :_Name0, :_Id0, :_Costly0)",
-    "Values": [
-      [":__seq0"],
-      ["foo"],
-      [null]
-    ],
+    "Values": [[[":__seq0"]],[["foo"]],[[null]]],
     "Table": "user",
     "Generate": {
       "Keyspace": {
@@ -696,9 +829,7 @@
       "Sharded": true
     },
     "Query": "insert into user_extra(nonid, extra_id, user_id) values (2, :__seq0, :_user_id0)",
-    "Values": [[
-      null
-    ]],
+    "Values": [[[null]]],
     "Table": "user_extra",
     "Generate": {
       "Keyspace": {
@@ -724,11 +855,7 @@
       "Sharded": true
     },
     "Query": "insert into `weird``name`(`a``b*c`, `b*c`) values (:_a_b_c0, 2)",
-    "Values": [
-      [
-        1
-      ]
-    ],
+    "Values": [[[1]]],
     "Table": "weird`name",
     "Prefix": "insert into `weird``name`(`a``b*c`, `b*c`) values ",
     "Mid": [
@@ -779,20 +906,7 @@
       "Sharded": true
     },
     "Query": "insert into user(id, Name, Costly) values (:_Id0, :_Name0, :_Costly0), (:_Id1, :_Name1, :_Costly1)",
-    "Values": [
-      [
-        ":__seq0",
-        ":__seq1"
-      ],
-      [
-        null,
-        null
-      ],
-      [
-        null,
-        null
-      ]
-    ],
+    "Values": [[[":__seq0"],[":__seq1"]],[[null],[null]],[[null],[null]]],
     "Table": "user",
     "Generate": {
       "Keyspace": {
@@ -920,3 +1034,163 @@
 # replace invalid table
 "replace into noexist(music_id, user_id) values(1, 18446744073709551616)"
 "table noexist not found"
+
+# insert a row in a multi column vindex table
+"insert multicolvin (column_a, column_b, column_c, kid) VALUES (1,2,3,4)"
+{
+  "Original": "insert multicolvin (column_a, column_b, column_c, kid) VALUES (1,2,3,4)",
+  "Instructions": {
+    "Opcode": "InsertSharded",
+    "Keyspace": {
+      "Name": "user",
+      "Sharded": true
+    },
+    "Query": "insert into multicolvin(column_a, column_b, column_c, kid) values (:_column_a0, :_column_b0, :_column_c0, :_kid0)",
+    "Values": [
+      [
+        [
+          4
+        ]
+      ],
+      [
+        [
+          1
+        ]
+      ],
+      [
+        [
+          2,
+          3
+        ]
+      ]
+    ],
+    "Table": "multicolvin",
+    "Prefix": "insert into multicolvin(column_a, column_b, column_c, kid) values ",
+    "Mid": [
+      "(:_column_a0, :_column_b0, :_column_c0, :_kid0)"
+    ]
+  }
+}
+
+# insert multiple rows in a multi column vindex table
+"insert multicolvin (column_a, column_b, column_c, kid) VALUES (1,2,3,4), (5,6,7,8)"
+{
+  "Original": "insert multicolvin (column_a, column_b, column_c, kid) VALUES (1,2,3,4), (5,6,7,8)",
+  "Instructions": {
+    "Opcode": "InsertSharded",
+    "Keyspace": {
+      "Name": "user",
+      "Sharded": true
+    },
+    "Query": "insert into multicolvin(column_a, column_b, column_c, kid) values (:_column_a0, :_column_b0, :_column_c0, :_kid0), (:_column_a1, :_column_b1, :_column_c1, :_kid1)",
+    "Values": [
+      [
+        [
+          4
+        ],
+        [
+          8
+        ]
+      ],
+      [
+        [
+          1
+        ],
+        [
+          5
+        ]
+      ],
+      [
+        [
+          2,
+          3
+        ],
+        [
+          6,
+          7
+        ]
+      ]
+    ],
+    "Table": "multicolvin",
+    "Prefix": "insert into multicolvin(column_a, column_b, column_c, kid) values ",
+    "Mid": [
+      "(:_column_a0, :_column_b0, :_column_c0, :_kid0)",
+      "(:_column_a1, :_column_b1, :_column_c1, :_kid1)"
+    ]
+  }
+}
+
+# delete row in a multi column vindex table
+"delete from multicolvin where kid=1"
+{
+  "Original": "delete from multicolvin where kid=1",
+  "Instructions": {
+    "Opcode": "DeleteEqual",
+    "Keyspace": {
+      "Name": "user",
+      "Sharded": true
+    },
+    "Query": "delete from multicolvin where kid = 1",
+    "Vindex": "kid_index",
+    "Values": [
+      1
+    ],
+    "Table": "multicolvin",
+    "Subquery": "select column_a, column_b, column_c from multicolvin where kid = 1 for update"
+  }
+}
+
+# update columns of multi column vindex
+"update multicolvin set column_b = 1, column_c = 2 where kid = 1"
+{
+  "Original": "update multicolvin set column_b = 1, column_c = 2 where kid = 1",
+  "Instructions": {
+    "Opcode": "UpdateEqual",
+    "Keyspace": {
+      "Name": "user",
+      "Sharded": true
+    },
+    "Query": "update multicolvin set column_b = 1, column_c = 2 where kid = 1",
+    "Vindex": "kid_index",
+    "Values": [
+      1
+    ],
+    "ChangedVindexValues": {
+      "colb_colc_map": [
+        1,
+        2
+      ]
+    },
+    "Table": "multicolvin",
+    "Subquery": "select column_a, column_b, column_c from multicolvin where kid = 1 for update"
+  }
+}
+
+# update multiple vindexes, with multi column vindex
+"update multicolvin set column_a = 0, column_b = 1, column_c = 2 where kid = 1"
+{
+  "Original": "update multicolvin set column_a = 0, column_b = 1, column_c = 2 where kid = 1",
+  "Instructions": {
+    "Opcode": "UpdateEqual",
+    "Keyspace": {
+      "Name": "user",
+      "Sharded": true
+    },
+    "Query": "update multicolvin set column_a = 0, column_b = 1, column_c = 2 where kid = 1",
+    "Vindex": "kid_index",
+    "Values": [
+      1
+    ],
+    "ChangedVindexValues": {
+      "cola_map": [
+        0
+      ],
+      "colb_colc_map": [
+        1,
+        2
+      ]
+    },
+    "Table": "multicolvin",
+    "Subquery": "select column_a, column_b, column_c from multicolvin where kid = 1 for update"
+  }
+}

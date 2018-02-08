@@ -30,7 +30,7 @@ import (
 // in the current context and session of a VTGate request. Vindexes
 // can use this interface to execute lookup queries.
 type VCursor interface {
-	Execute(query string, bindvars map[string]*querypb.BindVariable, isDML bool) (*sqltypes.Result, error)
+	Execute(method string, query string, bindvars map[string]*querypb.BindVariable, isDML bool) (*sqltypes.Result, error)
 }
 
 // Vindex defines the interface required to register a vindex.
@@ -102,8 +102,8 @@ type Functional interface {
 type Lookup interface {
 	// Create creates an association between ids and ksids. If ignoreMode
 	// is true, then the Create should ignore dup key errors.
-	Create(vc VCursor, ids []sqltypes.Value, ksids [][]byte, ignoreMode bool) error
-	Delete(VCursor, []sqltypes.Value, []byte) error
+	Create(vc VCursor, rowsColValues [][]sqltypes.Value, ksids [][]byte, ignoreMode bool) error
+	Delete(VCursor, [][]sqltypes.Value, []byte) error
 }
 
 // A NewVindexFunc is a function that creates a Vindex based on the

@@ -30,6 +30,7 @@ import (
 	"github.com/youtube/vitess/go/sqltypes"
 	"github.com/youtube/vitess/go/testfiles"
 	"github.com/youtube/vitess/go/vt/sqlparser"
+	"github.com/youtube/vitess/go/vt/vtgate/engine"
 	"github.com/youtube/vitess/go/vt/vtgate/vindexes"
 )
 
@@ -55,9 +56,9 @@ func (*lookupIndex) Cost() int        { return 2 }
 func (*lookupIndex) Verify(vindexes.VCursor, []sqltypes.Value, [][]byte) ([]bool, error) {
 	return []bool{}, nil
 }
-func (*lookupIndex) Map(vindexes.VCursor, []sqltypes.Value) ([][]byte, error)        { return nil, nil }
-func (*lookupIndex) Create(vindexes.VCursor, []sqltypes.Value, [][]byte, bool) error { return nil }
-func (*lookupIndex) Delete(vindexes.VCursor, []sqltypes.Value, []byte) error         { return nil }
+func (*lookupIndex) Map(vindexes.VCursor, []sqltypes.Value) ([][]byte, error)          { return nil, nil }
+func (*lookupIndex) Create(vindexes.VCursor, [][]sqltypes.Value, [][]byte, bool) error { return nil }
+func (*lookupIndex) Delete(vindexes.VCursor, [][]sqltypes.Value, []byte) error         { return nil }
 
 func newLookupIndex(name string, _ map[string]string) (vindexes.Vindex, error) {
 	return &lookupIndex{name: name}, nil
@@ -71,9 +72,9 @@ func (*multiIndex) Cost() int        { return 3 }
 func (*multiIndex) Verify(vindexes.VCursor, []sqltypes.Value, [][]byte) ([]bool, error) {
 	return []bool{}, nil
 }
-func (*multiIndex) Map(vindexes.VCursor, []sqltypes.Value) ([][][]byte, error)      { return nil, nil }
-func (*multiIndex) Create(vindexes.VCursor, []sqltypes.Value, [][]byte, bool) error { return nil }
-func (*multiIndex) Delete(vindexes.VCursor, []sqltypes.Value, []byte) error         { return nil }
+func (*multiIndex) Map(vindexes.VCursor, []sqltypes.Value) ([][][]byte, error)        { return nil, nil }
+func (*multiIndex) Create(vindexes.VCursor, [][]sqltypes.Value, [][]byte, bool) error { return nil }
+func (*multiIndex) Delete(vindexes.VCursor, [][]sqltypes.Value, []byte) error         { return nil }
 
 func newMultiIndex(name string, _ map[string]string) (vindexes.Vindex, error) {
 	return &multiIndex{name: name}, nil
@@ -87,9 +88,9 @@ func (*costlyIndex) Cost() int        { return 10 }
 func (*costlyIndex) Verify(vindexes.VCursor, []sqltypes.Value, [][]byte) ([]bool, error) {
 	return []bool{}, nil
 }
-func (*costlyIndex) Map(vindexes.VCursor, []sqltypes.Value) ([][][]byte, error)      { return nil, nil }
-func (*costlyIndex) Create(vindexes.VCursor, []sqltypes.Value, [][]byte, bool) error { return nil }
-func (*costlyIndex) Delete(vindexes.VCursor, []sqltypes.Value, []byte) error         { return nil }
+func (*costlyIndex) Map(vindexes.VCursor, []sqltypes.Value) ([][][]byte, error)        { return nil, nil }
+func (*costlyIndex) Create(vindexes.VCursor, [][]sqltypes.Value, [][]byte, bool) error { return nil }
+func (*costlyIndex) Delete(vindexes.VCursor, [][]sqltypes.Value, []byte) error         { return nil }
 
 func newCostlyIndex(name string, _ map[string]string) (vindexes.Vindex, error) {
 	return &costlyIndex{name: name}, nil
@@ -112,13 +113,15 @@ func TestPlan(t *testing.T) {
 	// column names are case-preserved, but treated as
 	// case-insensitive even if they come from the vschema.
 	testFile(t, "aggr_cases.txt", vschema)
+	testFile(t, "dml_cases.txt", vschema)
 	testFile(t, "from_cases.txt", vschema)
 	testFile(t, "filter_cases.txt", vschema)
-	testFile(t, "select_cases.txt", vschema)
 	testFile(t, "postprocess_cases.txt", vschema)
-	testFile(t, "wireup_cases.txt", vschema)
-	testFile(t, "dml_cases.txt", vschema)
+	testFile(t, "select_cases.txt", vschema)
+	testFile(t, "symtab_cases.txt", vschema)
 	testFile(t, "unsupported_cases.txt", vschema)
+	testFile(t, "vindex_func_cases.txt", vschema)
+	testFile(t, "wireup_cases.txt", vschema)
 }
 
 func TestOne(t *testing.T) {
@@ -142,12 +145,23 @@ type vschemaWrapper struct {
 	v *vindexes.VSchema
 }
 
-func (vw *vschemaWrapper) Find(tab sqlparser.TableName) (*vindexes.Table, error) {
-	return vw.v.Find(tab.Qualifier.String(), tab.Name.String())
+func (vw *vschemaWrapper) FindTable(tab sqlparser.TableName) (*vindexes.Table, error) {
+	return vw.v.FindTable(tab.Qualifier.String(), tab.Name.String())
+}
+
+func (vw *vschemaWrapper) FindTableOrVindex(tab sqlparser.TableName) (*vindexes.Table, vindexes.Vindex, error) {
+	return vw.v.FindTableOrVindex(tab.Qualifier.String(), tab.Name.String())
 }
 
 func (vw *vschemaWrapper) DefaultKeyspace() (*vindexes.Keyspace, error) {
 	return vw.v.Keyspaces["main"].Keyspace, nil
+}
+
+// For the purposes of this set of tests, just compare the actual plan
+// and ignore all the metrics.
+type testPlan struct {
+	Original     string           `json:",omitempty"`
+	Instructions engine.Primitive `json:",omitempty"`
 }
 
 func testFile(t *testing.T, filename string, vschema *vindexes.VSchema) {
@@ -159,7 +173,10 @@ func testFile(t *testing.T, filename string, vschema *vindexes.VSchema) {
 		if err != nil {
 			out = err.Error()
 		} else {
-			bout, _ := json.Marshal(plan)
+			bout, _ := json.Marshal(testPlan{
+				Original:     plan.Original,
+				Instructions: plan.Instructions,
+			})
 			out = string(bout)
 		}
 		if out != tcase.output {

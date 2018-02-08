@@ -121,7 +121,7 @@ func (qre *QueryExecutor) Execute() (reply *sqltypes.Result, err error) {
 		defer conn.Recycle()
 		switch qre.plan.PlanID {
 		case planbuilder.PlanPassDML:
-			if qre.tsv.qe.binlogFormat != connpool.BinlogFormatRow {
+			if !qre.tsv.qe.allowUnsafeDMLs && (qre.tsv.qe.binlogFormat != connpool.BinlogFormatRow) {
 				return nil, vterrors.Errorf(vtrpcpb.Code_UNIMPLEMENTED, "unsupported: cannot identify primary key of statement")
 			}
 			return qre.txFetch(conn, qre.plan.FullQuery, qre.bindVars, nil, nil, false, true)
@@ -141,15 +141,24 @@ func (qre *QueryExecutor) Execute() (reply *sqltypes.Result, err error) {
 			return qre.execUpsertPK(conn)
 		case planbuilder.PlanSet:
 			return qre.txFetch(conn, qre.plan.FullQuery, qre.bindVars, nil, nil, false, true)
-		default:
+		case planbuilder.PlanPassSelect, planbuilder.PlanSelectLock:
 			return qre.execDirect(conn)
+		default:
+			// handled above:
+			// planbuilder.PlanNextval
+			// planbuilder.PlanDDL
+
+			// not valid for Execute:
+			// planbuilder.PlanSelectStream
+			// planbuilder.PlanMessageStream:
+			return nil, vterrors.Errorf(vtrpcpb.Code_INTERNAL, "%s unexpected plan type", qre.plan.PlanID.String())
 		}
 	} else {
 		switch qre.plan.PlanID {
 		case planbuilder.PlanPassSelect:
 			return qre.execSelect()
 		case planbuilder.PlanSelectLock:
-			return nil, vterrors.Errorf(vtrpcpb.Code_FAILED_PRECONDITION, "disallowed outside transaction")
+			return nil, vterrors.Errorf(vtrpcpb.Code_FAILED_PRECONDITION, "%s disallowed outside transaction", qre.plan.PlanID.String())
 		case planbuilder.PlanSet:
 			return qre.execSet()
 		case planbuilder.PlanOtherRead:
@@ -159,11 +168,33 @@ func (qre *QueryExecutor) Execute() (reply *sqltypes.Result, err error) {
 			}
 			defer conn.Recycle()
 			return qre.execSQL(conn, qre.query, true)
-		default:
+
+		case planbuilder.PlanPassDML:
+			fallthrough
+		case planbuilder.PlanInsertPK:
+			fallthrough
+		case planbuilder.PlanInsertMessage:
+			fallthrough
+		case planbuilder.PlanInsertSubquery:
+			fallthrough
+		case planbuilder.PlanDMLPK:
+			fallthrough
+		case planbuilder.PlanDMLSubquery:
+			fallthrough
+		case planbuilder.PlanUpsertPK:
 			if !qre.tsv.qe.autoCommit.Get() {
-				return nil, vterrors.Errorf(vtrpcpb.Code_FAILED_PRECONDITION, "disallowed outside transaction")
+				return nil, vterrors.Errorf(vtrpcpb.Code_FAILED_PRECONDITION, "%s disallowed outside transaction", qre.plan.PlanID.String())
 			}
 			return qre.execDmlAutoCommit()
+		default:
+			// handled above:
+			// planbuilder.PlanNextval
+			// planbuilder.PlanDDL
+
+			// not valid for Execute:
+			// planbuilder.PlanSelectStream
+			// planbuilder.PlanMessageStream:
+			return nil, vterrors.Errorf(vtrpcpb.Code_INTERNAL, "%s unexpected plan type", qre.plan.PlanID.String())
 		}
 	}
 }
@@ -228,7 +259,7 @@ func (qre *QueryExecutor) execDmlAutoCommit() (reply *sqltypes.Result, err error
 	return qre.execAsTransaction(func(conn *TxConnection) (reply *sqltypes.Result, err error) {
 		switch qre.plan.PlanID {
 		case planbuilder.PlanPassDML:
-			if qre.tsv.qe.binlogFormat != connpool.BinlogFormatRow {
+			if !qre.tsv.qe.allowUnsafeDMLs && (qre.tsv.qe.binlogFormat != connpool.BinlogFormatRow) {
 				return nil, vterrors.Errorf(vtrpcpb.Code_UNIMPLEMENTED, "unsupported: cannot identify primary key of statement")
 			}
 			reply, err = qre.txFetch(conn, qre.plan.FullQuery, qre.bindVars, nil, nil, false, true)
@@ -448,7 +479,7 @@ func (qre *QueryExecutor) execNextval() (*sqltypes.Result, error) {
 				return nil, fmt.Errorf("invalid cache value for sequence %s: %d", tableName, cache)
 			}
 			newLast := nextID + cache
-			for newLast <= t.SequenceInfo.NextVal+inc {
+			for newLast < t.SequenceInfo.NextVal+inc {
 				newLast += cache
 			}
 			query = fmt.Sprintf("update %s set next_id = %d where id = 0", sqlparser.String(tableName), newLast)
@@ -526,6 +557,26 @@ func (qre *QueryExecutor) execInsertMessage(conn *TxConnection) (*sqltypes.Resul
 	qr, err := qre.execInsertPKRows(conn, nil, pkRows)
 	if err != nil {
 		return nil, err
+	}
+
+	// If an auto-inc value was generated, it could be the id column.
+	// If so, we have to populate it.
+	if qr.InsertID != 0 {
+		id := int64(qr.InsertID)
+		idPKIndex := qre.plan.Table.MessageInfo.IDPKIndex
+		for _, row := range pkRows {
+			if !row[idPKIndex].IsNull() {
+				// If a value was supplied, either it was not the auto-inc column
+				// or values were partially supplied for an auto-inc column.
+				// If it's the former, there is nothing more to do.
+				// If it's the latter, we cannot predict the values for subsequent
+				// rows. So, we still break out of this loop, and will rely on
+				// the poller to eventually pick up the rows from the database.
+				break
+			}
+			row[idPKIndex] = sqltypes.NewInt64(id)
+			id++
+		}
 	}
 
 	// Re-read the inserted rows to prime the cache.

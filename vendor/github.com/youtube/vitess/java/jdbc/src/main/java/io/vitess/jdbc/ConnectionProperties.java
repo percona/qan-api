@@ -138,6 +138,16 @@ public class ConnectionProperties {
         Constants.Property.INCLUDED_FIELDS,
         "What fields to return from MySQL to the Driver. Limiting the fields returned can improve performance, but ALL is required for maximum JDBC API support",
         Constants.DEFAULT_INCLUDED_FIELDS);
+    private EnumConnectionProperty<Query.ExecuteOptions.Workload> workload = new EnumConnectionProperty<>(
+        "workload",
+        "The workload type to use when executing queries",
+        Query.ExecuteOptions.Workload.UNSPECIFIED
+    );
+    private BooleanConnectionProperty useAffectedRows = new BooleanConnectionProperty(
+        "useAffectedRows",
+        "Don't set the CLIENT_FOUND_ROWS flag when connecting to the server. The vitess default (useAffectedRows=true) is the opposite of mysql-connector-j.",
+        true);
+
     private BooleanConnectionProperty grpcRetriesEnabled = new BooleanConnectionProperty(
         "grpcRetriesEnabled",
         "If enabled, a gRPC interceptor will ensure retries happen in the case of TRANSIENT gRPC errors.",
@@ -163,6 +173,14 @@ public class ConnectionProperties {
         Constants.Property.USE_SSL,
         "Whether this connection should use transport-layer security",
         false);
+    private BooleanConnectionProperty refreshConnection = new BooleanConnectionProperty(
+        "refreshConnection",
+        "When enabled, the driver will monitor for changes to the keystore and truststore files. If any are detected, SSL-enabled connections will be recreated.",
+        false);
+    private LongConnectionProperty refreshSeconds = new LongConnectionProperty(
+        "refreshSeconds",
+        "How often in seconds the driver will monitor for changes to the keystore and truststore files, when refreshConnection is enabled.",
+        60);
     private StringConnectionProperty keyStore = new StringConnectionProperty(
         Constants.Property.KEYSTORE,
         "The Java .JKS keystore file to use when TLS is enabled",
@@ -245,7 +263,8 @@ public class ConnectionProperties {
         this.simpleExecuteTypeCache = this.executeType.getValueAsEnum() == Constants.QueryExecuteType.SIMPLE;
         this.characterEncodingAsString = this.characterEncoding.getValueAsString();
         this.userNameCache = this.userName.getValueAsString();
-        this.executeOptionsCache = Query.ExecuteOptions.newBuilder().setIncludedFields(this.includedFieldsCache).build();
+
+        setExecuteOptions();
     }
 
     /**
@@ -368,8 +387,30 @@ public class ConnectionProperties {
         this.setExecuteOptions();
     }
 
+    public Query.ExecuteOptions.Workload getWorkload() {
+        return this.workload.getValueAsEnum();
+    }
+
+    public void setWorkload(Query.ExecuteOptions.Workload workload) {
+        this.workload.setValue(workload);
+        setExecuteOptions();
+    }
+
+    public boolean getUseAffectedRows() {
+        return useAffectedRows.getValueAsBoolean();
+    }
+
+    public void setUseAffectedRows(boolean useAffectedRows) {
+        this.useAffectedRows.setValue(useAffectedRows);
+        setExecuteOptions();
+    }
+
     private void setExecuteOptions() {
-        this.executeOptionsCache = Query.ExecuteOptions.newBuilder().setIncludedFields(this.includedFieldsCache).build();
+        this.executeOptionsCache = Query.ExecuteOptions.newBuilder()
+            .setIncludedFields(getIncludedFields())
+            .setWorkload(getWorkload())
+            .setClientFoundRows(!getUseAffectedRows())
+            .build();
     }
 
     public Query.ExecuteOptions getExecuteOptions() {
@@ -441,6 +482,22 @@ public class ConnectionProperties {
 
     public boolean getUseSSL() {
         return useSSL.getValueAsBoolean();
+    }
+
+    public boolean getRefreshConnection() {
+        return refreshConnection.getValueAsBoolean();
+    }
+
+    public void setRefreshConnection(boolean refreshConnection) {
+        this.refreshConnection.setValue(refreshConnection);
+    }
+
+    public long getRefreshSeconds() {
+        return refreshSeconds.getValueAsLong();
+    }
+
+    public void setRefreshSeconds(long refreshSeconds) {
+        this.refreshSeconds.setValue(refreshSeconds);
     }
 
     public String getKeyStore() {

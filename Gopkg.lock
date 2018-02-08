@@ -164,12 +164,8 @@
   name = "github.com/youtube/vitess"
   packages = [
     "go/bytes2",
-    "go/event",
     "go/hack",
     "go/sqltypes",
-    "go/tb",
-    "go/vt/logutil",
-    "go/vt/proto/logutil",
     "go/vt/proto/query",
     "go/vt/proto/topodata",
     "go/vt/proto/vtgate",
@@ -177,7 +173,7 @@
     "go/vt/sqlparser",
     "go/vt/vterrors"
   ]
-  revision = "9b42ea02086d8061f2fd49df6a00670689485fc7"
+  revision = "98f9189aa016e2a3afafa9ff42cde55bde421d3c"
 
 [[projects]]
   branch = "master"
@@ -224,6 +220,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "66cf0a437f2e0598d9efce39eb52f74326def9f7ce0c2412ca8aae0bb78a49d8"
+  inputs-digest = "a4317797a281f40d9f1919b1dea69ea81553734a9756981df73d8e5db6cfe017"
   solver-name = "gps-cdcl"
   solver-version = 1
