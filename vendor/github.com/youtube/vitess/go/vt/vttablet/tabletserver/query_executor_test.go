@@ -105,6 +105,62 @@ func TestQueryExecutorPlanPassDmlRBR(t *testing.T) {
 	testCommitHelper(t, tsv, qre)
 }
 
+func TestQueryExecutorPassthroughDml(t *testing.T) {
+	db := setUpQueryExecutorTest(t)
+	defer db.Close()
+	planbuilder.PassthroughDMLs = true
+	defer func() { planbuilder.PassthroughDMLs = false }()
+	query := "update test_table set pk = foo()"
+	want := &sqltypes.Result{}
+	db.AddQuery(query, want)
+	ctx := context.Background()
+	// RBR mode
+	tsv := newTestTabletServer(ctx, noFlags, db)
+	defer tsv.StopService()
+
+	planbuilder.PassthroughDMLs = true
+	defer func() { planbuilder.PassthroughDMLs = false }()
+	tsv.qe.passthroughDMLs.Set(true)
+	tsv.qe.binlogFormat = connpool.BinlogFormatRow
+
+	txid := newTransaction(tsv, nil)
+	qre := newTestQueryExecutor(ctx, tsv, query, txid)
+
+	checkPlanID(t, planbuilder.PlanPassDML, qre.plan.PlanID)
+	got, err := qre.Execute()
+	if err != nil {
+		t.Fatalf("qre.Execute() = %v, want nil", err)
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got: %v, want: %v", got, want)
+	}
+	wantqueries := []string{query}
+	gotqueries := fetchRecordedQueries(qre)
+	if !reflect.DeepEqual(gotqueries, wantqueries) {
+		t.Errorf("queries: %v, want %v", gotqueries, wantqueries)
+	}
+
+	// Statement mode also works when allowUnsafeDMLs is true
+	tsv.qe.binlogFormat = connpool.BinlogFormatStatement
+	_, err = qre.Execute()
+	if code := vterrors.Code(err); code != vtrpcpb.Code_UNIMPLEMENTED {
+		t.Errorf("qre.Execute: %v, want %v", code, vtrpcpb.Code_INVALID_ARGUMENT)
+	}
+
+	tsv.qe.allowUnsafeDMLs = true
+	got, err = qre.Execute()
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got: %v, want: %v", got, want)
+	}
+	wantqueries = []string{query, query}
+	gotqueries = fetchRecordedQueries(qre)
+	if !reflect.DeepEqual(gotqueries, wantqueries) {
+		t.Errorf("queries: %v, want %v", gotqueries, wantqueries)
+	}
+
+	testCommitHelper(t, tsv, qre)
+}
+
 func TestQueryExecutorPlanPassDmlAutoCommitRBR(t *testing.T) {
 	db := setUpQueryExecutorTest(t)
 	defer db.Close()
@@ -131,6 +187,49 @@ func TestQueryExecutorPlanPassDmlAutoCommitRBR(t *testing.T) {
 	_, err = qre.Execute()
 	if code := vterrors.Code(err); code != vtrpcpb.Code_UNIMPLEMENTED {
 		t.Errorf("qre.Execute: %v, want %v", code, vtrpcpb.Code_INVALID_ARGUMENT)
+	}
+}
+
+func TestQueryExecutorPassthroughDmlAutoCommit(t *testing.T) {
+	db := setUpQueryExecutorTest(t)
+	defer db.Close()
+	query := "update test_table set pk = foo()"
+	want := &sqltypes.Result{}
+	db.AddQuery(query, want)
+	ctx := context.Background()
+	// RBR mode
+	tsv := newTestTabletServer(ctx, noFlags, db)
+	defer tsv.StopService()
+
+	planbuilder.PassthroughDMLs = true
+	defer func() { planbuilder.PassthroughDMLs = false }()
+	tsv.qe.passthroughDMLs.Set(true)
+	tsv.qe.binlogFormat = connpool.BinlogFormatRow
+
+	qre := newTestQueryExecutor(ctx, tsv, query, 0)
+	checkPlanID(t, planbuilder.PlanPassDML, qre.plan.PlanID)
+	got, err := qre.Execute()
+	if err != nil {
+		t.Fatalf("qre.Execute() = %v, want nil", err)
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got: %v, want: %v", got, want)
+	}
+
+	// Statement mode
+	tsv.qe.binlogFormat = connpool.BinlogFormatStatement
+	_, err = qre.Execute()
+	if code := vterrors.Code(err); code != vtrpcpb.Code_UNIMPLEMENTED {
+		t.Errorf("qre.Execute: %v, want %v", code, vtrpcpb.Code_INVALID_ARGUMENT)
+	}
+
+	tsv.qe.allowUnsafeDMLs = true
+	got, err = qre.Execute()
+	if err != nil {
+		t.Fatalf("qre.Execute() = %v, want nil", err)
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got: %v, want: %v", got, want)
 	}
 }
 
@@ -257,6 +356,46 @@ func TestQueryExecutorPlanInsertMessage(t *testing.T) {
 	qre = newTestQueryExecutor(ctx, tsv, query, txid)
 	defer testCommitHelper(t, tsv, qre)
 	got, err = qre.Execute()
+	if err != nil {
+		t.Fatalf("qre.Execute() = %v, want nil", err)
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got: %v, want: %v", got, want)
+	}
+}
+
+// TestQueryExecutorPlanInsertMessageAutoInc tests that the query that reads
+// back rows correctly handles auto-inc values.
+func TestQueryExecutorPlanInsertMessageAutoInc(t *testing.T) {
+	db := setUpQueryExecutorTest(t)
+	defer db.Close()
+	db.AddQueryPattern("insert into msg\\(time_scheduled, id, message, time_next, time_created, epoch\\) values \\(1, .*", &sqltypes.Result{InsertID: 2})
+	query := "insert into msg(time_scheduled, id, message) values(1, null, 3), (1, 3, 3), (1, null, 3)"
+	// First auto-inc value should be used.
+	// But subsequent ones will not be used because value was supplied
+	// for the second row.
+	db.AddQuery(
+		"select time_next, epoch, time_created, id, time_scheduled, message from msg where (time_scheduled = 1 and id = 2) or (time_scheduled = 1 and id = 3) or (time_scheduled = 1 and id = null)",
+		&sqltypes.Result{
+			Fields: []*querypb.Field{
+				{Type: sqltypes.Int64},
+				{Type: sqltypes.Int64},
+				{Type: sqltypes.Int64},
+				{Type: sqltypes.Int64},
+				{Type: sqltypes.Int64},
+				{Type: sqltypes.Int64},
+			},
+			RowsAffected: 0,
+			Rows:         [][]sqltypes.Value{},
+		},
+	)
+	want := &sqltypes.Result{InsertID: 2}
+	ctx := context.Background()
+	tsv := newTestTabletServer(ctx, noFlags, db)
+	qre := newTestQueryExecutor(ctx, tsv, query, 0)
+	defer tsv.StopService()
+	checkPlanID(t, planbuilder.PlanInsertMessage, qre.plan.PlanID)
+	got, err := qre.Execute()
 	if err != nil {
 		t.Fatalf("qre.Execute() = %v, want nil", err)
 	}
@@ -1847,7 +1986,7 @@ func newTestTabletServer(ctx context.Context, flags executorFlags, db *fakesqldb
 	testUtils := newTestUtils()
 	dbconfigs := testUtils.newDBConfigs(db)
 	target := querypb.Target{TabletType: topodatapb.TabletType_MASTER}
-	tsv.StartService(target, dbconfigs, testUtils.newMysqld(&dbconfigs))
+	tsv.StartService(target, dbconfigs)
 	return tsv
 }
 
@@ -1861,7 +2000,7 @@ func newTransaction(tsv *TabletServer, options *querypb.ExecuteOptions) int64 {
 
 func newTestQueryExecutor(ctx context.Context, tsv *TabletServer, sql string, txID int64) *QueryExecutor {
 	logStats := tabletenv.NewLogStats(ctx, "TestQueryExecutor")
-	plan, err := tsv.qe.GetPlan(ctx, logStats, sql)
+	plan, err := tsv.qe.GetPlan(ctx, logStats, sql, false)
 	if err != nil {
 		panic(err)
 	}
@@ -1966,6 +2105,15 @@ func getQueryExecutorSupportedQueries(testTableHasMultipleUniqueKeys bool) map[s
 			RowsAffected: 1,
 			Rows: [][]sqltypes.Value{
 				{sqltypes.NewVarBinary("1")},
+			},
+		},
+		"select @@sql_auto_is_null": {
+			Fields: []*querypb.Field{{
+				Type: sqltypes.Uint64,
+			}},
+			RowsAffected: 1,
+			Rows: [][]sqltypes.Value{
+				{sqltypes.NewVarBinary("0")},
 			},
 		},
 		"show variables like 'binlog_format'": {

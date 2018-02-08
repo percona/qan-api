@@ -32,7 +32,6 @@ import (
 	"github.com/youtube/vitess/go/sqltypes"
 	"github.com/youtube/vitess/go/vt/discovery"
 	"github.com/youtube/vitess/go/vt/key"
-	"github.com/youtube/vitess/go/vt/topo"
 	"github.com/youtube/vitess/go/vt/vterrors"
 	"github.com/youtube/vitess/go/vt/vttablet/sandboxconn"
 
@@ -57,15 +56,18 @@ var masterSession = &vtgatepb.Session{
 func init() {
 	getSandbox(KsTestUnsharded).VSchema = `
 {
-	"Sharded": false,
-	"Tables": {
+	"sharded": false,
+	"tables": {
 		"t1": {}
 	}
 }
 `
 	hcVTGateTest = discovery.NewFakeHealthCheck()
 	*transactionMode = "MULTI"
-	Init(context.Background(), hcVTGateTest, topo.Server{}, new(sandboxTopo), "aa", 10, nil)
+	// The topo.Server is used to start watching the cells described
+	// in '-cells_to_watch' command line parameter, which is
+	// empty by default. So it's unused in this test, set to nil.
+	Init(context.Background(), hcVTGateTest, nil /*topo.Server*/, new(sandboxTopo), "aa", 10, nil)
 
 	*mysqlServerPort = 0
 	*mysqlAuthServerImpl = "none"
@@ -220,6 +222,7 @@ func TestVTGateExecute(t *testing.T) {
 	_, qr, err := rpcVTGate.Execute(
 		context.Background(),
 		&vtgatepb.Session{
+			Autocommit:   true,
 			TargetString: "@master",
 			Options:      executeOptions,
 		},
@@ -687,9 +690,18 @@ func TestVTGateExecuteEntityIds(t *testing.T) {
 }
 
 func TestVTGateExecuteBatch(t *testing.T) {
+	// TODO(sougou): using masterSession as global has some bugs
+	// which requires us to reset it here. This needs to be fixed.
+	masterSession = &vtgatepb.Session{
+		TargetString: "@master",
+	}
+
 	createSandbox(KsTestUnsharded)
 	hcVTGateTest.Reset()
 	sbc := hcVTGateTest.AddTestTablet("aa", "1.1.1.1", 1001, KsTestUnsharded, "0", topodatapb.TabletType_MASTER, true, 1, nil)
+
+	startCommit := sbc.CommitCount.Get()
+	startRollback := sbc.RollbackCount.Get()
 
 	sqlList := []string{
 		"begin",
@@ -720,11 +732,11 @@ func TestVTGateExecuteBatch(t *testing.T) {
 	if len(session.ShardSessions) != 1 {
 		t.Errorf("want 1, got %d", len(session.ShardSessions))
 	}
-	if commitCount := sbc.CommitCount.Get(); commitCount != 2 {
-		t.Errorf("want 2, got %d", commitCount)
+	if got, want := sbc.CommitCount.Get(), startCommit+3; got != want {
+		t.Errorf("got %d, want %d", got, want)
 	}
-	if rollbackCount := sbc.RollbackCount.Get(); rollbackCount != 1 {
-		t.Errorf("want 1, got %d", rollbackCount)
+	if got, want := sbc.RollbackCount.Get(), startRollback+2; got != want {
+		t.Errorf("got %d, want %d", got, want)
 	}
 }
 
@@ -792,6 +804,11 @@ func TestVTGateExecuteBatchShards(t *testing.T) {
 		nil)
 	if len(session.ShardSessions) != 2 {
 		t.Errorf("want 2, got %d", len(session.ShardSessions))
+	}
+
+	timingsCount := rpcVTGate.timings.Counts()["ExecuteBatchShards.TestVTGateExecuteBatchShards.master"]
+	if got, want := timingsCount, int64(2); got != want {
+		t.Errorf("stats were not properly recorded: got = %d, want = %d", got, want)
 	}
 }
 
@@ -861,6 +878,11 @@ func TestVTGateExecuteBatchKeyspaceIds(t *testing.T) {
 		nil)
 	if len(session.ShardSessions) != 2 {
 		t.Errorf("want 2, got %d", len(session.ShardSessions))
+	}
+
+	timingsCount := rpcVTGate.timings.Counts()["ExecuteBatchKeyspaceIds.TestVTGateExecuteBatchKeyspaceIds.master"]
+	if got, want := timingsCount, int64(2); got != want {
+		t.Errorf("stats were not properly recorded: got = %d, want = %d", got, want)
 	}
 }
 
@@ -2144,6 +2166,10 @@ func testErrorPropagation(t *testing.T, sbcs []*sandboxconn.SandboxConn, before 
 			t.Errorf("unexpected error, got %v want %v: %v", ec, expected, err)
 		}
 	}
+	statsKey := fmt.Sprintf("%s.%s.master.%v", "ExecuteBatchShards", KsTestUnsharded, vterrors.Code(err))
+	if got, want := errorCounts.Counts()[statsKey], int64(1); got != want {
+		t.Errorf("errorCounts not increased for '%s': got = %v, want = %v", statsKey, got, want)
+	}
 	for _, sbc := range sbcs {
 		after(sbc)
 	}
@@ -2175,12 +2201,16 @@ func testErrorPropagation(t *testing.T, sbcs []*sandboxconn.SandboxConn, before 
 		nil,
 		executeOptions)
 	if err == nil {
-		t.Errorf("error %v not propagated for ExecuteBatchShards", expected)
+		t.Errorf("error %v not propagated for ExecuteBatchKeyspaceIds", expected)
 	} else {
 		ec := vterrors.Code(err)
 		if ec != expected {
 			t.Errorf("unexpected error, got %v want %v: %v", ec, expected, err)
 		}
+	}
+	statsKey = fmt.Sprintf("%s.%s.master.%v", "ExecuteBatchKeyspaceIds", KsTestUnsharded, vterrors.Code(err))
+	if got, want := errorCounts.Counts()[statsKey], int64(1); got != want {
+		t.Errorf("errorCounts not increased for '%s': got = %v, want = %v", statsKey, got, want)
 	}
 	for _, sbc := range sbcs {
 		after(sbc)

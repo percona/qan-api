@@ -35,6 +35,9 @@ import (
 func TestUpdateEqual(t *testing.T) {
 	executor, sbc1, sbc2, sbclookup := createExecutorEnv()
 
+	logChan := QueryLogger.Subscribe("Test")
+	defer QueryLogger.Unsubscribe(logChan)
+
 	_, err := executorExec(executor, "update user set a=2 where id = 1", nil)
 	if err != nil {
 		t.Error(err)
@@ -49,6 +52,7 @@ func TestUpdateEqual(t *testing.T) {
 	if sbc2.Queries != nil {
 		t.Errorf("sbc2.Queries: %+v, want nil\n", sbc2.Queries)
 	}
+	testQueryLog(t, logChan, "TestExecute", "UPDATE", "update user set a=2 where id = 1", 1)
 
 	sbc1.Queries = nil
 	_, err = executorExec(executor, "update user set a=2 where id = 3", nil)
@@ -88,6 +92,57 @@ func TestUpdateEqual(t *testing.T) {
 	if sbc1.Queries != nil {
 		t.Errorf("sbc1.Queries: %+v, want nil\n", sbc1.Queries)
 	}
+
+	sbc1.Queries = nil
+	sbc2.Queries = nil
+	sbclookup.Queries = nil
+	_, err = executorExec(executor, "update user2 set name='myname', lastname='mylastname' where id = 1", nil)
+	if err != nil {
+		t.Error(err)
+	}
+	wantQueries = []*querypb.BoundQuery{
+		{
+			Sql:           "select name, lastname from user2 where id = 1 for update",
+			BindVariables: map[string]*querypb.BindVariable{},
+		},
+		{
+			Sql: "update user2 set name = 'myname', lastname = 'mylastname' where id = 1 /* vtgate:: keyspace_id:166b40b44aba4bd6 */",
+			BindVariables: map[string]*querypb.BindVariable{
+				"_name0":     sqltypes.BytesBindVariable([]byte("myname")),
+				"_lastname0": sqltypes.BytesBindVariable([]byte("mylastname")),
+			},
+		},
+	}
+	if !reflect.DeepEqual(sbc1.Queries, wantQueries) {
+		t.Errorf("sbc1.Queries: %+v, want %+v\n", sbc1.Queries, wantQueries)
+	}
+	if sbc2.Queries != nil {
+		t.Errorf("sbc2.Queries: %+v, want nil\n", sbc2.Queries)
+	}
+
+	wantQueries = []*querypb.BoundQuery{
+		{
+			Sql: "delete from name_lastname_keyspace_id_map where name = :name and lastname = :lastname and keyspace_id = :keyspace_id",
+			BindVariables: map[string]*querypb.BindVariable{
+				"lastname":    sqltypes.StringBindVariable("foo"),
+				"name":        sqltypes.Int32BindVariable(1),
+				"keyspace_id": sqltypes.BytesBindVariable([]byte("\026k@\264J\272K\326")),
+			},
+		},
+		{
+			Sql: "insert into name_lastname_keyspace_id_map(name, lastname, keyspace_id) values (:name0, :lastname0, :keyspace_id0)",
+			BindVariables: map[string]*querypb.BindVariable{
+				"name0":        sqltypes.BytesBindVariable([]byte("myname")),
+				"lastname0":    sqltypes.BytesBindVariable([]byte("mylastname")),
+				"keyspace_id0": sqltypes.BytesBindVariable([]byte("\026k@\264J\272K\326")),
+			},
+		},
+	}
+
+	if !reflect.DeepEqual(sbclookup.Queries, wantQueries) {
+		t.Errorf("sbclookup.Queries: %+v, want %+v\n", sbclookup.Queries, wantQueries)
+	}
+
 }
 
 func TestUpdateComments(t *testing.T) {
@@ -170,14 +225,6 @@ func TestUpdateEqualFail(t *testing.T) {
 		"id": sqltypes.Int64BindVariable(1),
 	})
 	want = "execUpdateEqual: keyspace TestExecutor fetch error: topo error GetSrvKeyspace"
-	if err == nil || err.Error() != want {
-		t.Errorf("executorExec: %v, want %v", err, want)
-	}
-
-	_, err = executorExec(executor, "update user set a=2 where id = :id", map[string]*querypb.BindVariable{
-		"id": sqltypes.StringBindVariable("aa"),
-	})
-	want = `execUpdateEqual: hash.Map: could not parse value: aa`
 	if err == nil || err.Error() != want {
 		t.Errorf("executorExec: %v, want %v", err, want)
 	}
@@ -290,6 +337,41 @@ func TestDeleteEqual(t *testing.T) {
 	if sbclookup.Queries != nil {
 		t.Errorf("sbc.Queries: %+v, want nil\n", sbc.Queries)
 	}
+
+	sbc.Queries = nil
+	sbclookup.Queries = nil
+	_, err = executorExec(executor, "delete from user2 where id = 1", nil)
+	if err != nil {
+		t.Error(err)
+	}
+	wantQueries = []*querypb.BoundQuery{
+		{
+			Sql:           "select name, lastname from user2 where id = 1 for update",
+			BindVariables: map[string]*querypb.BindVariable{},
+		},
+		{
+			Sql:           "delete from user2 where id = 1 /* vtgate:: keyspace_id:166b40b44aba4bd6 */",
+			BindVariables: map[string]*querypb.BindVariable{},
+		},
+	}
+	if !reflect.DeepEqual(sbc.Queries, wantQueries) {
+		t.Errorf("sbc.Queries: %+v, want %+v\n", sbc.Queries, wantQueries)
+	}
+
+	wantQueries = []*querypb.BoundQuery{
+		{
+			Sql: "delete from name_lastname_keyspace_id_map where name = :name and lastname = :lastname and keyspace_id = :keyspace_id",
+			BindVariables: map[string]*querypb.BindVariable{
+				"lastname":    sqltypes.StringBindVariable("foo"),
+				"name":        sqltypes.Int32BindVariable(1),
+				"keyspace_id": sqltypes.BytesBindVariable([]byte("\026k@\264J\272K\326")),
+			},
+		},
+	}
+
+	if !reflect.DeepEqual(sbclookup.Queries, wantQueries) {
+		t.Errorf("sbclookup.Queries: %+v, want %+v\n", sbclookup.Queries, wantQueries)
+	}
 }
 
 func TestDeleteComments(t *testing.T) {
@@ -351,14 +433,6 @@ func TestDeleteEqualFail(t *testing.T) {
 		t.Errorf("executorExec: %v, want %v", err, want)
 	}
 
-	_, err = executorExec(executor, "delete from user where id = :id", map[string]*querypb.BindVariable{
-		"id": sqltypes.StringBindVariable("aa"),
-	})
-	want = `execDeleteEqual: hash.Map: could not parse value: aa`
-	if err == nil || err.Error() != want {
-		t.Errorf("executorExec: %v, want %v", err, want)
-	}
-
 	s.ShardSpec = "80-"
 	_, err = executorExec(executor, "delete from user where id = :id", map[string]*querypb.BindVariable{
 		"id": sqltypes.Int64BindVariable(1),
@@ -372,6 +446,9 @@ func TestDeleteEqualFail(t *testing.T) {
 
 func TestInsertSharded(t *testing.T) {
 	executor, sbc1, sbc2, sbclookup := createExecutorEnv()
+
+	logChan := QueryLogger.Subscribe("Test")
+	defer QueryLogger.Unsubscribe(logChan)
 
 	_, err := executorExec(executor, "insert into user(id, v, name) values (1, 2, 'myname')", nil)
 	if err != nil {
@@ -402,6 +479,9 @@ func TestInsertSharded(t *testing.T) {
 		t.Errorf("sbclookup.Queries: \n%+v, want \n%+v", sbclookup.Queries, wantQueries)
 	}
 
+	testQueryLog(t, logChan, "VindexCreate", "INSERT", "insert into name_user_map(name, user_id) values(:name0, :user_id0)", 1)
+	testQueryLog(t, logChan, "TestExecute", "INSERT", "insert into user(id, v, name) values (1, 2, 'myname')", 1)
+
 	sbc1.Queries = nil
 	sbclookup.Queries = nil
 	_, err = executorExec(executor, "insert into user(id, v, name) values (3, 2, 'myname2')", nil)
@@ -431,6 +511,23 @@ func TestInsertSharded(t *testing.T) {
 	}}
 	if !reflect.DeepEqual(sbclookup.Queries, wantQueries) {
 		t.Errorf("sbclookup.Queries: \n%+v, want \n%+v\n", sbclookup.Queries, wantQueries)
+	}
+
+	sbc1.Queries = nil
+	_, err = executorExec(executor, "insert into user2(id, name, lastname) values (2, 'myname', 'mylastname')", nil)
+	if err != nil {
+		t.Error(err)
+	}
+	wantQueries = []*querypb.BoundQuery{{
+		Sql: "insert into user2(id, name, lastname) values (:_id0, :_name0, :_lastname0) /* vtgate:: keyspace_id:06e7ea22ce92708f */",
+		BindVariables: map[string]*querypb.BindVariable{
+			"_id0":       sqltypes.Int64BindVariable(2),
+			"_name0":     sqltypes.BytesBindVariable([]byte("myname")),
+			"_lastname0": sqltypes.BytesBindVariable([]byte("mylastname")),
+		},
+	}}
+	if !reflect.DeepEqual(sbc1.Queries, wantQueries) {
+		t.Errorf("sbc1.Queries:\n%+v, want\n%+v\n", sbc1.Queries, wantQueries)
 	}
 }
 
@@ -1001,7 +1098,7 @@ func TestInsertFail(t *testing.T) {
 	}
 
 	_, err = executorExec(executor, "insert into ksid_table(keyspace_id) values (null)", nil)
-	want = "execInsertSharded: getInsertShardedRoute: value must be supplied for column keyspace_id"
+	want = "execInsertSharded: getInsertShardedRoute: could not map NULL to a keyspace id"
 	if err == nil || err.Error() != want {
 		t.Errorf("executorExec: %v, want %v", err, want)
 	}
@@ -1016,8 +1113,8 @@ func TestInsertFail(t *testing.T) {
 	sbclookup.SetResults([]*sqltypes.Result{{}})
 	_, err = executorExec(executor, "insert into music_extra_reversed(music_id, user_id) values (1, 1)", nil)
 	want = "execInsertSharded: getInsertShardedRoute: could not map INT64(1) to a keyspace id"
-	if err == nil || err.Error() != want {
-		t.Errorf("paramsSelectEqual: executorExec: %v, want %v", err, want)
+	if err == nil || !strings.Contains(err.Error(), want) {
+		t.Errorf("paramsSelectEqual: executorExec: %v, must contain %v", err, want)
 	}
 
 	getSandbox("TestExecutor").SrvKeyspaceMustFail = 1
@@ -1030,8 +1127,8 @@ func TestInsertFail(t *testing.T) {
 	getSandbox("TestExecutor").ShardSpec = "80-"
 	_, err = executorExec(executor, "insert into user(id, v, name) values (1, 2, 'myname')", nil)
 	want = "execInsertSharded: getInsertShardedRoute: KeyspaceId 166b40b44aba4bd6 didn't match any shards"
-	if err == nil || !strings.HasPrefix(err.Error(), want) {
-		t.Errorf("executorExec: %v, want prefix %v", err, want)
+	if err == nil || !strings.Contains(err.Error(), want) {
+		t.Errorf("executorExec: %v, must contain %v", err, want)
 	}
 	getSandbox("TestExecutor").ShardSpec = DefaultShardSpec
 
@@ -1050,32 +1147,32 @@ func TestInsertFail(t *testing.T) {
 	}
 
 	_, err = executorExec(executor, "insert into music_extra(user_id, music_id) values (1, null)", nil)
-	want = "execInsertSharded: getInsertShardedRoute: value must be supplied for column music_id"
+	want = "execInsertSharded: getInsertShardedRoute: value must be supplied for column [music_id]"
 	if err == nil || err.Error() != want {
 		t.Errorf("executorExec: %v, want %v", err, want)
 	}
 
 	_, err = executorExec(executor, "insert into music_extra_reversed(music_id, user_id) values (1, 'aa')", nil)
-	want = `execInsertSharded: getInsertShardedRoute: hash.Verify: could not parse value: aa`
-	if err == nil || err.Error() != want {
-		t.Errorf("executorExec: %v, want %v", err, want)
+	want = `execInsertSharded: getInsertShardedRoute: hash.Verify: could not parse value: 'aa'`
+	if err == nil || !strings.Contains(err.Error(), want) {
+		t.Errorf("executorExec: %v, must contain %v", err, want)
 	}
 
 	_, err = executorExec(executor, "insert into music_extra_reversed(music_id, user_id) values (1, 3)", nil)
-	want = "execInsertSharded: getInsertShardedRoute: values [INT64(3)] for column user_id does not map to keyspaceids"
-	if err == nil || err.Error() != want {
-		t.Errorf("executorExec: %v, want %v", err, want)
+	want = "execInsertSharded: getInsertShardedRoute: values [[INT64(3)]] for column [user_id] does not map to keyspaceids"
+	if err == nil || !strings.Contains(err.Error(), want) {
+		t.Errorf("executorExec: %v, must contain %v", err, want)
 	}
 
 	sbc.MustFailCodes[vtrpcpb.Code_INVALID_ARGUMENT] = 1
 	_, err = executorExec(executor, "insert into user(id, v, name) values (1, 2, 'myname')", nil)
 	want = "execInsertSharded: target: TestExecutor.-20.master"
-	if err == nil || !strings.HasPrefix(err.Error(), want) {
-		t.Errorf("executorExec: %v, want prefix %v", err, want)
+	if err == nil || !strings.Contains(err.Error(), want) {
+		t.Errorf("executorExec: %v, must contain %v", err, want)
 	}
 
 	_, err = executorExec(executor, "insert into noauto_table(id) values (null)", nil)
-	want = "execInsertSharded: getInsertShardedRoute: value must be supplied for column id"
+	want = "execInsertSharded: getInsertShardedRoute: could not map NULL to a keyspace id"
 	if err == nil || !strings.HasPrefix(err.Error(), want) {
 		t.Errorf("executorExec: %v, want prefix %v", err, want)
 	}
@@ -1097,7 +1194,8 @@ func TestInsertPartialFail1(t *testing.T) {
 
 	_, err := executor.Execute(
 		context.Background(),
-		&vtgatepb.Session{InTransaction: true},
+		"TestExecute",
+		NewSafeSession(&vtgatepb.Session{InTransaction: true}),
 		"insert into user(id, v, name) values (1, 2, 'myname')",
 		nil,
 	)
@@ -1118,7 +1216,8 @@ func TestInsertPartialFail2(t *testing.T) {
 
 	_, err := executor.Execute(
 		context.Background(),
-		&vtgatepb.Session{InTransaction: true},
+		"TestExecute",
+		NewSafeSession(&vtgatepb.Session{InTransaction: true}),
 		"insert into user(id, v, name) values (1, 2, 'myname')",
 		nil,
 	)
@@ -1211,6 +1310,43 @@ func TestMultiInsertSharded(t *testing.T) {
 			"user_id0": sqltypes.Uint64BindVariable(1),
 			"name1":    sqltypes.BytesBindVariable([]byte("myname2")),
 			"user_id1": sqltypes.Uint64BindVariable(2),
+		},
+	}}
+	if !reflect.DeepEqual(sbclookup.Queries, wantQueries) {
+		t.Errorf("sbclookup.Queries: \n%+v, want \n%+v\n", sbclookup.Queries, wantQueries)
+	}
+
+	// Insert multiple rows in a multi column vindex
+	sbc1.Queries = nil
+	sbclookup.Queries = nil
+	sbc2.Queries = nil
+	_, err = executorExec(executor, "insert into user2(id, name, lastname) values (2, 'myname', 'mylastname'), (3, 'myname2', 'mylastname2')", nil)
+	if err != nil {
+		t.Error(err)
+	}
+	wantQueries = []*querypb.BoundQuery{{
+		Sql: "insert into user2(id, name, lastname) values (:_id0, :_name0, :_lastname0) /* vtgate:: keyspace_id:06e7ea22ce92708f */",
+		BindVariables: map[string]*querypb.BindVariable{
+			"_id0":       sqltypes.Int64BindVariable(2),
+			"_name0":     sqltypes.BytesBindVariable([]byte("myname")),
+			"_lastname0": sqltypes.BytesBindVariable([]byte("mylastname")),
+			"_id1":       sqltypes.Int64BindVariable(3),
+			"_name1":     sqltypes.BytesBindVariable([]byte("myname2")),
+			"_lastname1": sqltypes.BytesBindVariable([]byte("mylastname2")),
+		},
+	}}
+	if !reflect.DeepEqual(sbc1.Queries, wantQueries) {
+		t.Errorf("sbc1.Queries:\n%+v, want\n%+v\n", sbc1.Queries, wantQueries)
+	}
+	wantQueries = []*querypb.BoundQuery{{
+		Sql: "insert into name_lastname_keyspace_id_map(name, lastname, keyspace_id) values (:name0, :lastname0, :keyspace_id0), (:name1, :lastname1, :keyspace_id1)",
+		BindVariables: map[string]*querypb.BindVariable{
+			"name0":        sqltypes.BytesBindVariable([]byte("myname")),
+			"lastname0":    sqltypes.BytesBindVariable([]byte("mylastname")),
+			"keyspace_id0": sqltypes.BytesBindVariable([]byte("\006\347\352\"\316\222p\217")),
+			"name1":        sqltypes.BytesBindVariable([]byte("myname2")),
+			"lastname1":    sqltypes.BytesBindVariable([]byte("mylastname2")),
+			"keyspace_id1": sqltypes.BytesBindVariable([]byte("N\261\220\311\242\372\026\234")),
 		},
 	}}
 	if !reflect.DeepEqual(sbclookup.Queries, wantQueries) {

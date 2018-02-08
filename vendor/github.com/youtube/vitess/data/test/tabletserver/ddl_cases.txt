@@ -38,6 +38,11 @@
   "Action": "alter", "TableName": "b.c", "NewName": "b.c"
 }
 
+"drop index a on b lock=none"
+{
+  "Action": "alter", "TableName": "b", "NewName": "b"
+}
+
 "rename table a to b"
 {
   "Action": "rename", "TableName": "a", "NewTable": "b"
@@ -96,4 +101,18 @@
 "alter table a partition by range (id) (partition p0 values less than (10), partition p1 values less than (maxvalue))"
 {
   "Action": "alter", "TableName": "a", "NewTable": "a"
+}
+
+# truncate
+"truncate a"
+{
+  "PlanID": "DDL",
+  "TableName": "a"
+}
+
+# truncate
+"truncate table a"
+{
+  "PlanID": "DDL",
+  "TableName": "a"
 }

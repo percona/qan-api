@@ -49,7 +49,8 @@ echo "Updating git submodules..."
 git submodule update --init
 
 # install zookeeper
-zk_ver=3.4.6
+# TODO(sougou): when version changes, see if we can drop the 'zip -d' hack to get the fatjars working.
+zk_ver=3.4.10
 zk_dist=$VTROOT/dist/vt-zookeeper-$zk_ver
 if [ -f $zk_dist/.build_finished ]; then
   echo "skipping zookeeper build. remove $zk_dist to force rebuild."
@@ -60,6 +61,7 @@ else
     tar -xzf zookeeper-$zk_ver.tar.gz && \
     mkdir -p $zk_dist/lib && \
     cp zookeeper-$zk_ver/contrib/fatjar/zookeeper-$zk_ver-fatjar.jar $zk_dist/lib && \
+    zip -d $zk_dist/lib/zookeeper-$zk_ver-fatjar.jar 'META-INF/*.SF' 'META-INF/*.RSA' 'META-INF/*SF' && \
     rm -rf zookeeper-$zk_ver zookeeper-$zk_ver.tar.gz)
   [ $? -eq 0 ] || fail "zookeeper build failed"
   touch $zk_dist/.build_finished
@@ -101,10 +103,10 @@ else
 fi
 ln -snf $consul_dist/consul $VTROOT/bin/consul
 
-# install gRPC C++ base, so we can install the python adapters.
-# this also installs protobufs
-grpc_dist=$VTROOT/dist/grpc
-grpc_ver=v1.0.0
+# Install gRPC proto compilers. There is no download for grpc_python_plugin.
+# So, we need to build it.
+export grpc_dist=$VTROOT/dist/grpc
+export grpc_ver="v1.7.0"
 if [ $SKIP_ROOT_INSTALLS == "True" ]; then
   echo "skipping grpc build, as root version was already installed."
 elif [[ -f $grpc_dist/.build_finished && "$(cat $grpc_dist/.build_finished)" == "$grpc_ver" ]]; then
@@ -181,7 +183,7 @@ govendor sync || fail "Failed to download/update dependencies with govendor. Ple
 ln -snf $VTTOP/config $VTROOT/config
 ln -snf $VTTOP/data $VTROOT/data
 ln -snf $VTTOP/py $VTROOT/py-vtdb
-ln -snf $VTTOP/go/zk/zkctl/zksrv.sh $VTROOT/bin/zksrv.sh
+ln -snf $VTTOP/go/vt/zkctl/zksrv.sh $VTROOT/bin/zksrv.sh
 ln -snf $VTTOP/test/vthook-test.sh $VTROOT/vthook/test.sh
 ln -snf $VTTOP/test/vthook-test_backup_error $VTROOT/vthook/test_backup_error
 ln -snf $VTTOP/test/vthook-test_backup_transform $VTROOT/vthook/test_backup_transform

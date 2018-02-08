@@ -18,35 +18,57 @@ package sqlparser
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
-	"strings"
+	"io"
 
 	"github.com/youtube/vitess/go/bytes2"
 	"github.com/youtube/vitess/go/sqltypes"
 )
 
-const eofChar = 0x100
+const (
+	defaultBufSize = 4096
+	eofChar        = 0x100
+)
 
 // Tokenizer is the struct used to generate SQL
 // tokens for the parser.
 type Tokenizer struct {
-	InStream      *strings.Reader
+	InStream      io.Reader
 	AllowComments bool
 	ForceEOF      bool
 	lastChar      uint16
 	Position      int
 	lastToken     []byte
-	LastError     string
+	LastError     error
 	posVarIndex   int
 	ParseTree     Statement
 	partialDDL    *DDL
 	nesting       int
+	multi         bool
+
+	buf     []byte
+	bufPos  int
+	bufSize int
 }
 
 // NewStringTokenizer creates a new Tokenizer for the
 // sql string.
 func NewStringTokenizer(sql string) *Tokenizer {
-	return &Tokenizer{InStream: strings.NewReader(sql)}
+	buf := []byte(sql)
+	return &Tokenizer{
+		buf:     buf,
+		bufSize: len(buf),
+	}
+}
+
+// NewTokenizer creates a new Tokenizer reading a sql
+// string from the io.Reader.
+func NewTokenizer(r io.Reader) *Tokenizer {
+	return &Tokenizer{
+		InStream: r,
+		buf:      make([]byte, defaultBufSize),
+	}
 }
 
 // keywords is a map of mysql keywords that fall into two categories:
@@ -75,6 +97,7 @@ var keywords = map[string]int{
 	"between":             BETWEEN,
 	"bigint":              BIGINT,
 	"binary":              BINARY,
+	"_binary":             UNDERSCORE_BINARY,
 	"bit":                 BIT,
 	"blob":                BLOB,
 	"bool":                BOOL,
@@ -151,6 +174,7 @@ var keywords = map[string]int{
 	"fulltext":            UNUSED,
 	"generated":           UNUSED,
 	"get":                 UNUSED,
+	"global":              GLOBAL,
 	"grant":               UNUSED,
 	"group":               GROUP,
 	"group_concat":        GROUP_CONCAT,
@@ -183,7 +207,7 @@ var keywords = map[string]int{
 	"join":                JOIN,
 	"json":                JSON,
 	"key":                 KEY,
-	"keys":                UNUSED,
+	"keys":                KEYS,
 	"kill":                UNUSED,
 	"language":            LANGUAGE,
 	"last_insert_id":      LAST_INSERT_ID,
@@ -238,7 +262,7 @@ var keywords = map[string]int{
 	"partition":           PARTITION,
 	"precision":           UNUSED,
 	"primary":             PRIMARY,
-	"procedure":           UNUSED,
+	"procedure":           PROCEDURE,
 	"query":               QUERY,
 	"range":               UNUSED,
 	"read":                UNUSED,
@@ -266,6 +290,7 @@ var keywords = map[string]int{
 	"select":              SELECT,
 	"sensitive":           UNUSED,
 	"separator":           SEPARATOR,
+	"session":             SESSION,
 	"set":                 SET,
 	"share":               SHARE,
 	"show":                SHOW,
@@ -285,6 +310,7 @@ var keywords = map[string]int{
 	"sql_small_result":    UNUSED,
 	"ssl":                 UNUSED,
 	"starting":            UNUSED,
+	"status":              STATUS,
 	"stored":              UNUSED,
 	"straight_join":       STRAIGHT_JOIN,
 	"table":               TABLE,
@@ -300,7 +326,7 @@ var keywords = map[string]int{
 	"tinytext":            TINYTEXT,
 	"to":                  TO,
 	"trailing":            UNUSED,
-	"trigger":             UNUSED,
+	"trigger":             TRIGGER,
 	"true":                TRUE,
 	"truncate":            TRUNCATE,
 	"undo":                UNUSED,
@@ -316,14 +342,18 @@ var keywords = map[string]int{
 	"utc_time":            UTC_TIME,
 	"utc_timestamp":       UTC_TIMESTAMP,
 	"values":              VALUES,
+	"variables":           VARIABLES,
 	"varbinary":           VARBINARY,
 	"varchar":             VARCHAR,
 	"varcharacter":        UNUSED,
 	"varying":             UNUSED,
 	"virtual":             UNUSED,
+	"vindex":              VINDEX,
+	"vindexes":            VINDEXES,
 	"view":                VIEW,
 	"vitess_keyspaces":    VITESS_KEYSPACES,
 	"vitess_shards":       VITESS_SHARDS,
+	"vitess_tablets":      VITESS_TABLETS,
 	"vschema_tables":      VSCHEMA_TABLES,
 	"when":                WHEN,
 	"where":               WHERE,
@@ -346,6 +376,15 @@ func init() {
 		}
 		keywordStrings[id] = str
 	}
+}
+
+// KeywordString returns the string corresponding to the given keyword
+func KeywordString(id int) string {
+	str, ok := keywordStrings[id]
+	if !ok {
+		return ""
+	}
+	return str
 }
 
 // Lex returns the next token form the Tokenizer.
@@ -371,19 +410,26 @@ func (tkn *Tokenizer) Error(err string) {
 	} else {
 		fmt.Fprintf(buf, "%s at position %v", err, tkn.Position)
 	}
-	tkn.LastError = buf.String()
+	tkn.LastError = errors.New(buf.String())
+
+	// Try and re-sync to the next statement
+	if tkn.lastChar != ';' {
+		tkn.skipStatement()
+	}
 }
 
 // Scan scans the tokenizer for the next token and returns
 // the token type and an optional value.
 func (tkn *Tokenizer) Scan() (int, []byte) {
-	if tkn.ForceEOF {
-		return 0, nil
-	}
-
 	if tkn.lastChar == 0 {
 		tkn.next()
 	}
+
+	if tkn.ForceEOF {
+		tkn.skipStatement()
+		return 0, nil
+	}
+
 	tkn.skipBlank()
 	switch ch := tkn.lastChar; {
 	case isLetter(ch):
@@ -405,6 +451,8 @@ func (tkn *Tokenizer) Scan() (int, []byte) {
 		return tkn.scanNumber(false)
 	case ch == ':':
 		return tkn.scanBindVar()
+	case ch == ';' && tkn.multi:
+		return 0, nil
 	default:
 		tkn.next()
 		switch ch {
@@ -446,7 +494,6 @@ func (tkn *Tokenizer) Scan() (int, []byte) {
 				return int(ch), nil
 			}
 		case '#':
-			tkn.next()
 			return tkn.scanCommentType1("#")
 		case '-':
 			switch tkn.lastChar {
@@ -506,6 +553,15 @@ func (tkn *Tokenizer) Scan() (int, []byte) {
 		default:
 			return LEX_ERROR, []byte{byte(ch)}
 		}
+	}
+}
+
+// skipStatement scans until the EOF, or end of statement is encountered.
+func (tkn *Tokenizer) skipStatement() {
+	ch := tkn.lastChar
+	for ch != ';' && ch != eofChar {
+		tkn.next()
+		ch = tkn.lastChar
 	}
 }
 
@@ -665,18 +721,44 @@ exit:
 }
 
 func (tkn *Tokenizer) scanString(delim uint16, typ int) (int, []byte) {
-	buffer := &bytes2.Buffer{}
+	var buffer bytes2.Buffer
 	for {
 		ch := tkn.lastChar
-		tkn.next()
-		if ch == delim {
-			if tkn.lastChar == delim {
-				tkn.next()
-			} else {
-				break
+		if ch == eofChar {
+			// Unterminated string.
+			return LEX_ERROR, buffer.Bytes()
+		}
+
+		if ch != delim && ch != '\\' {
+			buffer.WriteByte(byte(ch))
+
+			// Scan ahead to the next interesting character.
+			start := tkn.bufPos
+			for ; tkn.bufPos < tkn.bufSize; tkn.bufPos++ {
+				ch = uint16(tkn.buf[tkn.bufPos])
+				if ch == delim || ch == '\\' {
+					break
+				}
 			}
-		} else if ch == '\\' {
+
+			buffer.Write(tkn.buf[start:tkn.bufPos])
+			tkn.Position += (tkn.bufPos - start)
+
+			if tkn.bufPos >= tkn.bufSize {
+				// Reached the end of the buffer without finding a delim or
+				// escape character.
+				tkn.next()
+				continue
+			}
+
+			tkn.bufPos++
+			tkn.Position++
+		}
+		tkn.next() // Read one past the delim or escape character.
+
+		if ch == '\\' {
 			if tkn.lastChar == eofChar {
+				// String terminates mid escape character.
 				return LEX_ERROR, buffer.Bytes()
 			}
 			if decodedChar := sqltypes.SQLDecodeMap[byte(tkn.lastChar)]; decodedChar == sqltypes.DontEscape {
@@ -684,13 +766,16 @@ func (tkn *Tokenizer) scanString(delim uint16, typ int) (int, []byte) {
 			} else {
 				ch = uint16(decodedChar)
 			}
-			tkn.next()
+
+		} else if ch == delim && tkn.lastChar != delim {
+			// Correctly terminated string, which is not a double delim.
+			break
 		}
-		if ch == eofChar {
-			return LEX_ERROR, buffer.Bytes()
-		}
+
 		buffer.WriteByte(byte(ch))
+		tkn.next()
 	}
+
 	return typ, buffer.Bytes()
 }
 
@@ -737,13 +822,34 @@ func (tkn *Tokenizer) consumeNext(buffer *bytes2.Buffer) {
 }
 
 func (tkn *Tokenizer) next() {
-	if ch, err := tkn.InStream.ReadByte(); err != nil {
-		// Only EOF is possible.
-		tkn.lastChar = eofChar
-	} else {
-		tkn.lastChar = uint16(ch)
+	if tkn.bufPos >= tkn.bufSize && tkn.InStream != nil {
+		// Try and refill the buffer
+		var err error
+		tkn.bufPos = 0
+		if tkn.bufSize, err = tkn.InStream.Read(tkn.buf); err != io.EOF && err != nil {
+			tkn.LastError = err
+		}
 	}
-	tkn.Position++
+
+	if tkn.bufPos >= tkn.bufSize {
+		if tkn.lastChar != eofChar {
+			tkn.Position++
+			tkn.lastChar = eofChar
+		}
+	} else {
+		tkn.Position++
+		tkn.lastChar = uint16(tkn.buf[tkn.bufPos])
+		tkn.bufPos++
+	}
+}
+
+// reset clears any internal state.
+func (tkn *Tokenizer) reset() {
+	tkn.ParseTree = nil
+	tkn.partialDDL = nil
+	tkn.posVarIndex = 0
+	tkn.nesting = 0
+	tkn.ForceEOF = false
 }
 
 func isLetter(ch uint16) bool {

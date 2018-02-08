@@ -49,8 +49,8 @@ var (
 func FindHealthyRdonlyTablet(ctx context.Context, wr *wrangler.Wrangler, tsc *discovery.TabletStatsCache, cell, keyspace, shard string, minHealthyRdonlyTablets int) (*topodatapb.TabletAlias, error) {
 	if tsc == nil {
 		// No healthcheck instance provided. Create one.
-		healthCheck := discovery.NewHealthCheck(*remoteActionsTimeout, *healthcheckRetryDelay, *healthCheckTimeout)
-		tsc = discovery.NewTabletStatsCache(healthCheck, cell)
+		healthCheck := discovery.NewHealthCheck(*healthcheckRetryDelay, *healthCheckTimeout)
+		tsc = discovery.NewTabletStatsCache(healthCheck, wr.TopoServer(), cell)
 		watcher := discovery.NewShardReplicationWatcher(wr.TopoServer(), healthCheck, cell, keyspace, shard, *healthCheckTopologyRefresh, discovery.DefaultTopoReadConcurrency)
 		defer watcher.Stop()
 		defer healthCheck.Close()
@@ -76,7 +76,7 @@ func waitForHealthyRdonlyTablets(ctx context.Context, wr *wrangler.Wrangler, tsc
 		cell, keyspace, shard, minHealthyRdonlyTablets, deadlineForLog.Sub(time.Now()).Seconds())
 
 	// Wait for at least one RDONLY tablet initially before checking the list.
-	if err := tsc.WaitForTablets(busywaitCtx, cell, keyspace, shard, []topodatapb.TabletType{topodatapb.TabletType_RDONLY}); err != nil {
+	if err := tsc.WaitForTablets(busywaitCtx, cell, keyspace, shard, topodatapb.TabletType_RDONLY); err != nil {
 		return nil, fmt.Errorf("error waiting for RDONLY tablets for (%v,%v/%v): %v", cell, keyspace, shard, err)
 	}
 

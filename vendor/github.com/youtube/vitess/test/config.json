@@ -197,9 +197,7 @@
 			"Manual": false,
 			"Shard": 1,
 			"RetryMax": 0,
-			"Tags": [
-				"tests_broken_on_travis"
-			]
+			"Tags": []
 		},
 		"mysqlctl": {
 			"File": "mysqlctl.py",
@@ -212,17 +210,16 @@
 				"site_test"
 			]
 		},
-		"php": {
+		"check_make_parser": {
 			"File": "",
 			"Args": [],
 			"Command": [
-				"make",
-				"php_test"
+				"tools/check_make_parser.sh"
 			],
-			"Manual": true,
-			"Shard": 4,
-			"RetryMax": 0,
-				"Tags": []
+			"Manual": false,
+			"Shard": 0,
+			"RetryMax": 1,
+			"Tags": []
 		},
 		"python_client": {
 			"File": "python_client_test.py",
@@ -304,17 +301,6 @@
 				"site_test"
 			]
 		},
-		"tabletmanager_etcd": {
-			"File": "tabletmanager.py",
-			"Args": ["--topo-server-flavor=etcd"],
-			"Command": [],
-			"Manual": false,
-			"Shard": 1,
-			"RetryMax": 0,
-			"Tags": [
-				"site_test"
-			]
-		},
 		"tabletmanager_etcd2": {
 			"File": "tabletmanager.py",
 			"Args": ["--topo-server-flavor=etcd2"],
@@ -346,9 +332,7 @@
 			"Manual": false,
 			"Shard": 1,
 			"RetryMax": 1,
-			"Tags": [
-				"tests_broken_on_travis"
-			]
+			"Tags": []
 		},
 		"unit_race": {
 			"File": "",
@@ -357,7 +341,7 @@
 				"make",
 				"unit_test_race"
 			],
-			"Manual": true,
+			"Manual": false,
 			"Shard": 0,
 			"RetryMax": 0,
 			"Tags": []

@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/youtube/vitess/go/sqltypes"
 	"github.com/youtube/vitess/go/vt/sqlparser"
 	"github.com/youtube/vitess/go/vt/vtgate/engine"
 	"github.com/youtube/vitess/go/vt/vtgate/vindexes"
@@ -83,7 +84,12 @@ func checkAggregates(sel *sqlparser.Select, bldr builder) (builder, error) {
 	if !hasAggregates {
 		return bldr, nil
 	}
-	if hasAggregates && !isRoute {
+
+	// The query has aggregates. We can proceed only
+	// if the underlying primitive is a route because
+	// we need the ability to push down group by and
+	// order by clauses.
+	if !isRoute {
 		return bldr, errors.New("unsupported: cross-shard query with aggregates")
 	}
 
@@ -441,6 +447,11 @@ func (oa *orderedAggregate) PushOrderByNull() {
 	panic("BUG: unreachable")
 }
 
+// PushOrderByRand satisfies the builder interface.
+func (oa *orderedAggregate) PushOrderByRand() {
+	panic("BUG: unreachable")
+}
+
 // SetUpperLimit satisfies the builder interface.
 func (oa *orderedAggregate) SetUpperLimit(count *sqlparser.SQLVal) {
 	oa.input.SetUpperLimit(count)
@@ -452,7 +463,18 @@ func (oa *orderedAggregate) PushMisc(sel *sqlparser.Select) {
 }
 
 // Wireup satisfies the builder interface.
+// If text columns are detected in the keys, then the function modifies
+// the primitive to pull a corresponding weight_string from mysql and
+// compare those instead. This is because we currently don't have the
+// ability to mimic mysql's collation behavior.
 func (oa *orderedAggregate) Wireup(bldr builder, jt *jointab) error {
+	for i, colnum := range oa.eaggr.Keys {
+		if sqltypes.IsText(oa.resultColumns[colnum].column.typ) {
+			// len(oa.resultColumns) does not change. No harm using the value multiple times.
+			oa.eaggr.TruncateColumnCount = len(oa.resultColumns)
+			oa.eaggr.Keys[i] = oa.input.SupplyWeightString(colnum)
+		}
+	}
 	return oa.input.Wireup(bldr, jt)
 }
 

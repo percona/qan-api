@@ -20,7 +20,10 @@ import (
 	"flag"
 	"fmt"
 	"net"
+	"os"
+	"sync/atomic"
 	"syscall"
+	"time"
 
 	log "github.com/golang/glog"
 	"golang.org/x/net/context"
@@ -29,10 +32,10 @@ import (
 	"github.com/youtube/vitess/go/sqltypes"
 	"github.com/youtube/vitess/go/vt/callerid"
 	"github.com/youtube/vitess/go/vt/servenv"
+	"github.com/youtube/vitess/go/vt/vttls"
 
 	querypb "github.com/youtube/vitess/go/vt/proto/query"
 	vtgatepb "github.com/youtube/vitess/go/vt/proto/vtgate"
-	"github.com/youtube/vitess/go/vt/servenv/grpcutils"
 )
 
 var (
@@ -47,6 +50,8 @@ var (
 	mysqlSslCa   = flag.String("mysql_server_ssl_ca", "", "Path to ssl CA for mysql server plugin SSL. If specified, server will require and validate client certs.")
 
 	mysqlSlowConnectWarnThreshold = flag.Duration("mysql_slow_connect_warn_threshold", 0, "Warn if it takes more than the given threshold for a mysql connection to establish")
+
+	busyConnections int32
 )
 
 // vtgateHandler implements the Listener interface.
@@ -70,11 +75,14 @@ func (vh *vtgateHandler) ConnectionClosed(c *mysql.Conn) {
 	ctx := context.Background()
 	session, _ := c.ClientData.(*vtgatepb.Session)
 	if session != nil {
+		if session.InTransaction {
+			defer atomic.AddInt32(&busyConnections, -1)
+		}
 		_, _, _ = vh.vtg.Execute(ctx, session, "rollback", make(map[string]*querypb.BindVariable))
 	}
 }
 
-func (vh *vtgateHandler) ComQuery(c *mysql.Conn, query []byte, callback func(*sqltypes.Result) error) error {
+func (vh *vtgateHandler) ComQuery(c *mysql.Conn, query string, callback func(*sqltypes.Result) error) error {
 	// FIXME(alainjobart): Add some kind of timeout to the context.
 	ctx := context.Background()
 
@@ -102,14 +110,24 @@ func (vh *vtgateHandler) ComQuery(c *mysql.Conn, query []byte, callback func(*sq
 			session.Options.ClientFoundRows = true
 		}
 	}
+
+	if !session.InTransaction {
+		atomic.AddInt32(&busyConnections, 1)
+	}
+	defer func() {
+		if !session.InTransaction {
+			atomic.AddInt32(&busyConnections, -1)
+		}
+	}()
+
 	if c.SchemaName != "" {
 		session.TargetString = c.SchemaName
 	}
 	if session.Options.Workload == querypb.ExecuteOptions_OLAP {
-		err := vh.vtg.StreamExecute(ctx, session, string(query), make(map[string]*querypb.BindVariable), callback)
+		err := vh.vtg.StreamExecute(ctx, session, query, make(map[string]*querypb.BindVariable), callback)
 		return mysql.NewSQLErrorFromError(err)
 	}
-	session, result, err := vh.vtg.Execute(ctx, session, string(query), make(map[string]*querypb.BindVariable))
+	session, result, err := vh.vtg.Execute(ctx, session, query, make(map[string]*querypb.BindVariable))
 	c.ClientData = session
 	err = mysql.NewSQLErrorFromError(err)
 	if err != nil {
@@ -146,12 +164,12 @@ func initMySQLProtocol() {
 	if *mysqlServerPort >= 0 {
 		mysqlListener, err = mysql.NewListener("tcp", net.JoinHostPort(*mysqlServerBindAddress, fmt.Sprintf("%v", *mysqlServerPort)), authServer, vh)
 		if err != nil {
-			log.Fatalf("mysql.NewListener failed: %v", err)
+			log.Exitf("mysql.NewListener failed: %v", err)
 		}
 		if *mysqlSslCert != "" && *mysqlSslKey != "" {
-			mysqlListener.TLSConfig, err = grpcutils.TLSServerConfig(*mysqlSslCert, *mysqlSslKey, *mysqlSslCa)
+			mysqlListener.TLSConfig, err = vttls.ServerConfig(*mysqlSslCert, *mysqlSslKey, *mysqlSslCa)
 			if err != nil {
-				log.Fatalf("grpcutils.TLSServerConfig failed: %v", err)
+				log.Exitf("grpcutils.TLSServerConfig failed: %v", err)
 				return
 			}
 		}
@@ -163,40 +181,83 @@ func initMySQLProtocol() {
 			mysqlListener.SlowConnectWarnThreshold = *mysqlSlowConnectWarnThreshold
 		}
 		// Start listening for tcp
-		go func() {
-			mysqlListener.Accept()
-		}()
+		go mysqlListener.Accept()
 	}
 
 	if *mysqlServerSocketPath != "" {
 		// Let's create this unix socket with permissions to all users. In this way,
 		// clients can connect to vtgate mysql server without being vtgate user
 		oldMask := syscall.Umask(000)
-		mysqlUnixListener, err = mysql.NewListener("unix", *mysqlServerSocketPath, authServer, vh)
+		mysqlUnixListener, err = newMysqlUnixSocket(*mysqlServerSocketPath, authServer, vh)
 		_ = syscall.Umask(oldMask)
 		if err != nil {
-			log.Fatalf("mysql.NewListener failed: %v", err)
+			log.Exitf("mysql.NewListener failed: %v", err)
+			return
 		}
 		// Listen for unix socket
-		go func() {
-			mysqlUnixListener.Accept()
-		}()
+		go mysqlUnixListener.Accept()
+	}
+}
+
+// newMysqlUnixSocket creates a new unix socket mysql listener. If a socket file already exists, attempts
+// to clean it up.
+func newMysqlUnixSocket(address string, authServer mysql.AuthServer, handler mysql.Handler) (*mysql.Listener, error) {
+	listener, err := mysql.NewListener("unix", address, authServer, handler)
+	switch err := err.(type) {
+	case nil:
+		return listener, nil
+	case *net.OpError:
+		log.Warningf("Found existent socket when trying to create new unix mysql listener: %s, attempting to clean up", address)
+		// err.Op should never be different from listen, just being extra careful
+		// in case in the future other errors are returned here
+		if err.Op != "listen" {
+			return nil, err
+		}
+		_, dialErr := net.Dial("unix", address)
+		if dialErr == nil {
+			log.Errorf("Existent socket '%s' is still accepting connections, aborting", address)
+			return nil, err
+		}
+		removeFileErr := os.Remove(address)
+		if removeFileErr != nil {
+			log.Errorf("Couldn't remove existent socket file: %s", address)
+			return nil, err
+		}
+		listener, listenerErr := mysql.NewListener("unix", address, authServer, handler)
+		return listener, listenerErr
+	default:
+		return nil, err
+	}
+}
+
+func shutdownMysqlProtocolAndDrain() {
+	if mysqlListener != nil {
+		mysqlListener.Close()
+		mysqlListener = nil
+	}
+	if mysqlUnixListener != nil {
+		mysqlUnixListener.Close()
+		mysqlUnixListener = nil
+	}
+
+	if atomic.LoadInt32(&busyConnections) > 0 {
+		log.Infof("Waiting for all client connections to be idle (%d active)...", atomic.LoadInt32(&busyConnections))
+		start := time.Now()
+		reported := start
+		for atomic.LoadInt32(&busyConnections) != 0 {
+			if time.Since(reported) > 2*time.Second {
+				log.Infof("Still waiting for client connections to be idle (%d active)...", atomic.LoadInt32(&busyConnections))
+				reported = time.Now()
+			}
+
+			time.Sleep(1 * time.Millisecond)
+		}
 	}
 }
 
 func init() {
 	servenv.OnRun(initMySQLProtocol)
-
-	servenv.OnTerm(func() {
-		if mysqlListener != nil {
-			mysqlListener.Close()
-			mysqlListener = nil
-		}
-		if mysqlUnixListener != nil {
-			mysqlUnixListener.Close()
-			mysqlUnixListener = nil
-		}
-	})
+	servenv.OnTermSync(shutdownMysqlProtocolAndDrain)
 }
 
 var pluginInitializers []func()

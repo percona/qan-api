@@ -17,14 +17,13 @@ limitations under the License.
 package vtgate
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"sync"
-	"time"
 
+	"github.com/youtube/vitess/go/json2"
+	"github.com/youtube/vitess/go/vt/grpcclient"
 	"github.com/youtube/vitess/go/vt/key"
-	"github.com/youtube/vitess/go/vt/topo"
 	"github.com/youtube/vitess/go/vt/vterrors"
 	"github.com/youtube/vitess/go/vt/vttablet/queryservice"
 	"github.com/youtube/vitess/go/vt/vttablet/sandboxconn"
@@ -78,7 +77,9 @@ func getSandboxSrvVSchema() *vschemapb.SrvVSchema {
 	defer sandboxMu.Unlock()
 	for keyspace, sandbox := range ksToSandbox {
 		var vs vschemapb.Keyspace
-		_ = json.Unmarshal([]byte(sandbox.VSchema), &vs)
+		if err := json2.Unmarshal([]byte(sandbox.VSchema), &vs); err != nil {
+			panic(err)
+		}
 		result.Keyspaces[keyspace] = &vs
 	}
 	return result
@@ -107,9 +108,6 @@ type sandbox struct {
 	// DialMustFail specifies how often sandboxDialer must fail before succeeding
 	DialMustFail int
 
-	// DialMustTimeout specifies how often sandboxDialer must time out
-	DialMustTimeout int
-
 	// KeyspaceServedFrom specifies the served-from keyspace for vertical resharding
 	KeyspaceServedFrom string
 
@@ -131,7 +129,6 @@ func (s *sandbox) Reset() {
 	s.SrvKeyspaceMustFail = 0
 	s.DialCounter = 0
 	s.DialMustFail = 0
-	s.DialMustTimeout = 0
 	s.KeyspaceServedFrom = ""
 	s.ShardSpec = DefaultShardSpec
 	s.SrvKeyspaceCallback = nil
@@ -218,11 +215,11 @@ func createUnshardedKeyspace() (*topodatapb.SrvKeyspace, error) {
 	return unshardedSrvKeyspace, nil
 }
 
-// sandboxTopo satisfies the SrvTopoServer interface
+// sandboxTopo satisfies the srvtopo.Server interface
 type sandboxTopo struct {
 }
 
-// GetSrvKeyspaceNames is part of SrvTopoServer.
+// GetSrvKeyspaceNames is part of the srvtopo.Server interface.
 func (sct *sandboxTopo) GetSrvKeyspaceNames(ctx context.Context, cell string) ([]string, error) {
 	sandboxMu.Lock()
 	defer sandboxMu.Unlock()
@@ -233,7 +230,7 @@ func (sct *sandboxTopo) GetSrvKeyspaceNames(ctx context.Context, cell string) ([
 	return keyspaces, nil
 }
 
-// GetSrvKeyspace is part of SrvTopoServer.
+// GetSrvKeyspace is part of the srvtopo.Server interface.
 func (sct *sandboxTopo) GetSrvKeyspace(ctx context.Context, cell, keyspace string) (*topodatapb.SrvKeyspace, error) {
 	sand := getSandbox(keyspace)
 	sand.sandmu.Lock()
@@ -270,14 +267,12 @@ func (sct *sandboxTopo) GetSrvKeyspace(ctx context.Context, cell, keyspace strin
 	return createShardedSrvKeyspace(sand.ShardSpec, sand.KeyspaceServedFrom)
 }
 
-// WatchSrvVSchema is part of SrvTopoServer.
-func (sct *sandboxTopo) WatchSrvVSchema(ctx context.Context, cell string) (*topo.WatchSrvVSchemaData, <-chan *topo.WatchSrvVSchemaData, topo.CancelFunc) {
-	return &topo.WatchSrvVSchemaData{
-		Value: getSandboxSrvVSchema(),
-	}, make(chan *topo.WatchSrvVSchemaData), func() {}
+// WatchSrvVSchema is part of the srvtopo.Server interface.
+func (sct *sandboxTopo) WatchSrvVSchema(ctx context.Context, cell string, callback func(*vschemapb.SrvVSchema, error)) {
+	callback(getSandboxSrvVSchema(), nil)
 }
 
-func sandboxDialer(tablet *topodatapb.Tablet, timeout time.Duration) (queryservice.QueryService, error) {
+func sandboxDialer(tablet *topodatapb.Tablet, failFast grpcclient.FailFast) (queryservice.QueryService, error) {
 	sand := getSandbox(tablet.Keyspace)
 	sand.sandmu.Lock()
 	defer sand.sandmu.Unlock()
@@ -285,11 +280,6 @@ func sandboxDialer(tablet *topodatapb.Tablet, timeout time.Duration) (queryservi
 	if sand.DialMustFail > 0 {
 		sand.DialMustFail--
 		return nil, vterrors.New(vtrpcpb.Code_UNAVAILABLE, "conn error")
-	}
-	if sand.DialMustTimeout > 0 {
-		time.Sleep(timeout)
-		sand.DialMustTimeout--
-		return nil, vterrors.New(vtrpcpb.Code_UNAVAILABLE, "conn unreachable")
 	}
 	sbc := sandboxconn.NewSandboxConn(tablet)
 	return sbc, nil

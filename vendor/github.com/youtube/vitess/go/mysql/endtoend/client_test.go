@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"golang.org/x/net/context"
 
@@ -21,6 +22,14 @@ func TestKill(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// Create the kill connection first. It sometimes takes longer
+	// than 10s
+	killConn, err := mysql.Connect(ctx, &connParams)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer killConn.Close()
+
 	errChan := make(chan error)
 	go func() {
 		_, err = conn.ExecuteFetch("select sleep(10) from dual", 1000, false)
@@ -28,18 +37,27 @@ func TestKill(t *testing.T) {
 		close(errChan)
 	}()
 
-	killConn, err := mysql.Connect(ctx, &connParams)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer killConn.Close()
-
+	// Give extra time for the query to start executing.
+	time.Sleep(2 * time.Second)
 	if _, err := killConn.ExecuteFetch(fmt.Sprintf("kill %v", conn.ConnectionID), 1000, false); err != nil {
 		t.Fatalf("Kill(%v) failed: %v", conn.ConnectionID, err)
 	}
 
+	// The error text will depend on what ExecuteFetch in the go
+	// routine managed to do. Two cases:
+	// 1. the connection was closed before the go routine's ExecuteFetch
+	//   entered the ReadFull call. Then we get an error with
+	//   'connection reset by peer' in it.
+	// 2. the connection was closed while the go routine's ExecuteFetch
+	//   was stuck on the read. Then we get io.EOF.
+	// The code and sqlState needs to be right in any case, the text
+	// will differ.
 	err = <-errChan
-	assertSQLError(t, err, mysql.CRServerLost, mysql.SSUnknownSQLState, "EOF", "select sleep(10) from dual")
+	if strings.Contains(err.Error(), "EOF") {
+		assertSQLError(t, err, mysql.CRServerLost, mysql.SSUnknownSQLState, "EOF", "select sleep(10) from dual")
+	} else {
+		assertSQLError(t, err, mysql.CRServerLost, mysql.SSUnknownSQLState, "", "connection reset by peer")
+	}
 }
 
 // TestKill2006 opens a connection, kills the
