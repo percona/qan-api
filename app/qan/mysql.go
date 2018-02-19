@@ -478,10 +478,11 @@ func (h *MySQLMetricWriter) prepareStatements() {
 
 	h.stmtInsertQueryExample, err = h.dbm.DB().Prepare(
 		"INSERT INTO query_examples" +
-			" (instance_id, query_class_id, period, ts, db, Query_time, query)" +
-			" VALUES (?, ?, DATE(?), ?, ?, ?, ?)" +
+			" (instance_id, query_class_id, period, ts, db, Query_time, query, truncated)" +
+			" VALUES (?, ?, DATE(?), ?, ?, ?, ?, ?)" +
 			" ON DUPLICATE KEY UPDATE" +
 			" query=IF(VALUES(Query_time) > COALESCE(Query_time, 0), VALUES(query), query)," +
+			" truncated=IF(VALUES(Query_time) > COALESCE(Query_time, 0), VALUES(truncated), truncated)," +
 			" ts=IF(VALUES(Query_time) > COALESCE(Query_time, 0), VALUES(ts), ts)," +
 			" Query_time=IF(VALUES(Query_time) > COALESCE(Query_time, 0), VALUES(Query_time), Query_time)," +
 			" db=IF(VALUES(Query_time) > COALESCE(Query_time, 0), VALUES(db), db)")
@@ -564,7 +565,7 @@ func init() {
 		" VALUES (" + shared.Placeholders(len(ClassCols)+len(metricColumns)) + ")"
 }
 
-var GlobalCols []string = []string{
+var GlobalCols = []string{
 	`instance_id`,
 	`start_ts`,
 	`end_ts`,
@@ -580,7 +581,7 @@ var GlobalCols []string = []string{
 	`stop_offset`,
 }
 
-var ClassCols []string = []string{
+var ClassCols = []string{
 	`query_class_id`,
 	`instance_id`,
 	`start_ts`,

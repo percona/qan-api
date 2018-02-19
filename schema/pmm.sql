@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS query_examples (
   db              VARCHAR(255) NOT NULL DEFAULT '',
   Query_time      FLOAT NOT NULL DEFAULT 0,
   query           TEXT NOT NULL,
+  truncated       TINYINT(1) UNSIGNED NOT NULL,
   --
   PRIMARY KEY (query_class_id, instance_id, period)
 ) CHARSET='utf8';

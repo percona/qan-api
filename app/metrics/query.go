@@ -1065,7 +1065,7 @@ func (h *QueryMetricsHandler) GetMetricsSparklines(classId uint, instanceId uint
 	intervalTs := (endTs - begin.Unix()) / (amountOfPoints - 1)
 
 	var args = []interface{}{endTs, intervalTs, endTs, intervalTs, classId, instanceId, begin, end}
-	var query string = queryClassMetrics
+	var query = queryClassMetrics
 	if classId == 0 {
 		// pop queryClassId
 		args = append(args[:4], args[5:]...)

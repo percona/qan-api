@@ -92,7 +92,7 @@
     "event",
     "log"
   ]
-  revision = "63da60b59ae83a05a8d447a5fdf2186ff3c37f4b"
+  revision = "7fe399a5451f6e7c0b76b886612e7046e28b963b"
 
 [[projects]]
   branch = "master"
@@ -220,6 +220,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a4317797a281f40d9f1919b1dea69ea81553734a9756981df73d8e5db6cfe017"
+  inputs-digest = "52490a4139235049922a8a0e8813dea96e9637a479d22cb6f544730e0ab963bf"
   solver-name = "gps-cdcl"
   solver-version = 1
