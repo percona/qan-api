@@ -26,6 +26,7 @@
 .. |firefox|                  replace:: *Firefox*
 .. |grafana|                  replace:: *Grafana*
 .. |innodb|                   replace:: *InnoDB*
+.. |tokudb|                   replace:: *TokuDB*
 .. |linux|                    replace:: *Linux*
 .. |mariadb|                  replace:: *MariaDB*
 .. |metrics-monitor|          replace:: *Metrics Monitor*
@@ -37,6 +38,8 @@
 .. |orchestrator|             replace:: *Orchestrator*
 .. |percona-server|           replace:: *Percona Server*
 .. |percona|                  replace:: *Percona*
+.. |percona-xtradb-cluster|   replace:: *Percona XtraDB Cluster*
+.. |xtradb-cluster|           replace:: *Percona XtraDB Cluster*
 .. |perl|                     replace:: *Perl*
 .. |pmm-client|               replace:: *PMM Client*
 .. |pmm-server|               replace:: *PMM Server*
@@ -75,21 +78,22 @@
 
 .. Metrics Monitor Dashboards 
 
+.. |advanced-data-exploration|       replace:: *Advanced Data Exploration*
+.. |adv-data-expl|                   replace:: *Advanced Data Exploration*
 .. |amazon-rds-aurora-mysql-metrics| replace:: *Amazon RDS / Aurora MySQL Metrics*
 .. |cross-server-graphs|             replace:: *Cross Server Graphs*
 .. |mysql-overview|                  replace:: *MySQL Overview*
 .. |pmm-add-instance|                replace:: *PMM Add Instance*
 .. |pmm-query-analytics|             replace:: *PMM Query Analytics*
 .. |pmm-system-summary|              replace:: *PMM System Summary*
+.. |prometheus-exporters-overview|   replace:: *Prometheus Exporters Overview*
 
 .. Metrics Monitor Graphs
 
-.. |advanced-data-exploration| replace:: *Advanced Data Exploration*
-.. |adv-data-expl|             replace:: *Advanced Data Exploration*
 .. |cpu-credit-usage|          replace:: *CPU Credit Usage*			     
 .. |cpu-usage|                 replace:: *CPU Usage*
 .. |mysql-myrocks-metrics|     replace:: *MySQL MyRocks Metrics*
-
+.. |mysql-amazon-aurora-metrics| replace:: *MySQL Amazon Aurora Metrics*
 .. GUI Elements
 
 .. |gui.load|                               replace:: :guilabel:`Load`
@@ -145,3 +149,8 @@
 
 .. |db.admin| replace:: :file:`admin` 
 .. |db.local| replace:: :file:`local`
+
+.. Metrics
+
+.. |mysql-global-status-commands-total| replace:: :command:`mysql_global_status_commands_total`
+.. |mysql-global-variables-autocommit|  replace:: :command:`mysql_global_variables_autocommit`

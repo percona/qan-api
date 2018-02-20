@@ -36,15 +36,12 @@ Terminology Reference
 
    Ports
 
-      The following ports must be open to enable communication between the
-      :term:`PMM Server` and :term:`PMM clients <PMM Client>`.
+      The following ports must be open to enable communication between
+      the :term:`PMM Server` and :term:`PMM clients <PMM Client>`.
 
-      |pmm-server| should keep ports 80 or 443 ports open for computers where
-      |pmm-client| is installed to access the |pmm| web interface.
-
-      On each computer where |pmm-client| is installed, the following ports must
-      be open. These are default ports that you can change when adding the
-      respective monitoring service with the |pmm-admin.add| command.
+      |pmm-server| should keep ports 80 or 443 ports open for
+      computers where |pmm-client| is installed to access the |pmm|
+      web interface.
 
       42000
          For |pmm| to collect genenal system metrics.
@@ -98,7 +95,9 @@ Terminology Reference
 
       .. seealso::
 
-	 - :ref:`Enabling orchestrator when running a docker container <pmm/docker.additional_option>`.
+	 Docker container: Enabling orchestrator
+
+	    :term:`ORCHESTRATOR_ENABLED (Option)`
 
    Data Source Name
 

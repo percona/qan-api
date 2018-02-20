@@ -98,7 +98,7 @@ func (h *MySQLHandler) Get(ids []string) (map[string]queryProto.Query, error) {
 
 func (h *MySQLHandler) Examples(classId, instanceId uint) ([]queryProto.Example, error) {
 	params := []interface{}{classId}
-	q := "SELECT c.checksum, i.uuid, e.period, e.ts, e.db, e.Query_time, e.query, e.truncated" +
+	q := "SELECT c.checksum, i.uuid, e.period, e.ts, e.db, e.Query_time, e.query, e.size" +
 		" FROM query_examples e" +
 		" JOIN query_classes c USING (query_class_id)" +
 		" JOIN instances i USING (instance_id)" +
@@ -126,7 +126,7 @@ func (h *MySQLHandler) Examples(classId, instanceId uint) ([]queryProto.Example,
 			&e.Db,
 			&e.QueryTime,
 			&e.Query,
-			&e.Truncated,
+			&e.Size,
 		)
 		if err != nil {
 			return nil, err
@@ -139,12 +139,12 @@ func (h *MySQLHandler) Examples(classId, instanceId uint) ([]queryProto.Example,
 
 func (h *MySQLHandler) Example(classId, instanceId uint, period time.Time) (queryProto.Example, error) {
 	e := queryProto.Example{}
-	q := "SELECT period, ts, db, Query_time, query, truncated" +
+	q := "SELECT period, ts, db, Query_time, query, size" +
 		" FROM query_examples" +
 		" WHERE query_class_id = ? AND instance_id = ? AND period <= ?" +
 		" ORDER BY period DESC" +
 		" LIMIT 1"
-	err := h.dbm.DB().QueryRow(q, classId, instanceId, period).Scan(&e.Period, &e.Ts, &e.Db, &e.QueryTime, &e.Query, &e.Truncated)
+	err := h.dbm.DB().QueryRow(q, classId, instanceId, period).Scan(&e.Period, &e.Ts, &e.Db, &e.QueryTime, &e.Query, &e.Size)
 	if err != nil {
 		return e, mysql.Error(err, "Example: SELECT query_examples")
 	}

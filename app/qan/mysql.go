@@ -358,7 +358,16 @@ func (h *MySQLMetricWriter) updateQueryClass(queryClassId uint, lastSeen, tables
 func (h *MySQLMetricWriter) updateQueryExample(instanceId uint, class *event.Class, classId uint, lastSeen string) error {
 	// INSERT ON DUPLICATE KEY UPDATE
 	t := time.Now()
-	_, err := h.stmtInsertQueryExample.Exec(instanceId, classId, lastSeen, lastSeen, class.Example.Db, class.Example.QueryTime, class.Example.Query)
+	_, err := h.stmtInsertQueryExample.Exec(
+		instanceId,
+		classId,
+		lastSeen,
+		lastSeen,
+		class.Example.Db,
+		class.Example.QueryTime,
+		class.Example.Query,
+		class.Example.Size,
+	)
 	h.stats.TimingDuration(h.stats.System("update-query-example"), time.Now().Sub(t), h.stats.SampleRate)
 	return mysql.Error(err, "updateQueryExample INSERT query_examples")
 }
@@ -478,11 +487,11 @@ func (h *MySQLMetricWriter) prepareStatements() {
 
 	h.stmtInsertQueryExample, err = h.dbm.DB().Prepare(
 		"INSERT INTO query_examples" +
-			" (instance_id, query_class_id, period, ts, db, Query_time, query, truncated)" +
+			" (instance_id, query_class_id, period, ts, db, Query_time, query, size)" +
 			" VALUES (?, ?, DATE(?), ?, ?, ?, ?, ?)" +
 			" ON DUPLICATE KEY UPDATE" +
 			" query=IF(VALUES(Query_time) > COALESCE(Query_time, 0), VALUES(query), query)," +
-			" truncated=IF(VALUES(Query_time) > COALESCE(Query_time, 0), VALUES(truncated), truncated)," +
+			" size=IF(VALUES(Query_time) > COALESCE(Query_time, 0), VALUES(size), size)," +
 			" ts=IF(VALUES(Query_time) > COALESCE(Query_time, 0), VALUES(ts), ts)," +
 			" Query_time=IF(VALUES(Query_time) > COALESCE(Query_time, 0), VALUES(Query_time), Query_time)," +
 			" db=IF(VALUES(Query_time) > COALESCE(Query_time, 0), VALUES(db), db)")
@@ -492,7 +501,7 @@ func (h *MySQLMetricWriter) prepareStatements() {
 
 	/* Why use LEAST and GREATEST and update first_seen?
 	   Because of the asynchronous nature of agents communication, we can receive
-	   the same query from 2 different agents but it isn't madatory that the first
+	   the same query from 2 different agents but it isn't mandatory that the first
 	   one we receive, is the older one. There could have been a network error on
 	   the agent having the oldest data
 	*/

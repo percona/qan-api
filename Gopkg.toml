@@ -30,4 +30,9 @@ required = ["github.com/revel/cmd/revel"]
 
 [[constraint]]
   name = "github.com/percona/go-mysql"
-  revision = "7fe399a5451f6e7c0b76b886612e7046e28b963b"
+  revision = "373945f3aa5d8a990e5a63282f16366633d23c97"
+
+[[constraint]]
+  name = "github.com/percona/pmm"
+  revision = "890bc6cddb845dce02cb92749b429617e6581dbe"
+

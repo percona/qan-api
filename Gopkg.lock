@@ -92,10 +92,9 @@
     "event",
     "log"
   ]
-  revision = "7fe399a5451f6e7c0b76b886612e7046e28b963b"
+  revision = "373945f3aa5d8a990e5a63282f16366633d23c97"
 
 [[projects]]
-  branch = "master"
   name = "github.com/percona/pmm"
   packages = [
     "proto",
@@ -104,7 +103,7 @@
     "proto/qan",
     "proto/query"
   ]
-  revision = "99e800552681871f9956a84bf5465a6d19455597"
+  revision = "890bc6cddb845dce02cb92749b429617e6581dbe"
 
 [[projects]]
   name = "github.com/pkg/errors"
@@ -220,6 +219,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "52490a4139235049922a8a0e8813dea96e9637a479d22cb6f544730e0ab963bf"
+  inputs-digest = "231c167354e5d119592eaa1f8dd21da8bf18a12fbd17591a164cebcd8ea88e0a"
   solver-name = "gps-cdcl"
   solver-version = 1
