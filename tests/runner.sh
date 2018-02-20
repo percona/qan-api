@@ -13,7 +13,7 @@ touch "$coverreport"
 echo >> "$coverreport"
 # Find test files ending with _test.go but ignore those starting with _
 # also ignore hidden files and directories
-for dir in $(find . \( ! -path '*/\.*' \) -type f \( -name '*_test.go' ! -name '_*' \) -not -path "./vendor/*" -print | xargs -n1 dirname | sort | uniq); do
+for dir in $(find . \( ! -path '*/\.*' \) -type f \( -name '*_test.go' ! -name '_*' \) -not -path "\./vendor/*" -print | xargs -n1 dirname | sort | uniq); do
    header="Package ${thisPkg}/${dir#./}"
    echo "$header"
    (
