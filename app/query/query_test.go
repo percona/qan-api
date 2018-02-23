@@ -28,6 +28,7 @@ import (
 	"github.com/percona/qan-api/app/db"
 	"github.com/percona/qan-api/app/query"
 	"github.com/percona/qan-api/config"
+	queryService "github.com/percona/qan-api/service/query"
 	"github.com/percona/qan-api/stats"
 	"github.com/percona/qan-api/test"
 	testDb "github.com/percona/qan-api/tests/setup/db"
@@ -90,4 +91,17 @@ func (s *TestSuite) TestSimple(t *C) {
 	t.Assert(err, IsNil)
 
 	assert.Equal(t, expect, got)
+}
+
+func (s *TestSuite) TestTables(t *C) {
+	m := queryService.NewMini(config.ApiRootDir + "/service/query")
+	go m.Run()
+	defer m.Stop()
+
+	s.testDb.LoadDataInfiles(config.TestDir + "/qan/may-2015")
+
+	qh := query.NewMySQLHandler(db.DBManager, s.nullStats)
+	got, err := qh.Tables(328, m)
+	assert.NoError(t, err)
+	assert.Equal(t, []queryProto.Table([]queryProto.Table{{Db: "percona", Table: "cache"}}), got)
 }

@@ -180,47 +180,59 @@ func (h *MySQLHandler) UpdateTables(classId uint, tables []queryProto.Table) err
 	return nil
 }
 
-func (h *MySQLHandler) Tables(classId uint, m *queryService.Mini) ([]queryProto.Table, bool, error) {
-	created := false
-
+func (h *MySQLHandler) Tables(classId uint, m *queryService.Mini) ([]queryProto.Table, error) {
 	// First try to get the tables. If we're lucky, they've already been parsed
 	// and we're done.
 	var tablesJSON string
 	err := h.dbm.DB().QueryRow("SELECT COALESCE(tables, '') FROM query_classes WHERE query_class_id = ?", classId).Scan(&tablesJSON)
 	if err != nil {
-		return nil, created, mysql.Error(err, "Tables: SELECT query_classes (tables)")
+		return nil, mysql.Error(err, "Tables: SELECT query_classes (tables)")
 	}
 
 	// We're lucky: we already have tables.
 	if tablesJSON != "" {
 		var tables []queryProto.Table
 		if err := json.Unmarshal([]byte(tablesJSON), &tables); err != nil {
-			return nil, created, err
+			return nil, err
 		}
-		return tables, created, nil
+		return tables, nil
 	}
 
 	// We're not lucky: this query hasn't been parsed yet, so do it now, if possible.
 	var fingerprint string
 	err = h.dbm.DB().QueryRow("SELECT fingerprint FROM query_classes WHERE query_class_id = ?", classId).Scan(&fingerprint)
 	if err != nil {
-		return nil, created, mysql.Error(err, "Tables: SELECT query_classes (fingerprint)")
+		return nil, mysql.Error(err, "Tables: SELECT query_classes (fingerprint)")
+	}
+
+	// Get database from latest example.
+	var example, db string
+	err = h.dbm.DB().QueryRow(
+		"SELECT query, db "+
+			" FROM query_examples "+
+			" JOIN query_classes c USING (query_class_id)"+
+			" JOIN instances i USING (instance_id)"+
+			" WHERE query_class_id = ?"+
+			" ORDER BY period DESC",
+		classId,
+	).Scan(&example, &db)
+	if err != nil {
+		return nil, mysql.Error(err, "Tables: SELECT query_examples (db)")
 	}
 
 	// If this returns an error, then youtube/vitess/go/sqltypes/sqlparser
 	// doesn't support the query type.
-	tableInfo, err := m.Parse(fingerprint, "")
+	tableInfo, err := m.Parse(fingerprint, example, db)
 	if err != nil {
-		return nil, created, shared.ErrNotImplemented
+		return nil, shared.ErrNotImplemented
 	}
 
 	// The sqlparser was able to handle the query, so marshal the tables
 	// into a string and update the tables column so next time we don't
 	// have to parse the query.
 	if err := h.UpdateTables(classId, tableInfo.Tables); err != nil {
-		return nil, created, err
+		return nil, err
 	}
-	created = true
 
-	return tableInfo.Tables, created, nil
+	return tableInfo.Tables, nil
 }
