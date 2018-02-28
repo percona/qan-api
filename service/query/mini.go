@@ -31,9 +31,9 @@ import (
 )
 
 type QueryInfo struct {
-	Query    string
-	Abstract string
-	Tables   []queryProto.Table
+	Fingerprint string
+	Abstract    string
+	Tables      []queryProto.Table
 }
 
 type parseTry struct {
@@ -57,23 +57,21 @@ func (t protoTables) String() string {
 }
 
 const (
-	MAX_JOIN_DEPTH = 20
+	MAX_JOIN_DEPTH = 100
 )
 
 var (
 	ErrNotSupported = errors.New("SQL parser does not support the query")
-	ErrMaxJoinDepth = errors.New("recurse to MAX_JOIN_DEPTH")
 )
 
 type Mini struct {
-	Debug         bool
-	cwd           string
-	queryIn       chan string
-	miniOut       chan string
-	parseChan     chan parseTry
-	onlyTables    bool
-	stopChan      chan struct{}
-	defaultSchema string
+	Debug      bool
+	cwd        string
+	queryIn    chan string
+	miniOut    chan string
+	parseChan  chan parseTry
+	onlyTables bool
+	stopChan   chan struct{}
 }
 
 func NewMini(cwd string) *Mini {
@@ -143,16 +141,26 @@ func (m *Mini) Run() {
 	}
 }
 
-func (m *Mini) Parse(query, defaultDb string) (QueryInfo, error) {
+func (m *Mini) Parse(fingerprint, example, defaultDb string) (QueryInfo, error) {
+	fingerprint = strings.TrimSpace(fingerprint)
+	example = strings.TrimSpace(example)
 	q := QueryInfo{
-		Tables: []queryProto.Table{},
+		Fingerprint: fingerprint,
+		Tables:      []queryProto.Table{},
 	}
 	defer func() {
 		q.Abstract = strings.TrimSpace(q.Abstract)
 	}()
 
 	if m.Debug {
-		fmt.Printf("\n\nquery: %s\n", query)
+		fmt.Printf("\n\nexample: %s\n", example)
+		fmt.Printf("\n\nfingerprint: %s\n", fingerprint)
+	}
+
+	query := fingerprint
+	// If we have a query example, that's better to parse than a fingerprint.
+	if example != "" {
+		query = example
 	}
 
 	// Fingerprints replace IN (1, 2) -> in (?+) but "?+" is not valid SQL so
@@ -161,8 +169,6 @@ func (m *Mini) Parse(query, defaultDb string) (QueryInfo, error) {
 
 	// Internal newlines break everything.
 	query = strings.Replace(query, "\n", " ", -1)
-
-	q.Query = query
 
 	s, err := sqlparser.Parse(query)
 	if err != nil {
@@ -215,68 +221,65 @@ func (m *Mini) parse() {
 		case p := <-m.parseChan:
 			q := p.q
 			crashChan = p.crashChan
-			switch p.s.(type) {
+			switch s := p.s.(type) {
 			case *sqlparser.Select:
 				q.Abstract = "SELECT"
-				s := p.s.(*sqlparser.Select)
 				if m.Debug {
 					fmt.Printf("struct: %#v\n", s)
 				}
-				for _, t := range s.From {
-					if err := m.addTable(&q, t, 0); err != nil {
-						switch err {
-						case ErrMaxJoinDepth:
-							fmt.Printf("WARN: %s (%d): %s\n", err, MAX_JOIN_DEPTH, p.query)
-							q, _ = m.usePerl(p.query, q, ErrNotSupported)
-						default:
-							fmt.Printf("ERROR: %s: %s\n", err, p.query)
-						}
-					}
+				tables := getTablesFromTableExprs(s.From)
+				if len(tables) > 0 {
+					q.Tables = append(q.Tables, tables...)
+					q.Abstract += " " + tables.String()
 				}
 			case *sqlparser.Insert:
 				// REPLACEs will be recognized by sqlparser as INSERTs and the Action field
 				// will have the real command
-				s := p.s.(*sqlparser.Insert)
 				q.Abstract = strings.ToUpper(s.Action)
 				if m.Debug {
 					fmt.Printf("struct: %#v\n", s)
 				}
 				table := queryProto.Table{
-					Db:    firstNonEmpty(s.Table.Qualifier.String(), m.defaultSchema),
+					Db:    s.Table.Qualifier.String(),
 					Table: s.Table.Name.String(),
 				}
 				q.Tables = append(q.Tables, table)
 				q.Abstract += " " + table.String()
 			case *sqlparser.Update:
 				q.Abstract = "UPDATE"
-				s := p.s.(*sqlparser.Update)
 				if m.Debug {
 					fmt.Printf("struct: %#v\n", s)
 				}
-				tables := m.getTablesFromStmt(s.TableExprs)
-				q.Tables = append(q.Tables, tables...)
-				q.Abstract += " " + tables.String()
+				tables := getTablesFromTableExprs(s.TableExprs)
+				if len(tables) > 0 {
+					q.Tables = append(q.Tables, tables...)
+					q.Abstract += " " + tables.String()
+				}
 			case *sqlparser.Delete:
 				q.Abstract = "DELETE"
-				s := p.s.(*sqlparser.Delete)
 				if m.Debug {
 					fmt.Printf("struct: %#v\n", s)
 				}
-				tables := m.getTablesFromStmt(s.TableExprs)
-				q.Tables = append(q.Tables, tables...)
-				q.Abstract += " " + tables.String()
+				tables := getTablesFromTableExprs(s.TableExprs)
+				if len(tables) > 0 {
+					q.Tables = append(q.Tables, tables...)
+					q.Abstract += " " + tables.String()
+				}
+			case *sqlparser.Use:
+				q.Abstract = "USE"
+			case *sqlparser.Show:
+				sql := sqlparser.NewTrackedBuffer(nil)
+				s.Format(sql)
+				q.Abstract = strings.ToUpper(sql.String())
 			default:
 				if m.Debug {
 					fmt.Printf("unsupported type: %#v\n", p.s)
 				}
 				q, _ = m.usePerl(p.query, q, ErrNotSupported)
-				switch p.s.(type) {
-				case *sqlparser.Use:
-					m.defaultSchema = p.s.(*sqlparser.Use).DBName.String()
+				switch use := p.s.(type) {
 				case *sqlparser.DDL:
-					use := p.s.(*sqlparser.DDL)
 					table := queryProto.Table{
-						Db:    firstNonEmpty(use.NewName.Qualifier.String(), m.defaultSchema),
+						Db:    use.NewName.Qualifier.String(),
 						Table: use.NewName.Name.String(),
 					}
 					q.Tables = append(q.Tables, table)
@@ -287,35 +290,6 @@ func (m *Mini) parse() {
 			return
 		}
 	}
-}
-
-func (m *Mini) getTablesFromStmt(tes sqlparser.TableExprs) protoTables {
-	t := []queryProto.Table{}
-	if len(tes) > 0 {
-		for _, te := range tes {
-			if ate, ok := te.(*sqlparser.AliasedTableExpr); ok {
-				if tn, ok := ate.Expr.(sqlparser.TableName); ok {
-					tbl := tn.Name.String()
-					schema := tn.Qualifier.String()
-					table := queryProto.Table{
-						Db:    firstNonEmpty(schema, m.defaultSchema),
-						Table: tbl,
-					}
-					t = append(t, table)
-				}
-			}
-		}
-	}
-	return t
-}
-
-func firstNonEmpty(vals ...string) string {
-	for _, val := range vals {
-		if val != "" {
-			return val
-		}
-	}
-	return ""
 }
 
 func (m *Mini) usePerl(query string, q QueryInfo, originalErr error) (QueryInfo, error) {
@@ -330,22 +304,30 @@ func (m *Mini) usePerl(query string, q QueryInfo, originalErr error) (QueryInfo,
 	return q, nil
 }
 
-func (m *Mini) addTable(q *QueryInfo, t sqlparser.TableExpr, depth uint) error {
+func getTablesFromTableExprs(tes sqlparser.TableExprs) (tables protoTables) {
+	for _, te := range tes {
+		tables = append(tables, getTablesFromTableExpr(te, 0)...)
+	}
+	return tables
+}
+
+func getTablesFromTableExpr(te sqlparser.TableExpr, depth uint) (tables protoTables) {
 	if depth > MAX_JOIN_DEPTH {
-		return ErrMaxJoinDepth
+		return nil
 	}
 	depth++
-	switch a := t.(type) {
+	switch a := te.(type) {
 	case *sqlparser.AliasedTableExpr:
 		n := a.Expr.(sqlparser.TableName)
 		db := n.Qualifier.String()
-		tbl := n.Name.String()
-		table := queryProto.Table{
-			Db:    firstNonEmpty(db, m.defaultSchema),
-			Table: tbl,
+		tbl := parseTableName(n.Name.String())
+		if db != "" || tbl != "" {
+			table := queryProto.Table{
+				Db:    db,
+				Table: tbl,
+			}
+			tables = append(tables, table)
 		}
-		q.Tables = append(q.Tables, table)
-		q.Abstract += " " + table.String()
 	case *sqlparser.JoinTableExpr:
 		// This case happens for JOIN clauses. It recurses to the bottom
 		// of the tree via the left expressions, then it unwinds. E.g. with
@@ -364,16 +346,27 @@ func (m *Mini) addTable(q *QueryInfo, t sqlparser.TableExpr, depth uint) error {
 		// store the right-side values: "b" then "c". Because of this, if
 		// MAX_JOIN_DEPTH is reached, we lose the whole tree because if we take
 		// the existing right-side tables, we'll generate a misleading partial
-		// list of tables, e.g. "SELECT b c". In this case, the caller falls
-		// back to usePerl() to get the full, correct abstract (but no tables).
-		//
-		// todo: maybe a partial list is better than no list?
-		if err := m.addTable(q, a.LeftExpr, depth); err != nil {
-			return err
-		}
-		if err := m.addTable(q, a.RightExpr, depth); err != nil {
-			return err
-		}
+		// list of tables, e.g. "SELECT b c".
+		tables = append(tables, getTablesFromTableExpr(a.LeftExpr, depth)...)
+		tables = append(tables, getTablesFromTableExpr(a.RightExpr, depth)...)
 	}
-	return nil
+
+	return tables
+}
+
+func parseTableName(tableName string) string {
+	// https://dev.mysql.com/doc/refman/5.7/en/select.html#idm140358784149168
+	// You are permitted to specify DUAL as a dummy table name in situations where no tables are referenced:
+	//
+	// ```
+	// mysql> SELECT 1 + 1 FROM DUAL;
+	//         -> 2
+	// ```
+	// DUAL is purely for the convenience of people who require that all SELECT statements
+	// should have FROM and possibly other clauses. MySQL may ignore the clauses.
+	// MySQL does not require FROM DUAL if no tables are referenced.
+	if tableName == "dual" {
+		tableName = ""
+	}
+	return tableName
 }
