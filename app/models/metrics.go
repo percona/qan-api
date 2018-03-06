@@ -265,24 +265,24 @@ func (m metrics) computeSpecialMetrics(gMetrics generalMetrics) specialMetrics {
 }
 
 type specialMetrics struct {
-	Lock_time_avg_per_query_time                 float32 `json:",omitempty" divider:"Query_time_avg"`
-	InnoDB_rec_lock_wait_avg_per_query_time      float32 `json:",omitempty" divider:"Query_time_avg"`
-	InnoDB_IO_r_wait_avg_per_query_time          float32 `json:",omitempty" divider:"Query_time_avg"`
-	InnoDB_queue_wait_avg_per_query_time         float32 `json:",omitempty" divider:"Query_time_avg"`
-	InnoDB_IO_r_bytes_sum_per_io                 float32 `json:",omitempty" divider:"InnoDB_IO_r_ops_sum"`
-	QC_Hit_sum_per_query                         float32 `json:",omitempty" divider:"Query_count"`
-	Bytes_sent_sum_per_rows                      float32 `json:",omitempty" divider:"Rows_sent_sum"`
-	Rows_examined_sum_per_rows                   float32 `json:",omitempty" divider:"Rows_sent_sum"`
-	Filesort_sum_per_query                       float32 `json:",omitempty" divider:"Query_count"`
-	Filesort_on_disk_sum_per_query               float32 `json:",omitempty" divider:"Query_count"`
-	Merge_passes_sum_per_external_sort           float32 `json:",omitempty" divider:"Filesort_sum"`
-	Full_join_sum_per_query                      float32 `json:",omitempty" divider:"Query_count"`
-	Full_scan_sum_per_query                      float32 `json:",omitempty" divider:"Query_count"`
-	Tmp_table_sum_per_query                      float32 `json:",omitempty" divider:"Query_count"`
-	Tmp_tables_sum_per_query_with_tmp_table      float32 `json:",omitempty" divider:"Tmp_table_sum"`
-	Tmp_table_on_disk_sum_per_query              float32 `json:",omitempty" divider:"Query_count"`
-	Tmp_disk_tables_sum_per_query_with_tmp_table float32 `json:",omitempty" divider:"Tmp_table_on_disk_sum"`
-	Tmp_table_sizes_sum_per_query                float32 `json:",omitempty" divider:"Query_count"`
+	Lock_time_avg_per_query_time                     float32 `json:",omitempty" divider:"Query_time_avg"`
+	InnoDB_rec_lock_wait_avg_per_query_time          float32 `json:",omitempty" divider:"Query_time_avg"`
+	InnoDB_IO_r_wait_avg_per_query_time              float32 `json:",omitempty" divider:"Query_time_avg"`
+	InnoDB_queue_wait_avg_per_query_time             float32 `json:",omitempty" divider:"Query_time_avg"`
+	InnoDB_IO_r_bytes_sum_per_io                     float32 `json:",omitempty" divider:"InnoDB_IO_r_ops_sum"`
+	QC_Hit_sum_per_query                             float32 `json:",omitempty" divider:"Query_count"`
+	Bytes_sent_sum_per_rows                          float32 `json:",omitempty" divider:"Rows_sent_sum"`
+	Rows_examined_sum_per_rows                       float32 `json:",omitempty" divider:"Rows_sent_sum"`
+	Filesort_sum_per_query                           float32 `json:",omitempty" divider:"Query_count"`
+	Filesort_on_disk_sum_per_query                   float32 `json:",omitempty" divider:"Query_count"`
+	Merge_passes_sum_per_external_sort               float32 `json:",omitempty" divider:"Filesort_sum"`
+	Full_join_sum_per_query                          float32 `json:",omitempty" divider:"Query_count"`
+	Full_scan_sum_per_query                          float32 `json:",omitempty" divider:"Query_count"`
+	Tmp_table_sum_per_query                          float32 `json:",omitempty" divider:"Query_count"`
+	Tmp_tables_sum_per_query_with_tmp_table          float32 `json:",omitempty" divider:"Tmp_table_sum"`
+	Tmp_table_on_disk_sum_per_query                  float32 `json:",omitempty" divider:"Query_count"`
+	Tmp_disk_tables_sum_per_query_with_tmp_table     float32 `json:",omitempty" divider:"Tmp_table_on_disk_sum"`
+	Tmp_table_sizes_sum_per_query_with_any_tmp_table float32 `json:",omitempty" divider:"Total_tmp_tables_sum"` // = Tmp_table_sum + Tmp_table_on_disk_sum
 }
 
 type rateMetrics struct {
@@ -438,6 +438,7 @@ type generalMetrics struct {
 	Tmp_table_sizes_med   float32 `json:",omitempty"`
 	Tmp_table_sizes_p95   float32 `json:",omitempty"`
 	Tmp_table_sizes_max   float32 `json:",omitempty"`
+	Total_tmp_tables_sum  float32 `json:",omitempty"`
 	QC_Hit_sum            float32 `json:",omitempty"`
 	Full_scan_sum         float32 `json:",omitempty"`
 	Full_join_sum         float32 `json:",omitempty"`
@@ -592,6 +593,7 @@ SELECT
  COALESCE(AVG(Tmp_table_sizes_med), 0) AS tmp_table_sizes_med,
  COALESCE(AVG(Tmp_table_sizes_p95), 0) AS tmp_table_sizes_p95,
  COALESCE(MAX(Tmp_table_sizes_max), 0) AS tmp_table_sizes_max,
+ COALESCE(SUM(Tmp_table_sum + Tmp_table_on_disk_sum), 0) AS total_tmp_tables_sum,
 
  COALESCE(SUM(QC_Hit_sum), 0) AS qc_hit_sum,
  COALESCE(SUM(Filesort_sum), 0) AS filesort_sum,
