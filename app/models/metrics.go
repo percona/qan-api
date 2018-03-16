@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+const maxAmountOfPoints = 60
+
 // Metrics provire instruments to works with metrics
 type metrics struct{}
 
@@ -81,8 +83,14 @@ type classMetrics struct {
 func (m metrics) GetClassMetrics(classID, instanceID uint, begin, end time.Time) (classMetrics, []rateMetrics) {
 	currentMetricGroup := m.identifyMetricGroup(instanceID, begin, end)
 	currentMetricGroup.CountField = "query_count"
+
+	intervalTime := end.Sub(begin).Minutes()
+	amountOfPoints := int64(maxAmountOfPoints)
+	if intervalTime < maxAmountOfPoints {
+		amountOfPoints = int64(intervalTime)
+	}
 	endTs := end.Unix()
-	intervalTs := (endTs - begin.Unix()) / (amountOfPoints - 1)
+	intervalTs := int64(end.Sub(begin).Seconds()) / amountOfPoints
 	args := args{
 		classID,
 		instanceID,
@@ -93,7 +101,7 @@ func (m metrics) GetClassMetrics(classID, instanceID uint, begin, end time.Time)
 	}
 	// this two lines should be before ServerSummary = true
 	generalClassMetrics := m.getMetrics(currentMetricGroup, args)
-	sparks := m.getSparklines(currentMetricGroup, args)
+	sparks := m.getSparklines(currentMetricGroup, args, amountOfPoints)
 
 	// turns metric group to global
 	currentMetricGroup.ServerSummary = true
@@ -124,8 +132,14 @@ func (m metrics) GetGlobalMetrics(instanceID uint, begin, end time.Time) (global
 	currentMetricGroup := m.identifyMetricGroup(instanceID, begin, end)
 	currentMetricGroup.ServerSummary = true
 	currentMetricGroup.CountField = "total_query_count"
+
+	intervalTime := end.Sub(begin).Minutes()
 	endTs := end.Unix()
-	intervalTs := (endTs - begin.Unix()) / (amountOfPoints - 1)
+	amountOfPoints := int64(maxAmountOfPoints)
+	if intervalTime < maxAmountOfPoints {
+		amountOfPoints = int64(intervalTime)
+	}
+	intervalTs := int64(end.Sub(begin).Seconds()) / amountOfPoints
 	args := args{
 		0,
 		instanceID,
@@ -136,7 +150,7 @@ func (m metrics) GetGlobalMetrics(instanceID uint, begin, end time.Time) (global
 	}
 
 	generalGlobalMetrics := m.getMetrics(currentMetricGroup, args)
-	sparks := m.getSparklines(currentMetricGroup, args)
+	sparks := m.getSparklines(currentMetricGroup, args, amountOfPoints)
 
 	aMetrics := m.computeRateMetrics(generalGlobalMetrics, begin, end)
 	sMetrics := m.computeSpecialMetrics(generalGlobalMetrics)
@@ -167,9 +181,7 @@ func (m metrics) getMetrics(group metricGroup, args args) generalMetrics {
 	return gMetrics
 }
 
-const amountOfPoints = 60
-
-func (m metrics) getSparklines(group metricGroup, args args) []rateMetrics {
+func (m metrics) getSparklines(group metricGroup, args args, amountOfPoints int64) []rateMetrics {
 	var querySparklinesBuffer bytes.Buffer
 	if tmpl, err := template.New("querySparklinesSQL").Parse(querySparklinesTemplate); err != nil {
 		log.Fatalln(err)
@@ -197,12 +209,15 @@ func (m metrics) getSparklines(group metricGroup, args args) []rateMetrics {
 	var pointN int64
 	for pointN = 0; pointN < amountOfPoints; pointN++ {
 		ts := args.EndTS - pointN*args.IntervalTS
-		if val, ok := metricLogRaw[ts]; ok {
-			sparks = append(sparks, val)
-		} else {
-			val := rateMetrics{Point: pointN, Ts: time.Unix(ts, 0).UTC()}
-			sparks = append(sparks, val)
+		val, ok := metricLogRaw[ts]
+		// skip first or last point if they are empty
+		if (pointN == 0 || pointN == amountOfPoints-1) && !ok {
+			continue
 		}
+		if !ok {
+			val = rateMetrics{Point: pointN, Ts: time.Unix(ts, 0).UTC()}
+		}
+		sparks = append(sparks, val)
 	}
 	return sparks
 }
