@@ -16,428 +16,428 @@
       "Id": "",
       "Abstract": "",
       "Fingerprint": "",
-      "QPS": 210.35856481481483,
-      "Load": 0.0858381973952055,
+      "QPS": 12621.513888888889,
+      "Load": 5.1502918437123295,
       "Log": [
         {
           "Point": 0,
           "Start_ts": "2015-05-02T00:00:00Z",
-          "Query_count": 328964,
-          "Query_load": 0.07134217,
-          "Query_time_avg": 0.00032388722
+          "Query_count": 314120,
+          "Query_load": 0.06917091,
+          "Query_time_avg": 0.00032379627
         },
         {
           "Point": 1,
-          "Start_ts": "2015-05-01T23:35:36Z",
-          "Query_count": 285354,
-          "Query_load": 0.07609669,
-          "Query_time_avg": 0.0003992816
+          "Start_ts": "2015-05-01T23:36:00Z",
+          "Query_count": 290027,
+          "Query_load": 0.07778344,
+          "Query_time_avg": 0.00039550982
         },
         {
           "Point": 2,
-          "Start_ts": "2015-05-01T23:11:12Z",
-          "Query_count": 374047,
-          "Query_load": 0.08470089,
-          "Query_time_avg": 0.00033263653
+          "Start_ts": "2015-05-01T23:12:00Z",
+          "Query_count": 354340,
+          "Query_load": 0.08235052,
+          "Query_time_avg": 0.000336994
         },
         {
           "Point": 3,
-          "Start_ts": "2015-05-01T22:46:48Z",
-          "Query_count": 370699,
-          "Query_load": 0.075265296,
-          "Query_time_avg": 0.00030602218
+          "Start_ts": "2015-05-01T22:48:00Z",
+          "Query_count": 371718,
+          "Query_load": 0.077761345,
+          "Query_time_avg": 0.00031015158
         },
         {
           "Point": 4,
-          "Start_ts": "2015-05-01T22:22:24Z",
-          "Query_count": 325712,
-          "Query_load": 0.088489465,
-          "Query_time_avg": 0.0004216169
+          "Start_ts": "2015-05-01T22:24:00Z",
+          "Query_count": 290028,
+          "Query_load": 0.081490226,
+          "Query_time_avg": 0.00041389954
         },
         {
           "Point": 5,
-          "Start_ts": "2015-05-01T21:58:00Z",
-          "Query_count": 238830,
-          "Query_load": 0.07935993,
-          "Query_time_avg": 0.00049027795
+          "Start_ts": "2015-05-01T22:00:00Z",
+          "Query_count": 273404,
+          "Query_load": 0.08601548,
+          "Query_time_avg": 0.0004886811
         },
         {
           "Point": 6,
-          "Start_ts": "2015-05-01T21:33:36Z",
-          "Query_count": 311467,
-          "Query_load": 0.07735276,
-          "Query_time_avg": 0.00037394112
+          "Start_ts": "2015-05-01T21:36:00Z",
+          "Query_count": 281158,
+          "Query_load": 0.071876295,
+          "Query_time_avg": 0.00038154208
         },
         {
           "Point": 7,
-          "Start_ts": "2015-05-01T21:09:12Z",
-          "Query_count": 461205,
-          "Query_load": 0.088279806,
-          "Query_time_avg": 0.00029261736
+          "Start_ts": "2015-05-01T21:12:00Z",
+          "Query_count": 462022,
+          "Query_load": 0.092276685,
+          "Query_time_avg": 0.00029577262
         },
         {
           "Point": 8,
-          "Start_ts": "2015-05-01T20:44:48Z",
-          "Query_count": 296108,
-          "Query_load": 0.085399896,
-          "Query_time_avg": 0.0004276465
+          "Start_ts": "2015-05-01T20:48:00Z",
+          "Query_count": 298449,
+          "Query_load": 0.07969901,
+          "Query_time_avg": 0.0003992635
         },
         {
           "Point": 9,
-          "Start_ts": "2015-05-01T20:20:24Z",
-          "Query_count": 407538,
-          "Query_load": 0.11501197,
-          "Query_time_avg": 0.00042185458
+          "Start_ts": "2015-05-01T20:24:00Z",
+          "Query_count": 406792,
+          "Query_load": 0.12124982,
+          "Query_time_avg": 0.00043854117
         },
         {
           "Point": 10,
-          "Start_ts": "2015-05-01T19:56:00Z",
-          "Query_count": 323259,
-          "Query_load": 0.07774479,
-          "Query_time_avg": 0.00035886635
+          "Start_ts": "2015-05-01T20:00:00Z",
+          "Query_count": 296416,
+          "Query_load": 0.07763403,
+          "Query_time_avg": 0.00037859092
         },
         {
           "Point": 11,
-          "Start_ts": "2015-05-01T19:31:36Z",
-          "Query_count": 440769,
-          "Query_load": 0.09146343,
-          "Query_time_avg": 0.00031610375
+          "Start_ts": "2015-05-01T19:36:00Z",
+          "Query_count": 376343,
+          "Query_load": 0.082185335,
+          "Query_time_avg": 0.00031995305
         },
         {
           "Point": 12,
-          "Start_ts": "2015-05-01T19:07:12Z",
-          "Query_count": 412931,
-          "Query_load": 0.08716102,
-          "Query_time_avg": 0.00032235857
+          "Start_ts": "2015-05-01T19:12:00Z",
+          "Query_count": 458367,
+          "Query_load": 0.09561055,
+          "Query_time_avg": 0.0003168143
         },
         {
           "Point": 13,
-          "Start_ts": "2015-05-01T18:42:48Z",
-          "Query_count": 397204,
-          "Query_load": 0.07861111,
-          "Query_time_avg": 0.00030599345
+          "Start_ts": "2015-05-01T18:48:00Z",
+          "Query_count": 424216,
+          "Query_load": 0.08057785,
+          "Query_time_avg": 0.0002842478
         },
         {
           "Point": 14,
-          "Start_ts": "2015-05-01T18:18:24Z",
-          "Query_count": 315932,
-          "Query_load": 0.08988131,
-          "Query_time_avg": 0.00042011763
+          "Start_ts": "2015-05-01T18:24:00Z",
+          "Query_count": 311321,
+          "Query_load": 0.09008676,
+          "Query_time_avg": 0.00041936143
         },
         {
           "Point": 15,
-          "Start_ts": "2015-05-01T17:54:00Z",
-          "Query_count": 271801,
-          "Query_load": 0.07485518,
-          "Query_time_avg": 0.00040896973
+          "Start_ts": "2015-05-01T18:00:00Z",
+          "Query_count": 276331,
+          "Query_load": 0.07632214,
+          "Query_time_avg": 0.0004054935
         },
         {
           "Point": 16,
-          "Start_ts": "2015-05-01T17:29:36Z",
-          "Query_count": 259940,
-          "Query_load": 0.07819154,
-          "Query_time_avg": 0.00042657735
+          "Start_ts": "2015-05-01T17:36:00Z",
+          "Query_count": 253464,
+          "Query_load": 0.07072634,
+          "Query_time_avg": 0.00040629914
         },
         {
           "Point": 17,
-          "Start_ts": "2015-05-01T17:05:12Z",
-          "Query_count": 370748,
-          "Query_load": 0.086153075,
-          "Query_time_avg": 0.00034847972
+          "Start_ts": "2015-05-01T17:12:00Z",
+          "Query_count": 336723,
+          "Query_load": 0.09242358,
+          "Query_time_avg": 0.00039958846
         },
         {
           "Point": 18,
-          "Start_ts": "2015-05-01T16:40:48Z",
-          "Query_count": 459298,
-          "Query_load": 0.0847393,
-          "Query_time_avg": 0.00027720738
+          "Start_ts": "2015-05-01T16:48:00Z",
+          "Query_count": 431659,
+          "Query_load": 0.08401809,
+          "Query_time_avg": 0.00028938035
         },
         {
           "Point": 19,
-          "Start_ts": "2015-05-01T16:16:24Z",
-          "Query_count": 398881,
-          "Query_load": 0.09558382,
-          "Query_time_avg": 0.00037390034
+          "Start_ts": "2015-05-01T16:24:00Z",
+          "Query_count": 410155,
+          "Query_load": 0.088331304,
+          "Query_time_avg": 0.00032552963
         },
         {
           "Point": 20,
-          "Start_ts": "2015-05-01T15:52:00Z",
-          "Query_count": 320297,
-          "Query_load": 0.08389073,
-          "Query_time_avg": 0.00039366152
+          "Start_ts": "2015-05-01T16:00:00Z",
+          "Query_count": 338714,
+          "Query_load": 0.090875775,
+          "Query_time_avg": 0.0004042937
         },
         {
           "Point": 21,
-          "Start_ts": "2015-05-01T15:27:36Z",
-          "Query_count": 308407,
-          "Query_load": 0.09109595,
-          "Query_time_avg": 0.00042673424
+          "Start_ts": "2015-05-01T15:36:00Z",
+          "Query_count": 299916,
+          "Query_load": 0.08267325,
+          "Query_time_avg": 0.0003987642
         },
         {
           "Point": 22,
-          "Start_ts": "2015-05-01T15:03:12Z",
-          "Query_count": 300346,
-          "Query_load": 0.08371125,
-          "Query_time_avg": 0.00042324248
+          "Start_ts": "2015-05-01T15:12:00Z",
+          "Query_count": 321502,
+          "Query_load": 0.09589326,
+          "Query_time_avg": 0.00044108916
         },
         {
           "Point": 23,
-          "Start_ts": "2015-05-01T14:38:48Z",
-          "Query_count": 291031,
-          "Query_load": 0.07619277,
-          "Query_time_avg": 0.0003899948
+          "Start_ts": "2015-05-01T14:48:00Z",
+          "Query_count": 275801,
+          "Query_load": 0.07325277,
+          "Query_time_avg": 0.0003856167
         },
         {
           "Point": 24,
-          "Start_ts": "2015-05-01T14:14:24Z",
-          "Query_count": 295136,
-          "Query_load": 0.08870924,
-          "Query_time_avg": 0.00044836954
+          "Start_ts": "2015-05-01T14:24:00Z",
+          "Query_count": 302642,
+          "Query_load": 0.08852491,
+          "Query_time_avg": 0.00042717045
         },
         {
           "Point": 25,
-          "Start_ts": "2015-05-01T13:50:00Z",
-          "Query_count": 335964,
-          "Query_load": 0.07826667,
-          "Query_time_avg": 0.0003645077
+          "Start_ts": "2015-05-01T14:00:00Z",
+          "Query_count": 262466,
+          "Query_load": 0.0799992,
+          "Query_time_avg": 0.00045163493
         },
         {
           "Point": 26,
-          "Start_ts": "2015-05-01T13:25:36Z",
-          "Query_count": 364970,
-          "Query_load": 0.07636729,
-          "Query_time_avg": 0.00030663644
+          "Start_ts": "2015-05-01T13:36:00Z",
+          "Query_count": 364042,
+          "Query_load": 0.07330346,
+          "Query_time_avg": 0.00029289533
         },
         {
           "Point": 27,
-          "Start_ts": "2015-05-01T13:01:12Z",
-          "Query_count": 278168,
-          "Query_load": 0.08892554,
-          "Query_time_avg": 0.00047941
+          "Start_ts": "2015-05-01T13:12:00Z",
+          "Query_count": 351446,
+          "Query_load": 0.090886265,
+          "Query_time_avg": 0.00038511376
         },
         {
           "Point": 28,
-          "Start_ts": "2015-05-01T12:36:48Z",
-          "Query_count": 251472,
-          "Query_load": 0.075895205,
-          "Query_time_avg": 0.00044882158
+          "Start_ts": "2015-05-01T12:48:00Z",
+          "Query_count": 246941,
+          "Query_load": 0.07743936,
+          "Query_time_avg": 0.0004614048
         },
         {
           "Point": 29,
-          "Start_ts": "2015-05-01T12:12:24Z",
-          "Query_count": 263894,
-          "Query_load": 0.082859054,
-          "Query_time_avg": 0.0004885616
+          "Start_ts": "2015-05-01T12:24:00Z",
+          "Query_count": 249674,
+          "Query_load": 0.083384104,
+          "Query_time_avg": 0.0004973046
         },
         {
           "Point": 30,
-          "Start_ts": "2015-05-01T11:48:00Z",
-          "Query_count": 218674,
-          "Query_load": 0.07160417,
-          "Query_time_avg": 0.0004856581
+          "Start_ts": "2015-05-01T12:00:00Z",
+          "Query_count": 234295,
+          "Query_load": 0.07578966,
+          "Query_time_avg": 0.00048601895
         },
         {
           "Point": 31,
-          "Start_ts": "2015-05-01T11:23:36Z",
-          "Query_count": 302612,
-          "Query_load": 0.095040835,
-          "Query_time_avg": 0.00046663068
+          "Start_ts": "2015-05-01T11:36:00Z",
+          "Query_count": 239241,
+          "Query_load": 0.07555302,
+          "Query_time_avg": 0.0004608512
         },
         {
           "Point": 32,
-          "Start_ts": "2015-05-01T10:59:12Z",
-          "Query_count": 225611,
-          "Query_load": 0.07386419,
-          "Query_time_avg": 0.00048685184
+          "Start_ts": "2015-05-01T11:12:00Z",
+          "Query_count": 277547,
+          "Query_load": 0.092221096,
+          "Query_time_avg": 0.00049037015
         },
         {
           "Point": 33,
-          "Start_ts": "2015-05-01T10:34:48Z",
-          "Query_count": 257188,
-          "Query_load": 0.08086575,
-          "Query_time_avg": 0.00046515418
+          "Start_ts": "2015-05-01T10:48:00Z",
+          "Query_count": 232872,
+          "Query_load": 0.07390173,
+          "Query_time_avg": 0.00046320303
         },
         {
           "Point": 34,
-          "Start_ts": "2015-05-01T10:10:24Z",
-          "Query_count": 327528,
-          "Query_load": 0.099166684,
-          "Query_time_avg": 0.00046486646
+          "Start_ts": "2015-05-01T10:24:00Z",
+          "Query_count": 287347,
+          "Query_load": 0.09367352,
+          "Query_time_avg": 0.00047921608
         },
         {
           "Point": 35,
-          "Start_ts": "2015-05-01T09:46:00Z",
-          "Query_count": 248707,
-          "Query_load": 0.07735931,
-          "Query_time_avg": 0.00046202147
+          "Start_ts": "2015-05-01T10:00:00Z",
+          "Query_count": 290854,
+          "Query_load": 0.088813946,
+          "Query_time_avg": 0.00046066075
         },
         {
           "Point": 36,
-          "Start_ts": "2015-05-01T09:21:36Z",
-          "Query_count": 306312,
-          "Query_load": 0.0948392,
-          "Query_time_avg": 0.0004643712
+          "Start_ts": "2015-05-01T09:36:00Z",
+          "Query_count": 248493,
+          "Query_load": 0.078362696,
+          "Query_time_avg": 0.00046016558
         },
         {
           "Point": 37,
-          "Start_ts": "2015-05-01T08:57:12Z",
-          "Query_count": 249046,
-          "Query_load": 0.08264432,
-          "Query_time_avg": 0.00048800063
+          "Start_ts": "2015-05-01T09:12:00Z",
+          "Query_count": 288813,
+          "Query_load": 0.09059649,
+          "Query_time_avg": 0.0004625219
         },
         {
           "Point": 38,
-          "Start_ts": "2015-05-01T08:32:48Z",
-          "Query_count": 251281,
-          "Query_load": 0.08163478,
-          "Query_time_avg": 0.00048624756
+          "Start_ts": "2015-05-01T08:48:00Z",
+          "Query_count": 252867,
+          "Query_load": 0.08169167,
+          "Query_time_avg": 0.00046947593
         },
         {
           "Point": 39,
-          "Start_ts": "2015-05-01T08:08:24Z",
-          "Query_count": 298028,
-          "Query_load": 0.14136821,
-          "Query_time_avg": 0.0005601033
+          "Start_ts": "2015-05-01T08:24:00Z",
+          "Query_count": 278004,
+          "Query_load": 0.09982667,
+          "Query_time_avg": 0.0005132599
         },
         {
           "Point": 40,
-          "Start_ts": "2015-05-01T07:44:00Z",
-          "Query_count": 280057,
-          "Query_load": 0.10801907,
-          "Query_time_avg": 0.00056109554
+          "Start_ts": "2015-05-01T08:00:00Z",
+          "Query_count": 282826,
+          "Query_load": 0.14111362,
+          "Query_time_avg": 0.0005850311
         },
         {
           "Point": 41,
-          "Start_ts": "2015-05-01T07:19:36Z",
-          "Query_count": 322603,
-          "Query_load": 0.09754705,
-          "Query_time_avg": 0.000454677
+          "Start_ts": "2015-05-01T07:36:00Z",
+          "Query_count": 263190,
+          "Query_load": 0.09616537,
+          "Query_time_avg": 0.0005250903
         },
         {
           "Point": 42,
-          "Start_ts": "2015-05-01T06:55:12Z",
-          "Query_count": 280636,
-          "Query_load": 0.08987338,
-          "Query_time_avg": 0.00047145775
+          "Start_ts": "2015-05-01T07:12:00Z",
+          "Query_count": 323529,
+          "Query_load": 0.10038297,
+          "Query_time_avg": 0.00045889147
         },
         {
           "Point": 43,
-          "Start_ts": "2015-05-01T06:30:48Z",
-          "Query_count": 279244,
-          "Query_load": 0.09403413,
-          "Query_time_avg": 0.0004793897
+          "Start_ts": "2015-05-01T06:48:00Z",
+          "Query_count": 270793,
+          "Query_load": 0.08720709,
+          "Query_time_avg": 0.00047034866
         },
         {
           "Point": 44,
-          "Start_ts": "2015-05-01T06:06:24Z",
-          "Query_count": 282614,
-          "Query_load": 0.081943296,
-          "Query_time_avg": 0.0004260677
+          "Start_ts": "2015-05-01T06:24:00Z",
+          "Query_count": 286099,
+          "Query_load": 0.09515064,
+          "Query_time_avg": 0.0004695964
         },
         {
           "Point": 45,
-          "Start_ts": "2015-05-01T05:42:00Z",
-          "Query_count": 246503,
-          "Query_load": 0.079939224,
-          "Query_time_avg": 0.00048809889
+          "Start_ts": "2015-05-01T06:00:00Z",
+          "Query_count": 266219,
+          "Query_load": 0.09011696,
+          "Query_time_avg": 0.0005002812
         },
         {
           "Point": 46,
-          "Start_ts": "2015-05-01T05:17:36Z",
-          "Query_count": 287102,
-          "Query_load": 0.10781319,
-          "Query_time_avg": 0.00051406986
+          "Start_ts": "2015-05-01T05:36:00Z",
+          "Query_count": 237001,
+          "Query_load": 0.07096041,
+          "Query_time_avg": 0.00043079507
         },
         {
           "Point": 47,
-          "Start_ts": "2015-05-01T04:53:12Z",
-          "Query_count": 230809,
-          "Query_load": 0.07661156,
-          "Query_time_avg": 0.0004939074
+          "Start_ts": "2015-05-01T05:12:00Z",
+          "Query_count": 283299,
+          "Query_load": 0.104369104,
+          "Query_time_avg": 0.00049334986
         },
         {
           "Point": 48,
-          "Start_ts": "2015-05-01T04:28:48Z",
-          "Query_count": 281497,
-          "Query_load": 0.09877987,
-          "Query_time_avg": 0.00049994176
+          "Start_ts": "2015-05-01T04:48:00Z",
+          "Query_count": 226247,
+          "Query_load": 0.07930428,
+          "Query_time_avg": 0.00051302224
         },
         {
           "Point": 49,
-          "Start_ts": "2015-05-01T04:04:24Z",
-          "Query_count": 306775,
-          "Query_load": 0.08370099,
-          "Query_time_avg": 0.00043058
+          "Start_ts": "2015-05-01T04:24:00Z",
+          "Query_count": 302158,
+          "Query_load": 0.10243527,
+          "Query_time_avg": 0.0004855009
         },
         {
           "Point": 50,
-          "Start_ts": "2015-05-01T03:40:00Z",
-          "Query_count": 256681,
-          "Query_load": 0.07719965,
-          "Query_time_avg": 0.00044216908
+          "Start_ts": "2015-05-01T04:00:00Z",
+          "Query_count": 279569,
+          "Query_load": 0.08302446,
+          "Query_time_avg": 0.00045500888
         },
         {
           "Point": 51,
-          "Start_ts": "2015-05-01T03:15:36Z",
-          "Query_count": 287972,
-          "Query_load": 0.08167585,
-          "Query_time_avg": 0.00042786542
+          "Start_ts": "2015-05-01T03:36:00Z",
+          "Query_count": 250171,
+          "Query_load": 0.074933365,
+          "Query_time_avg": 0.00043255076
         },
         {
           "Point": 52,
-          "Start_ts": "2015-05-01T02:51:12Z",
-          "Query_count": 258906,
-          "Query_load": 0.075279236,
-          "Query_time_avg": 0.0004295185
+          "Start_ts": "2015-05-01T03:12:00Z",
+          "Query_count": 289238,
+          "Query_load": 0.08067286,
+          "Query_time_avg": 0.00041267712
         },
         {
           "Point": 53,
-          "Start_ts": "2015-05-01T02:26:48Z",
-          "Query_count": 288796,
-          "Query_load": 0.08488793,
-          "Query_time_avg": 0.00042190644
+          "Start_ts": "2015-05-01T02:48:00Z",
+          "Query_count": 247903,
+          "Query_load": 0.073865876,
+          "Query_time_avg": 0.00043299608
         },
         {
           "Point": 54,
-          "Start_ts": "2015-05-01T02:02:24Z",
-          "Query_count": 298414,
-          "Query_load": 0.0833024,
-          "Query_time_avg": 0.0004214955
+          "Start_ts": "2015-05-01T02:24:00Z",
+          "Query_count": 312184,
+          "Query_load": 0.09020294,
+          "Query_time_avg": 0.00041644982
         },
         {
           "Point": 55,
-          "Start_ts": "2015-05-01T01:38:00Z",
-          "Query_count": 273853,
-          "Query_load": 0.08004119,
-          "Query_time_avg": 0.0004372272
+          "Start_ts": "2015-05-01T02:00:00Z",
+          "Query_count": 271742,
+          "Query_load": 0.081229486,
+          "Query_time_avg": 0.00043477074
         },
         {
           "Point": 56,
-          "Start_ts": "2015-05-01T01:13:36Z",
-          "Query_count": 337624,
-          "Query_load": 0.084759675,
-          "Query_time_avg": 0.00037370482
+          "Start_ts": "2015-05-01T01:36:00Z",
+          "Query_count": 267309,
+          "Query_load": 0.07788342,
+          "Query_time_avg": 0.00042944367
         },
         {
           "Point": 57,
-          "Start_ts": "2015-05-01T00:49:12Z",
-          "Query_count": 276517,
-          "Query_load": 0.077668145,
-          "Query_time_avg": 0.00041427367
+          "Start_ts": "2015-05-01T01:12:00Z",
+          "Query_count": 336616,
+          "Query_load": 0.08640493,
+          "Query_time_avg": 0.00037604597
         },
         {
           "Point": 58,
-          "Start_ts": "2015-05-01T00:24:48Z",
-          "Query_count": 307769,
-          "Query_load": 0.08272541,
-          "Query_time_avg": 0.00040124613
+          "Start_ts": "2015-05-01T00:48:00Z",
+          "Query_count": 265339,
+          "Query_load": 0.07626916,
+          "Query_time_avg": 0.00041707745
         },
         {
           "Point": 59,
-          "Start_ts": "2015-05-01T00:00:24Z",
-          "Query_count": 45249,
-          "Query_load": 0.010075,
-          "Query_time_avg": 0.000325969
+          "Start_ts": "2015-05-01T00:24:00Z",
+          "Query_count": 307769,
+          "Query_load": 0.084104165,
+          "Query_time_avg": 0.00040124613
         }
       ],
       "Stats": {
@@ -457,428 +457,428 @@
       "Id": "94350EA2AB8AAC34",
       "Abstract": "UPDATE wp_options",
       "Fingerprint": "update `wp_options` set `option_value` = ? where `option_name` = ?",
-      "QPS": 2.993912037037037,
-      "Load": 0.0019811616489810316,
+      "QPS": 179.63472222222222,
+      "Load": 0.1188696989388619,
       "Log": [
         {
           "Point": 0,
           "Start_ts": "2015-05-02T00:00:00Z",
-          "Query_count": 3902,
-          "Query_load": 0.0012429939,
-          "Query_time_avg": 0.00046131562
+          "Query_count": 3752,
+          "Query_load": 0.001227709,
+          "Query_time_avg": 0.00046634616
         },
         {
           "Point": 1,
-          "Start_ts": "2015-05-01T23:35:36Z",
-          "Query_count": 4378,
-          "Query_load": 0.0010861715,
-          "Query_time_avg": 0.00036308568
+          "Start_ts": "2015-05-01T23:36:00Z",
+          "Query_count": 4391,
+          "Query_load": 0.0011068229,
+          "Query_time_avg": 0.0003628354
         },
         {
           "Point": 2,
-          "Start_ts": "2015-05-01T23:11:12Z",
-          "Query_count": 4228,
-          "Query_load": 0.0011903818,
-          "Query_time_avg": 0.00040033716
+          "Start_ts": "2015-05-01T23:12:00Z",
+          "Query_count": 3999,
+          "Query_load": 0.0011534638,
+          "Query_time_avg": 0.0004019093
         },
         {
           "Point": 3,
-          "Start_ts": "2015-05-01T22:46:48Z",
-          "Query_count": 4389,
-          "Query_load": 0.0013007787,
-          "Query_time_avg": 0.00043006754
+          "Start_ts": "2015-05-01T22:48:00Z",
+          "Query_count": 4388,
+          "Query_load": 0.001329466,
+          "Query_time_avg": 0.0004325638
         },
         {
           "Point": 4,
-          "Start_ts": "2015-05-01T22:22:24Z",
-          "Query_count": 4130,
-          "Query_load": 0.0011259372,
-          "Query_time_avg": 0.00040328034
+          "Start_ts": "2015-05-01T22:24:00Z",
+          "Query_count": 4154,
+          "Query_load": 0.0011318576,
+          "Query_time_avg": 0.00039592
         },
         {
           "Point": 5,
-          "Start_ts": "2015-05-01T21:58:00Z",
-          "Query_count": 4423,
-          "Query_load": 0.0017665492,
-          "Query_time_avg": 0.00055816583
+          "Start_ts": "2015-05-01T22:00:00Z",
+          "Query_count": 4252,
+          "Query_load": 0.0017210215,
+          "Query_time_avg": 0.0005612208
         },
         {
           "Point": 6,
-          "Start_ts": "2015-05-01T21:33:36Z",
-          "Query_count": 4097,
-          "Query_load": 0.0010503231,
-          "Query_time_avg": 0.00037367333
+          "Start_ts": "2015-05-01T21:36:00Z",
+          "Query_count": 3999,
+          "Query_load": 0.0010804681,
+          "Query_time_avg": 0.0003821707
         },
         {
           "Point": 7,
-          "Start_ts": "2015-05-01T21:09:12Z",
-          "Query_count": 4658,
-          "Query_load": 0.0011423927,
-          "Query_time_avg": 0.0003596518
+          "Start_ts": "2015-05-01T21:12:00Z",
+          "Query_count": 4431,
+          "Query_load": 0.0011158681,
+          "Query_time_avg": 0.0003632323
         },
         {
           "Point": 8,
-          "Start_ts": "2015-05-01T20:44:48Z",
-          "Query_count": 5080,
-          "Query_load": 0.0013981797,
-          "Query_time_avg": 0.00039870068
+          "Start_ts": "2015-05-01T20:48:00Z",
+          "Query_count": 4970,
+          "Query_load": 0.00137015,
+          "Query_time_avg": 0.00039293384
         },
         {
           "Point": 9,
-          "Start_ts": "2015-05-01T20:20:24Z",
-          "Query_count": 5036,
-          "Query_load": 0.0018353374,
-          "Query_time_avg": 0.000529897
+          "Start_ts": "2015-05-01T20:24:00Z",
+          "Query_count": 5108,
+          "Query_load": 0.0018907139,
+          "Query_time_avg": 0.0005299971
         },
         {
           "Point": 10,
-          "Start_ts": "2015-05-01T19:56:00Z",
-          "Query_count": 4970,
-          "Query_load": 0.0012898293,
-          "Query_time_avg": 0.00037830108
+          "Start_ts": "2015-05-01T20:00:00Z",
+          "Query_count": 4812,
+          "Query_load": 0.0012718708,
+          "Query_time_avg": 0.00037975353
         },
         {
           "Point": 11,
-          "Start_ts": "2015-05-01T19:31:36Z",
-          "Query_count": 4782,
-          "Query_load": 0.0014479754,
-          "Query_time_avg": 0.0004406068
+          "Start_ts": "2015-05-01T19:36:00Z",
+          "Query_count": 4963,
+          "Query_load": 0.0013043479,
+          "Query_time_avg": 0.00037780026
         },
         {
           "Point": 12,
-          "Start_ts": "2015-05-01T19:07:12Z",
-          "Query_count": 5269,
-          "Query_load": 0.0013031058,
-          "Query_time_avg": 0.00036249863
+          "Start_ts": "2015-05-01T19:12:00Z",
+          "Query_count": 4821,
+          "Query_load": 0.0014450666,
+          "Query_time_avg": 0.00043069164
         },
         {
           "Point": 13,
-          "Start_ts": "2015-05-01T18:42:48Z",
-          "Query_count": 5556,
-          "Query_load": 0.0014448327,
-          "Query_time_avg": 0.00038081105
+          "Start_ts": "2015-05-01T18:48:00Z",
+          "Query_count": 5471,
+          "Query_load": 0.0014120868,
+          "Query_time_avg": 0.00037105056
         },
         {
           "Point": 14,
-          "Start_ts": "2015-05-01T18:18:24Z",
-          "Query_count": 5105,
-          "Query_load": 0.0019840423,
-          "Query_time_avg": 0.0005344017
+          "Start_ts": "2015-05-01T18:24:00Z",
+          "Query_count": 5068,
+          "Query_load": 0.001993687,
+          "Query_time_avg": 0.0005329288
         },
         {
           "Point": 15,
-          "Start_ts": "2015-05-01T17:54:00Z",
-          "Query_count": 4718,
-          "Query_load": 0.0012139167,
-          "Query_time_avg": 0.00037551488
+          "Start_ts": "2015-05-01T18:00:00Z",
+          "Query_count": 4837,
+          "Query_load": 0.0012887729,
+          "Query_time_avg": 0.0003804793
         },
         {
           "Point": 16,
-          "Start_ts": "2015-05-01T17:29:36Z",
-          "Query_count": 4584,
-          "Query_load": 0.0014594549,
-          "Query_time_avg": 0.0004661828
+          "Start_ts": "2015-05-01T17:36:00Z",
+          "Query_count": 4548,
+          "Query_load": 0.0012709555,
+          "Query_time_avg": 0.00040275612
         },
         {
           "Point": 17,
-          "Start_ts": "2015-05-01T17:05:12Z",
-          "Query_count": 4704,
-          "Query_load": 0.0012299584,
-          "Query_time_avg": 0.0003803979
+          "Start_ts": "2015-05-01T17:12:00Z",
+          "Query_count": 4705,
+          "Query_load": 0.0014538883,
+          "Query_time_avg": 0.000442346
         },
         {
           "Point": 18,
-          "Start_ts": "2015-05-01T16:40:48Z",
-          "Query_count": 4654,
-          "Query_load": 0.001200108,
-          "Query_time_avg": 0.00038087263
+          "Start_ts": "2015-05-01T16:48:00Z",
+          "Query_count": 4408,
+          "Query_load": 0.0011699361,
+          "Query_time_avg": 0.00038555483
         },
         {
           "Point": 19,
-          "Start_ts": "2015-05-01T16:16:24Z",
-          "Query_count": 4429,
-          "Query_load": 0.0013124583,
-          "Query_time_avg": 0.00042463196
+          "Start_ts": "2015-05-01T16:24:00Z",
+          "Query_count": 4463,
+          "Query_load": 0.0013137222,
+          "Query_time_avg": 0.0004162585
         },
         {
           "Point": 20,
-          "Start_ts": "2015-05-01T15:52:00Z",
-          "Query_count": 4481,
-          "Query_load": 0.0013625334,
-          "Query_time_avg": 0.00044474556
+          "Start_ts": "2015-05-01T16:00:00Z",
+          "Query_count": 4375,
+          "Query_load": 0.001348709,
+          "Query_time_avg": 0.00044715492
         },
         {
           "Point": 21,
-          "Start_ts": "2015-05-01T15:27:36Z",
-          "Query_count": 4621,
-          "Query_load": 0.0017013312,
-          "Query_time_avg": 0.0005211162
+          "Start_ts": "2015-05-01T15:36:00Z",
+          "Query_count": 4681,
+          "Query_load": 0.0012950812,
+          "Query_time_avg": 0.00039610124
         },
         {
           "Point": 22,
-          "Start_ts": "2015-05-01T15:03:12Z",
-          "Query_count": 4596,
-          "Query_load": 0.0011820882,
-          "Query_time_avg": 0.00037275816
+          "Start_ts": "2015-05-01T15:12:00Z",
+          "Query_count": 4445,
+          "Query_load": 0.0016291292,
+          "Query_time_avg": 0.0005034168
         },
         {
           "Point": 23,
-          "Start_ts": "2015-05-01T14:38:48Z",
-          "Query_count": 4218,
-          "Query_load": 0.00103328,
-          "Query_time_avg": 0.00035887377
+          "Start_ts": "2015-05-01T14:48:00Z",
+          "Query_count": 4201,
+          "Query_load": 0.0010824327,
+          "Query_time_avg": 0.00036813418
         },
         {
           "Point": 24,
-          "Start_ts": "2015-05-01T14:14:24Z",
-          "Query_count": 4407,
-          "Query_load": 0.0015135806,
-          "Query_time_avg": 0.0004805218
+          "Start_ts": "2015-05-01T14:24:00Z",
+          "Query_count": 4412,
+          "Query_load": 0.0015143167,
+          "Query_time_avg": 0.00047220074
         },
         {
           "Point": 25,
-          "Start_ts": "2015-05-01T13:50:00Z",
-          "Query_count": 4346,
-          "Query_load": 0.0012792405,
-          "Query_time_avg": 0.000430734
+          "Start_ts": "2015-05-01T14:00:00Z",
+          "Query_count": 4207,
+          "Query_load": 0.0012488667,
+          "Query_time_avg": 0.00042761903
         },
         {
           "Point": 26,
-          "Start_ts": "2015-05-01T13:25:36Z",
-          "Query_count": 4460,
-          "Query_load": 0.0011408299,
-          "Query_time_avg": 0.0003662443
+          "Start_ts": "2015-05-01T13:36:00Z",
+          "Query_count": 4159,
+          "Query_load": 0.0010688868,
+          "Query_time_avg": 0.00036949784
         },
         {
           "Point": 27,
-          "Start_ts": "2015-05-01T13:01:12Z",
-          "Query_count": 4127,
-          "Query_load": 0.0012149406,
-          "Query_time_avg": 0.0004363261
+          "Start_ts": "2015-05-01T13:12:00Z",
+          "Query_count": 4470,
+          "Query_load": 0.001204191,
+          "Query_time_avg": 0.000381039
         },
         {
           "Point": 28,
-          "Start_ts": "2015-05-01T12:36:48Z",
-          "Query_count": 4400,
-          "Query_load": 0.0017681264,
-          "Query_time_avg": 0.0005723401
+          "Start_ts": "2015-05-01T12:48:00Z",
+          "Query_count": 4014,
+          "Query_load": 0.0013991181,
+          "Query_time_avg": 0.0005099554
         },
         {
           "Point": 29,
-          "Start_ts": "2015-05-01T12:12:24Z",
-          "Query_count": 3699,
-          "Query_load": 0.001081614,
-          "Query_time_avg": 0.0004291902
+          "Start_ts": "2015-05-01T12:24:00Z",
+          "Query_count": 3971,
+          "Query_load": 0.0016140805,
+          "Query_time_avg": 0.0005500375
         },
         {
           "Point": 30,
-          "Start_ts": "2015-05-01T11:48:00Z",
-          "Query_count": 3868,
-          "Query_load": 0.0013790376,
-          "Query_time_avg": 0.000484535
+          "Start_ts": "2015-05-01T12:00:00Z",
+          "Query_count": 3778,
+          "Query_load": 0.0013856889,
+          "Query_time_avg": 0.00049193104
         },
         {
           "Point": 31,
-          "Start_ts": "2015-05-01T11:23:36Z",
-          "Query_count": 4120,
-          "Query_load": 0.0019600957,
-          "Query_time_avg": 0.0006967487
+          "Start_ts": "2015-05-01T11:36:00Z",
+          "Query_count": 4124,
+          "Query_load": 0.0010831965,
+          "Query_time_avg": 0.00037678116
         },
         {
           "Point": 32,
-          "Start_ts": "2015-05-01T10:59:12Z",
-          "Query_count": 3887,
-          "Query_load": 0.002412699,
-          "Query_time_avg": 0.0009703695
+          "Start_ts": "2015-05-01T11:12:00Z",
+          "Query_count": 3807,
+          "Query_load": 0.0033157319,
+          "Query_time_avg": 0.0012809015
         },
         {
           "Point": 33,
-          "Start_ts": "2015-05-01T10:34:48Z",
-          "Query_count": 4182,
-          "Query_load": 0.001298211,
-          "Query_time_avg": 0.00045018553
+          "Start_ts": "2015-05-01T10:48:00Z",
+          "Query_count": 3823,
+          "Query_load": 0.0011250348,
+          "Query_time_avg": 0.00041820257
         },
         {
           "Point": 34,
-          "Start_ts": "2015-05-01T10:10:24Z",
-          "Query_count": 3982,
-          "Query_load": 0.0011868436,
-          "Query_time_avg": 0.00042498478
+          "Start_ts": "2015-05-01T10:24:00Z",
+          "Query_count": 4149,
+          "Query_load": 0.0012630556,
+          "Query_time_avg": 0.00043943062
         },
         {
           "Point": 35,
-          "Start_ts": "2015-05-01T09:46:00Z",
-          "Query_count": 4044,
-          "Query_load": 0.001369067,
-          "Query_time_avg": 0.0004915485
+          "Start_ts": "2015-05-01T10:00:00Z",
+          "Query_count": 3878,
+          "Query_load": 0.0014415556,
+          "Query_time_avg": 0.0005181055
         },
         {
           "Point": 36,
-          "Start_ts": "2015-05-01T09:21:36Z",
-          "Query_count": 4402,
-          "Query_load": 0.0017512643,
-          "Query_time_avg": 0.00061287795
+          "Start_ts": "2015-05-01T09:36:00Z",
+          "Query_count": 4296,
+          "Query_load": 0.0011674243,
+          "Query_time_avg": 0.00039020707
         },
         {
           "Point": 37,
-          "Start_ts": "2015-05-01T08:57:12Z",
-          "Query_count": 4660,
-          "Query_load": 0.0015328921,
-          "Query_time_avg": 0.0004519995
+          "Start_ts": "2015-05-01T09:12:00Z",
+          "Query_count": 4125,
+          "Query_load": 0.0016741118,
+          "Query_time_avg": 0.000602227
         },
         {
           "Point": 38,
-          "Start_ts": "2015-05-01T08:32:48Z",
-          "Query_count": 4326,
-          "Query_load": 0.0017523675,
-          "Query_time_avg": 0.0005554962
+          "Start_ts": "2015-05-01T08:48:00Z",
+          "Query_count": 4469,
+          "Query_load": 0.0015091875,
+          "Query_time_avg": 0.00045534392
         },
         {
           "Point": 39,
-          "Start_ts": "2015-05-01T08:08:24Z",
-          "Query_count": 4531,
-          "Query_load": 0.015600307,
-          "Query_time_avg": 0.00465831
+          "Start_ts": "2015-05-01T08:24:00Z",
+          "Query_count": 4530,
+          "Query_load": 0.0030049763,
+          "Query_time_avg": 0.0009409199
         },
         {
           "Point": 40,
-          "Start_ts": "2015-05-01T07:44:00Z",
-          "Query_count": 4849,
-          "Query_load": 0.0046729953,
-          "Query_time_avg": 0.0014083099
+          "Start_ts": "2015-05-01T08:00:00Z",
+          "Query_count": 4638,
+          "Query_load": 0.014914321,
+          "Query_time_avg": 0.0043295776
         },
         {
           "Point": 41,
-          "Start_ts": "2015-05-01T07:19:36Z",
-          "Query_count": 4623,
-          "Query_load": 0.0034136456,
-          "Query_time_avg": 0.0010035252
+          "Start_ts": "2015-05-01T07:36:00Z",
+          "Query_count": 4601,
+          "Query_load": 0.0050260355,
+          "Query_time_avg": 0.0015527386
         },
         {
           "Point": 42,
-          "Start_ts": "2015-05-01T06:55:12Z",
-          "Query_count": 4957,
-          "Query_load": 0.0031198293,
-          "Query_time_avg": 0.0009015028
+          "Start_ts": "2015-05-01T07:12:00Z",
+          "Query_count": 4658,
+          "Query_load": 0.0032756792,
+          "Query_time_avg": 0.0009350837
         },
         {
           "Point": 43,
-          "Start_ts": "2015-05-01T06:30:48Z",
-          "Query_count": 4172,
-          "Query_load": 0.002670619,
-          "Query_time_avg": 0.00096882886
+          "Start_ts": "2015-05-01T06:48:00Z",
+          "Query_count": 4493,
+          "Query_load": 0.0032887778,
+          "Query_time_avg": 0.001053355
         },
         {
           "Point": 44,
-          "Start_ts": "2015-05-01T06:06:24Z",
-          "Query_count": 4003,
-          "Query_load": 0.002985226,
-          "Query_time_avg": 0.0010683052
+          "Start_ts": "2015-05-01T06:24:00Z",
+          "Query_count": 4150,
+          "Query_load": 0.0026147834,
+          "Query_time_avg": 0.000927137
         },
         {
           "Point": 45,
-          "Start_ts": "2015-05-01T05:42:00Z",
-          "Query_count": 3968,
-          "Query_load": 0.0028793374,
-          "Query_time_avg": 0.0010378545
+          "Start_ts": "2015-05-01T06:00:00Z",
+          "Query_count": 3952,
+          "Query_load": 0.0028634819,
+          "Query_time_avg": 0.0010171348
         },
         {
           "Point": 46,
-          "Start_ts": "2015-05-01T05:17:36Z",
-          "Query_count": 3998,
-          "Query_load": 0.004978062,
-          "Query_time_avg": 0.0018686688
+          "Start_ts": "2015-05-01T05:36:00Z",
+          "Query_count": 3933,
+          "Query_load": 0.0028813216,
+          "Query_time_avg": 0.0010532903
         },
         {
           "Point": 47,
-          "Start_ts": "2015-05-01T04:53:12Z",
-          "Query_count": 3470,
-          "Query_load": 0.0054611415,
-          "Query_time_avg": 0.0019207251
+          "Start_ts": "2015-05-01T05:12:00Z",
+          "Query_count": 3815,
+          "Query_load": 0.0047622453,
+          "Query_time_avg": 0.0017678391
         },
         {
           "Point": 48,
-          "Start_ts": "2015-05-01T04:28:48Z",
-          "Query_count": 4182,
-          "Query_load": 0.0032127895,
-          "Query_time_avg": 0.0010711434
+          "Start_ts": "2015-05-01T04:48:00Z",
+          "Query_count": 3601,
+          "Query_load": 0.006300011,
+          "Query_time_avg": 0.0022114618
         },
         {
           "Point": 49,
-          "Start_ts": "2015-05-01T04:04:24Z",
-          "Query_count": 4068,
-          "Query_load": 0.0010750471,
-          "Query_time_avg": 0.00038689596
+          "Start_ts": "2015-05-01T04:24:00Z",
+          "Query_count": 4012,
+          "Query_load": 0.0024830499,
+          "Query_time_avg": 0.0008317327
         },
         {
           "Point": 50,
-          "Start_ts": "2015-05-01T03:40:00Z",
-          "Query_count": 4295,
-          "Query_load": 0.0011912296,
-          "Query_time_avg": 0.00041371764
+          "Start_ts": "2015-05-01T04:00:00Z",
+          "Query_count": 3992,
+          "Query_load": 0.0011455257,
+          "Query_time_avg": 0.0004205452
         },
         {
           "Point": 51,
-          "Start_ts": "2015-05-01T03:15:36Z",
-          "Query_count": 4112,
-          "Query_load": 0.0011129904,
-          "Query_time_avg": 0.00039172155
+          "Start_ts": "2015-05-01T03:36:00Z",
+          "Query_count": 4226,
+          "Query_load": 0.0011338417,
+          "Query_time_avg": 0.00038679095
         },
         {
           "Point": 52,
-          "Start_ts": "2015-05-01T02:51:12Z",
-          "Query_count": 4263,
-          "Query_load": 0.0011111667,
-          "Query_time_avg": 0.00038176312
+          "Start_ts": "2015-05-01T03:12:00Z",
+          "Query_count": 4142,
+          "Query_load": 0.0011204958,
+          "Query_time_avg": 0.00038486504
         },
         {
           "Point": 53,
-          "Start_ts": "2015-05-01T02:26:48Z",
-          "Query_count": 4500,
-          "Query_load": 0.0012856373,
-          "Query_time_avg": 0.00041109626
+          "Start_ts": "2015-05-01T02:48:00Z",
+          "Query_count": 4032,
+          "Query_load": 0.0010791903,
+          "Query_time_avg": 0.000386148
         },
         {
           "Point": 54,
-          "Start_ts": "2015-05-01T02:02:24Z",
-          "Query_count": 4306,
-          "Query_load": 0.0015195335,
-          "Query_time_avg": 0.00051636115
+          "Start_ts": "2015-05-01T02:24:00Z",
+          "Query_count": 4518,
+          "Query_load": 0.00131385,
+          "Query_time_avg": 0.00041140334
         },
         {
           "Point": 55,
-          "Start_ts": "2015-05-01T01:38:00Z",
-          "Query_count": 4042,
-          "Query_load": 0.0011180314,
-          "Query_time_avg": 0.00040483932
+          "Start_ts": "2015-05-01T02:00:00Z",
+          "Query_count": 4252,
+          "Query_load": 0.0015280861,
+          "Query_time_avg": 0.0005158042
         },
         {
           "Point": 56,
-          "Start_ts": "2015-05-01T01:13:36Z",
-          "Query_count": 4110,
-          "Query_load": 0.0017160915,
-          "Query_time_avg": 0.00056295865
+          "Start_ts": "2015-05-01T01:36:00Z",
+          "Query_count": 3902,
+          "Query_load": 0.0010958236,
+          "Query_time_avg": 0.00040343168
         },
         {
           "Point": 57,
-          "Start_ts": "2015-05-01T00:49:12Z",
-          "Query_count": 4109,
-          "Query_load": 0.0010575751,
-          "Query_time_avg": 0.00037679594
+          "Start_ts": "2015-05-01T01:12:00Z",
+          "Query_count": 4191,
+          "Query_load": 0.0017672917,
+          "Query_time_avg": 0.00056373095
         },
         {
           "Point": 58,
-          "Start_ts": "2015-05-01T00:24:48Z",
-          "Query_count": 3929,
-          "Query_load": 0.0016836236,
-          "Query_time_avg": 0.0006261606
+          "Start_ts": "2015-05-01T00:48:00Z",
+          "Query_count": 3914,
+          "Query_load": 0.0010243299,
+          "Query_time_avg": 0.000376843
         },
         {
           "Point": 59,
-          "Start_ts": "2015-05-01T00:00:24Z",
-          "Query_count": 269,
-          "Query_load": 0.00011136748,
-          "Query_time_avg": 0.000606104
+          "Start_ts": "2015-05-01T00:24:00Z",
+          "Query_count": 3929,
+          "Query_load": 0.001711684,
+          "Query_time_avg": 0.0006261606
         }
       ],
       "Stats": {
@@ -898,428 +898,428 @@
       "Id": "407C5D658AA2568B",
       "Abstract": "INSERT cache_bootstrap",
       "Fingerprint": "insert into cache (cid, serialized, created, expire, data) values (?+)",
-      "QPS": 0.07842592592592593,
-      "Load": 0.0012248699192019153,
+      "QPS": 4.705555555555556,
+      "Load": 0.07349219515211493,
       "Log": [
         {
           "Point": 0,
           "Start_ts": "2015-05-02T00:00:00Z",
-          "Query_count": 91,
-          "Query_load": 0.0001312985,
-          "Query_time_avg": 0.0023385163
+          "Query_count": 87,
+          "Query_load": 0.00012367083,
+          "Query_time_avg": 0.0022841876
         },
         {
           "Point": 1,
-          "Start_ts": "2015-05-01T23:35:36Z",
-          "Query_count": 100,
-          "Query_load": 0.00018851434,
-          "Query_time_avg": 0.002857712
+          "Start_ts": "2015-05-01T23:36:00Z",
+          "Query_count": 95,
+          "Query_load": 0.00018463541,
+          "Query_time_avg": 0.0028927063
         },
         {
           "Point": 2,
-          "Start_ts": "2015-05-01T23:11:12Z",
-          "Query_count": 139,
-          "Query_load": 0.0007441694,
-          "Query_time_avg": 0.0033215745
+          "Start_ts": "2015-05-01T23:12:00Z",
+          "Query_count": 140,
+          "Query_load": 0.0007667896,
+          "Query_time_avg": 0.0034982348
         },
         {
           "Point": 3,
-          "Start_ts": "2015-05-01T22:46:48Z",
-          "Query_count": 80,
-          "Query_load": 0.00012987774,
-          "Query_time_avg": 0.0026254759
+          "Start_ts": "2015-05-01T22:48:00Z",
+          "Query_count": 84,
+          "Query_load": 0.00013409584,
+          "Query_time_avg": 0.0025878667
         },
         {
           "Point": 4,
-          "Start_ts": "2015-05-01T22:22:24Z",
-          "Query_count": 72,
-          "Query_load": 0.0017150288,
-          "Query_time_avg": 0.009240363
+          "Start_ts": "2015-05-01T22:24:00Z",
+          "Query_count": 66,
+          "Query_load": 0.0017082605,
+          "Query_time_avg": 0.008917792
         },
         {
           "Point": 5,
-          "Start_ts": "2015-05-01T21:58:00Z",
-          "Query_count": 116,
-          "Query_load": 0.0001847295,
-          "Query_time_avg": 0.0026707512
+          "Start_ts": "2015-05-01T22:00:00Z",
+          "Query_count": 107,
+          "Query_load": 0.0002020375,
+          "Query_time_avg": 0.0029673346
         },
         {
           "Point": 6,
-          "Start_ts": "2015-05-01T21:33:36Z",
-          "Query_count": 99,
-          "Query_load": 0.00086026156,
-          "Query_time_avg": 0.006184225
+          "Start_ts": "2015-05-01T21:36:00Z",
+          "Query_count": 94,
+          "Query_load": 0.00013552084,
+          "Query_time_avg": 0.002646137
         },
         {
           "Point": 7,
-          "Start_ts": "2015-05-01T21:09:12Z",
-          "Query_count": 126,
-          "Query_load": 0.00022031966,
-          "Query_time_avg": 0.0025519463
+          "Start_ts": "2015-05-01T21:12:00Z",
+          "Query_count": 129,
+          "Query_load": 0.0009705909,
+          "Query_time_avg": 0.005569605
         },
         {
           "Point": 8,
-          "Start_ts": "2015-05-01T20:44:48Z",
-          "Query_count": 163,
-          "Query_load": 0.00025119056,
-          "Query_time_avg": 0.00299882
+          "Start_ts": "2015-05-01T20:48:00Z",
+          "Query_count": 166,
+          "Query_load": 0.00023284166,
+          "Query_time_avg": 0.0024229996
         },
         {
           "Point": 9,
-          "Start_ts": "2015-05-01T20:20:24Z",
-          "Query_count": 146,
-          "Query_load": 0.00027311407,
-          "Query_time_avg": 0.0024540166
+          "Start_ts": "2015-05-01T20:24:00Z",
+          "Query_count": 133,
+          "Query_load": 0.00025052082,
+          "Query_time_avg": 0.0029204886
         },
         {
           "Point": 10,
-          "Start_ts": "2015-05-01T19:56:00Z",
-          "Query_count": 118,
-          "Query_load": 0.00022032445,
-          "Query_time_avg": 0.0024437595
+          "Start_ts": "2015-05-01T20:00:00Z",
+          "Query_count": 108,
+          "Query_load": 0.00020872986,
+          "Query_time_avg": 0.0024927268
         },
         {
           "Point": 11,
-          "Start_ts": "2015-05-01T19:31:36Z",
+          "Start_ts": "2015-05-01T19:36:00Z",
           "Query_count": 119,
-          "Query_load": 0.0021906544,
-          "Query_time_avg": 0.009866655
+          "Query_load": 0.00019928403,
+          "Query_time_avg": 0.0024581742
         },
         {
           "Point": 12,
-          "Start_ts": "2015-05-01T19:07:12Z",
-          "Query_count": 87,
-          "Query_load": 0.00014570424,
-          "Query_time_avg": 0.00265213
+          "Start_ts": "2015-05-01T19:12:00Z",
+          "Query_count": 118,
+          "Query_load": 0.0022409882,
+          "Query_time_avg": 0.010051096
         },
         {
           "Point": 13,
-          "Start_ts": "2015-05-01T18:42:48Z",
-          "Query_count": 176,
-          "Query_load": 0.00019786271,
-          "Query_time_avg": 0.001923516
+          "Start_ts": "2015-05-01T18:48:00Z",
+          "Query_count": 161,
+          "Query_load": 0.00017401944,
+          "Query_time_avg": 0.0019435891
         },
         {
           "Point": 14,
-          "Start_ts": "2015-05-01T18:18:24Z",
-          "Query_count": 111,
-          "Query_load": 0.006178026,
-          "Query_time_avg": 0.019020436
+          "Start_ts": "2015-05-01T18:24:00Z",
+          "Query_count": 127,
+          "Query_load": 0.006298541,
+          "Query_time_avg": 0.01725935
         },
         {
           "Point": 15,
-          "Start_ts": "2015-05-01T17:54:00Z",
-          "Query_count": 166,
-          "Query_load": 0.0002152616,
-          "Query_time_avg": 0.0023767536
+          "Start_ts": "2015-05-01T18:00:00Z",
+          "Query_count": 121,
+          "Query_load": 0.0001779007,
+          "Query_time_avg": 0.0026655965
         },
         {
           "Point": 16,
-          "Start_ts": "2015-05-01T17:29:36Z",
-          "Query_count": 89,
-          "Query_load": 0.00518872,
-          "Query_time_avg": 0.017117657
+          "Start_ts": "2015-05-01T17:36:00Z",
+          "Query_count": 99,
+          "Query_load": 0.00015876596,
+          "Query_time_avg": 0.003033427
         },
         {
           "Point": 17,
-          "Start_ts": "2015-05-01T17:05:12Z",
-          "Query_count": 129,
-          "Query_load": 0.00016430327,
-          "Query_time_avg": 0.0018888923
+          "Start_ts": "2015-05-01T17:12:00Z",
+          "Query_count": 151,
+          "Query_load": 0.0053227646,
+          "Query_time_avg": 0.014676095
         },
         {
           "Point": 18,
-          "Start_ts": "2015-05-01T16:40:48Z",
-          "Query_count": 213,
-          "Query_load": 0.00024483266,
-          "Query_time_avg": 0.0022308452
+          "Start_ts": "2015-05-01T16:48:00Z",
+          "Query_count": 187,
+          "Query_load": 0.00020930833,
+          "Query_time_avg": 0.002125295
         },
         {
           "Point": 19,
-          "Start_ts": "2015-05-01T16:16:24Z",
-          "Query_count": 97,
-          "Query_load": 0.00020985451,
-          "Query_time_avg": 0.0031472486
+          "Start_ts": "2015-05-01T16:24:00Z",
+          "Query_count": 112,
+          "Query_load": 0.00021804652,
+          "Query_time_avg": 0.0028450873
         },
         {
           "Point": 20,
-          "Start_ts": "2015-05-01T15:52:00Z",
-          "Query_count": 218,
-          "Query_load": 0.00025352938,
-          "Query_time_avg": 0.0022070073
+          "Start_ts": "2015-05-01T16:00:00Z",
+          "Query_count": 191,
+          "Query_load": 0.00024367431,
+          "Query_time_avg": 0.0024143173
         },
         {
           "Point": 21,
-          "Start_ts": "2015-05-01T15:27:36Z",
-          "Query_count": 135,
-          "Query_load": 0.004210834,
-          "Query_time_avg": 0.014263168
+          "Start_ts": "2015-05-01T15:36:00Z",
+          "Query_count": 95,
+          "Query_load": 0.00015376805,
+          "Query_time_avg": 0.0030881034
         },
         {
           "Point": 22,
-          "Start_ts": "2015-05-01T15:03:12Z",
-          "Query_count": 88,
-          "Query_load": 0.00015732924,
-          "Query_time_avg": 0.0034363142
+          "Start_ts": "2015-05-01T15:12:00Z",
+          "Query_count": 152,
+          "Query_load": 0.0043046,
+          "Query_time_avg": 0.015075439
         },
         {
           "Point": 23,
-          "Start_ts": "2015-05-01T14:38:48Z",
-          "Query_count": 136,
-          "Query_load": 0.00022418374,
-          "Query_time_avg": 0.0029120722
+          "Start_ts": "2015-05-01T14:48:00Z",
+          "Query_count": 113,
+          "Query_load": 0.00019967291,
+          "Query_time_avg": 0.0030844405
         },
         {
           "Point": 24,
-          "Start_ts": "2015-05-01T14:14:24Z",
-          "Query_count": 139,
-          "Query_load": 0.0013867624,
-          "Query_time_avg": 0.0059482823
+          "Start_ts": "2015-05-01T14:24:00Z",
+          "Query_count": 158,
+          "Query_load": 0.0014213744,
+          "Query_time_avg": 0.0059134685
         },
         {
           "Point": 25,
-          "Start_ts": "2015-05-01T13:50:00Z",
-          "Query_count": 97,
-          "Query_load": 0.00013822062,
-          "Query_time_avg": 0.0023290808
+          "Start_ts": "2015-05-01T14:00:00Z",
+          "Query_count": 105,
+          "Query_load": 0.00016268542,
+          "Query_time_avg": 0.002315419
         },
         {
           "Point": 26,
-          "Start_ts": "2015-05-01T13:25:36Z",
-          "Query_count": 78,
-          "Query_load": 0.0014755464,
-          "Query_time_avg": 0.008748459
+          "Start_ts": "2015-05-01T13:36:00Z",
+          "Query_count": 53,
+          "Query_load": 0.00010229236,
+          "Query_time_avg": 0.0031661484
         },
         {
           "Point": 27,
-          "Start_ts": "2015-05-01T13:01:12Z",
-          "Query_count": 63,
-          "Query_load": 0.0001141933,
-          "Query_time_avg": 0.0029727542
+          "Start_ts": "2015-05-01T13:12:00Z",
+          "Query_count": 98,
+          "Query_load": 0.0015246714,
+          "Query_time_avg": 0.007689167
         },
         {
           "Point": 28,
-          "Start_ts": "2015-05-01T12:36:48Z",
-          "Query_count": 133,
-          "Query_load": 0.00019327868,
-          "Query_time_avg": 0.002339406
+          "Start_ts": "2015-05-01T12:48:00Z",
+          "Query_count": 107,
+          "Query_load": 0.00016773472,
+          "Query_time_avg": 0.0027727943
         },
         {
           "Point": 29,
-          "Start_ts": "2015-05-01T12:12:24Z",
-          "Query_count": 107,
-          "Query_load": 0.0012232309,
-          "Query_time_avg": 0.00740146
+          "Start_ts": "2015-05-01T12:24:00Z",
+          "Query_count": 82,
+          "Query_load": 0.0011778063,
+          "Query_time_avg": 0.007881761
         },
         {
           "Point": 30,
-          "Start_ts": "2015-05-01T11:48:00Z",
-          "Query_count": 73,
-          "Query_load": 0.00011517213,
-          "Query_time_avg": 0.0030808693
+          "Start_ts": "2015-05-01T12:00:00Z",
+          "Query_count": 122,
+          "Query_load": 0.00020371111,
+          "Query_time_avg": 0.0027504335
         },
         {
           "Point": 31,
-          "Start_ts": "2015-05-01T11:23:36Z",
-          "Query_count": 153,
-          "Query_load": 0.0034260328,
-          "Query_time_avg": 0.011492184
+          "Start_ts": "2015-05-01T11:36:00Z",
+          "Query_count": 86,
+          "Query_load": 0.00017647153,
+          "Query_time_avg": 0.0035806368
         },
         {
           "Point": 32,
-          "Start_ts": "2015-05-01T10:59:12Z",
-          "Query_count": 155,
-          "Query_load": 0.00021761339,
-          "Query_time_avg": 0.0024157157
+          "Start_ts": "2015-05-01T11:12:00Z",
+          "Query_count": 163,
+          "Query_load": 0.0034797008,
+          "Query_time_avg": 0.0107861655
         },
         {
           "Point": 33,
-          "Start_ts": "2015-05-01T10:34:48Z",
-          "Query_count": 141,
-          "Query_load": 0.00026191736,
-          "Query_time_avg": 0.0029030996
+          "Start_ts": "2015-05-01T10:48:00Z",
+          "Query_count": 135,
+          "Query_load": 0.00020407986,
+          "Query_time_avg": 0.002372433
         },
         {
           "Point": 34,
-          "Start_ts": "2015-05-01T10:10:24Z",
-          "Query_count": 138,
-          "Query_load": 0.002485472,
-          "Query_time_avg": 0.008146189
+          "Start_ts": "2015-05-01T10:24:00Z",
+          "Query_count": 182,
+          "Query_load": 0.0026080597,
+          "Query_time_avg": 0.008109518
         },
         {
           "Point": 35,
-          "Start_ts": "2015-05-01T09:46:00Z",
-          "Query_count": 65,
-          "Query_load": 0.00011902049,
-          "Query_time_avg": 0.0033349504
+          "Start_ts": "2015-05-01T10:00:00Z",
+          "Query_count": 88,
+          "Query_load": 0.0001426507,
+          "Query_time_avg": 0.0024772172
         },
         {
           "Point": 36,
-          "Start_ts": "2015-05-01T09:21:36Z",
-          "Query_count": 104,
-          "Query_load": 0.0030451398,
-          "Query_time_avg": 0.012243899
+          "Start_ts": "2015-05-01T09:36:00Z",
+          "Query_count": 66,
+          "Query_load": 0.00014004027,
+          "Query_time_avg": 0.004023105
         },
         {
           "Point": 37,
-          "Start_ts": "2015-05-01T08:57:12Z",
-          "Query_count": 63,
-          "Query_load": 0.00014255328,
-          "Query_time_avg": 0.0037394227
+          "Start_ts": "2015-05-01T09:12:00Z",
+          "Query_count": 76,
+          "Query_load": 0.0030541937,
+          "Query_time_avg": 0.011689303
         },
         {
           "Point": 38,
-          "Start_ts": "2015-05-01T08:32:48Z",
-          "Query_count": 131,
-          "Query_load": 0.00035948906,
-          "Query_time_avg": 0.0036845547
+          "Start_ts": "2015-05-01T08:48:00Z",
+          "Query_count": 115,
+          "Query_load": 0.00021021874,
+          "Query_time_avg": 0.0035349734
         },
         {
           "Point": 39,
-          "Start_ts": "2015-05-01T08:08:24Z",
-          "Query_count": 52,
-          "Query_load": 0.0002593716,
-          "Query_time_avg": 0.0045936457
+          "Start_ts": "2015-05-01T08:24:00Z",
+          "Query_count": 77,
+          "Query_load": 0.00029045972,
+          "Query_time_avg": 0.003711703
         },
         {
           "Point": 40,
-          "Start_ts": "2015-05-01T07:44:00Z",
-          "Query_count": 65,
-          "Query_load": 0.00047095696,
-          "Query_time_avg": 0.012550921
+          "Start_ts": "2015-05-01T08:00:00Z",
+          "Query_count": 54,
+          "Query_load": 0.0006178257,
+          "Query_time_avg": 0.01322168
         },
         {
           "Point": 41,
-          "Start_ts": "2015-05-01T07:19:36Z",
-          "Query_count": 132,
-          "Query_load": 0.0016078299,
-          "Query_time_avg": 0.0071480293
+          "Start_ts": "2015-05-01T07:36:00Z",
+          "Query_count": 81,
+          "Query_load": 0.0001605375,
+          "Query_time_avg": 0.004494679
         },
         {
           "Point": 42,
-          "Start_ts": "2015-05-01T06:55:12Z",
-          "Query_count": 142,
-          "Query_load": 0.00030344125,
-          "Query_time_avg": 0.004304512
+          "Start_ts": "2015-05-01T07:12:00Z",
+          "Query_count": 171,
+          "Query_load": 0.0017525423,
+          "Query_time_avg": 0.0066891154
         },
         {
           "Point": 43,
-          "Start_ts": "2015-05-01T06:30:48Z",
-          "Query_count": 139,
-          "Query_load": 0.004146216,
-          "Query_time_avg": 0.013134965
+          "Start_ts": "2015-05-01T06:48:00Z",
+          "Query_count": 98,
+          "Query_load": 0.00016698889,
+          "Query_time_avg": 0.0041096685
         },
         {
           "Point": 44,
-          "Start_ts": "2015-05-01T06:06:24Z",
-          "Query_count": 112,
-          "Query_load": 0.00022508744,
-          "Query_time_avg": 0.0026375225
+          "Start_ts": "2015-05-01T06:24:00Z",
+          "Query_count": 143,
+          "Query_load": 0.0042319056,
+          "Query_time_avg": 0.012642787
         },
         {
           "Point": 45,
-          "Start_ts": "2015-05-01T05:42:00Z",
-          "Query_count": 159,
-          "Query_load": 0.0008925943,
-          "Query_time_avg": 0.00923113
+          "Start_ts": "2015-05-01T06:00:00Z",
+          "Query_count": 126,
+          "Query_load": 0.0009042896,
+          "Query_time_avg": 0.009736195
         },
         {
           "Point": 46,
-          "Start_ts": "2015-05-01T05:17:36Z",
-          "Query_count": 142,
-          "Query_load": 0.005458285,
-          "Query_time_avg": 0.043635078
+          "Start_ts": "2015-05-01T05:36:00Z",
+          "Query_count": 143,
+          "Query_load": 0.00024051944,
+          "Query_time_avg": 0.0026118057
         },
         {
           "Point": 47,
-          "Start_ts": "2015-05-01T04:53:12Z",
-          "Query_count": 100,
-          "Query_load": 0.00011688593,
-          "Query_time_avg": 0.0017587995
+          "Start_ts": "2015-05-01T05:12:00Z",
+          "Query_count": 141,
+          "Query_load": 0.0055115125,
+          "Query_time_avg": 0.04329776
         },
         {
           "Point": 48,
-          "Start_ts": "2015-05-01T04:28:48Z",
-          "Query_count": 131,
-          "Query_load": 0.0085383635,
-          "Query_time_avg": 0.028652202
+          "Start_ts": "2015-05-01T04:48:00Z",
+          "Query_count": 90,
+          "Query_load": 0.00012037153,
+          "Query_time_avg": 0.001937707
         },
         {
           "Point": 49,
-          "Start_ts": "2015-05-01T04:04:24Z",
-          "Query_count": 43,
-          "Query_load": 0.0001840082,
-          "Query_time_avg": 0.004736515
+          "Start_ts": "2015-05-01T04:24:00Z",
+          "Query_count": 121,
+          "Query_load": 0.008673587,
+          "Query_time_avg": 0.03018748
         },
         {
           "Point": 50,
-          "Start_ts": "2015-05-01T03:40:00Z",
-          "Query_count": 135,
-          "Query_load": 0.00020664823,
-          "Query_time_avg": 0.0029550386
+          "Start_ts": "2015-05-01T04:00:00Z",
+          "Query_count": 67,
+          "Query_load": 0.00021133333,
+          "Query_time_avg": 0.004421703
         },
         {
           "Point": 51,
-          "Start_ts": "2015-05-01T03:15:36Z",
-          "Query_count": 96,
-          "Query_load": 0.00021594399,
-          "Query_time_avg": 0.0032630786
+          "Start_ts": "2015-05-01T03:36:00Z",
+          "Query_count": 117,
+          "Query_load": 0.00019189583,
+          "Query_time_avg": 0.0030157138
         },
         {
           "Point": 52,
-          "Start_ts": "2015-05-01T02:51:12Z",
-          "Query_count": 85,
-          "Query_load": 0.00015611612,
-          "Query_time_avg": 0.002743752
+          "Start_ts": "2015-05-01T03:12:00Z",
+          "Query_count": 89,
+          "Query_load": 0.00020751389,
+          "Query_time_avg": 0.003263087
         },
         {
           "Point": 53,
-          "Start_ts": "2015-05-01T02:26:48Z",
-          "Query_count": 123,
-          "Query_load": 0.004692983,
-          "Query_time_avg": 0.013754043
+          "Start_ts": "2015-05-01T02:48:00Z",
+          "Query_count": 88,
+          "Query_load": 0.00016403958,
+          "Query_time_avg": 0.0027516978
         },
         {
           "Point": 54,
-          "Start_ts": "2015-05-01T02:02:24Z",
-          "Query_count": 70,
-          "Query_load": 0.00012857445,
-          "Query_time_avg": 0.00331228
+          "Start_ts": "2015-05-01T02:24:00Z",
+          "Query_count": 115,
+          "Query_load": 0.0047519333,
+          "Query_time_avg": 0.014130386
         },
         {
           "Point": 55,
-          "Start_ts": "2015-05-01T01:38:00Z",
-          "Query_count": 73,
-          "Query_load": 0.00013557855,
-          "Query_time_avg": 0.0030589032
+          "Start_ts": "2015-05-01T02:00:00Z",
+          "Query_count": 75,
+          "Query_load": 0.00014352916,
+          "Query_time_avg": 0.0033578144
         },
         {
           "Point": 56,
-          "Start_ts": "2015-05-01T01:13:36Z",
-          "Query_count": 118,
-          "Query_load": 0.0013935484,
-          "Query_time_avg": 0.0075556603
+          "Start_ts": "2015-05-01T01:36:00Z",
+          "Query_count": 67,
+          "Query_load": 0.00012373333,
+          "Query_time_avg": 0.0029939462
         },
         {
           "Point": 57,
-          "Start_ts": "2015-05-01T00:49:12Z",
-          "Query_count": 78,
-          "Query_load": 0.00016440028,
-          "Query_time_avg": 0.003367173
+          "Start_ts": "2015-05-01T01:12:00Z",
+          "Query_count": 119,
+          "Query_load": 0.0014202492,
+          "Query_time_avg": 0.007627556
         },
         {
           "Point": 58,
-          "Start_ts": "2015-05-01T00:24:48Z",
-          "Query_count": 80,
-          "Query_load": 0.0037108704,
-          "Query_time_avg": 0.018175183
+          "Start_ts": "2015-05-01T00:48:00Z",
+          "Query_count": 76,
+          "Query_load": 0.0001625868,
+          "Query_time_avg": 0.00337184
         },
         {
           "Point": 59,
-          "Start_ts": "2015-05-01T00:00:24Z",
-          "Query_count": 47,
-          "Query_load": 0.00007613524,
-          "Query_time_avg": 0.00237153
+          "Start_ts": "2015-05-01T00:24:00Z",
+          "Query_count": 80,
+          "Query_load": 0.0037727181,
+          "Query_time_avg": 0.018175183
         }
       ],
       "Stats": {
@@ -1339,428 +1339,428 @@
       "Id": "92F3B1B361FB0E5B",
       "Abstract": "SELECT wp_options",
       "Fingerprint": "select option_name, option_value from wp_options where autoload = ?",
-      "QPS": 1.304826388888889,
-      "Load": 0.0007255530665322483,
+      "QPS": 78.28958333333334,
+      "Load": 0.0435331839919349,
       "Log": [
         {
           "Point": 0,
           "Start_ts": "2015-05-02T00:00:00Z",
-          "Query_count": 1651,
-          "Query_load": 0.00058252324,
-          "Query_time_avg": 0.0005129495
+          "Query_count": 1581,
+          "Query_load": 0.00056720903,
+          "Query_time_avg": 0.0005128709
         },
         {
           "Point": 1,
-          "Start_ts": "2015-05-01T23:35:36Z",
-          "Query_count": 1880,
-          "Query_load": 0.0007121892,
-          "Query_time_avg": 0.0005521079
+          "Start_ts": "2015-05-01T23:36:00Z",
+          "Query_count": 1896,
+          "Query_load": 0.00072865834,
+          "Query_time_avg": 0.00055086316
         },
         {
           "Point": 2,
-          "Start_ts": "2015-05-01T23:11:12Z",
-          "Query_count": 1907,
-          "Query_load": 0.00063939893,
-          "Query_time_avg": 0.00048872747
+          "Start_ts": "2015-05-01T23:12:00Z",
+          "Query_count": 1808,
+          "Query_load": 0.00061242154,
+          "Query_time_avg": 0.00048593408
         },
         {
           "Point": 3,
-          "Start_ts": "2015-05-01T22:46:48Z",
-          "Query_count": 1908,
-          "Query_load": 0.0006506653,
-          "Query_time_avg": 0.00050434
+          "Start_ts": "2015-05-01T22:48:00Z",
+          "Query_count": 1895,
+          "Query_load": 0.00065805414,
+          "Query_time_avg": 0.0005042068
         },
         {
           "Point": 4,
-          "Start_ts": "2015-05-01T22:22:24Z",
-          "Query_count": 1969,
-          "Query_load": 0.0007518695,
-          "Query_time_avg": 0.00055534
+          "Start_ts": "2015-05-01T22:24:00Z",
+          "Query_count": 1967,
+          "Query_load": 0.0007561382,
+          "Query_time_avg": 0.0005518438
         },
         {
           "Point": 5,
-          "Start_ts": "2015-05-01T21:58:00Z",
-          "Query_count": 2038,
-          "Query_load": 0.0007654495,
-          "Query_time_avg": 0.00054686354
+          "Start_ts": "2015-05-01T22:00:00Z",
+          "Query_count": 1952,
+          "Query_load": 0.000761216,
+          "Query_time_avg": 0.000558058
         },
         {
           "Point": 6,
-          "Start_ts": "2015-05-01T21:33:36Z",
-          "Query_count": 1875,
-          "Query_load": 0.00067218713,
-          "Query_time_avg": 0.0005232537
+          "Start_ts": "2015-05-01T21:36:00Z",
+          "Query_count": 1871,
+          "Query_load": 0.0006754618,
+          "Query_time_avg": 0.00051822606
         },
         {
           "Point": 7,
-          "Start_ts": "2015-05-01T21:09:12Z",
-          "Query_count": 2096,
-          "Query_load": 0.0007260922,
-          "Query_time_avg": 0.00050482526
+          "Start_ts": "2015-05-01T21:12:00Z",
+          "Query_count": 1971,
+          "Query_load": 0.00069703197,
+          "Query_time_avg": 0.0005068026
         },
         {
           "Point": 8,
-          "Start_ts": "2015-05-01T20:44:48Z",
-          "Query_count": 2224,
-          "Query_load": 0.00085879647,
-          "Query_time_avg": 0.0005602921
+          "Start_ts": "2015-05-01T20:48:00Z",
+          "Query_count": 2206,
+          "Query_load": 0.0008408625,
+          "Query_time_avg": 0.00054682523
         },
         {
           "Point": 9,
-          "Start_ts": "2015-05-01T20:20:24Z",
-          "Query_count": 2347,
-          "Query_load": 0.0009208033,
-          "Query_time_avg": 0.00056858244
+          "Start_ts": "2015-05-01T20:24:00Z",
+          "Query_count": 2327,
+          "Query_load": 0.00094290206,
+          "Query_time_avg": 0.00057528116
         },
         {
           "Point": 10,
-          "Start_ts": "2015-05-01T19:56:00Z",
-          "Query_count": 2291,
-          "Query_load": 0.00078836887,
-          "Query_time_avg": 0.0004993773
+          "Start_ts": "2015-05-01T20:00:00Z",
+          "Query_count": 2244,
+          "Query_load": 0.000805716,
+          "Query_time_avg": 0.000510956
         },
         {
           "Point": 11,
-          "Start_ts": "2015-05-01T19:31:36Z",
-          "Query_count": 2163,
-          "Query_load": 0.00068414,
-          "Query_time_avg": 0.00045901895
+          "Start_ts": "2015-05-01T19:36:00Z",
+          "Query_count": 2235,
+          "Query_load": 0.0007208368,
+          "Query_time_avg": 0.00046271886
         },
         {
           "Point": 12,
-          "Start_ts": "2015-05-01T19:07:12Z",
-          "Query_count": 2394,
-          "Query_load": 0.0008210198,
-          "Query_time_avg": 0.00050471205
+          "Start_ts": "2015-05-01T19:12:00Z",
+          "Query_count": 2205,
+          "Query_load": 0.00077257224,
+          "Query_time_avg": 0.0005035897
         },
         {
           "Point": 13,
-          "Start_ts": "2015-05-01T18:42:48Z",
-          "Query_count": 2333,
-          "Query_load": 0.000867041,
-          "Query_time_avg": 0.0005459542
+          "Start_ts": "2015-05-01T18:48:00Z",
+          "Query_count": 2358,
+          "Query_load": 0.0008415,
+          "Query_time_avg": 0.00051435706
         },
         {
           "Point": 14,
-          "Start_ts": "2015-05-01T18:18:24Z",
-          "Query_count": 2215,
-          "Query_load": 0.0009113149,
-          "Query_time_avg": 0.00058736437
+          "Start_ts": "2015-05-01T18:24:00Z",
+          "Query_count": 2194,
+          "Query_load": 0.00088355417,
+          "Query_time_avg": 0.00057570235
         },
         {
           "Point": 15,
-          "Start_ts": "2015-05-01T17:54:00Z",
-          "Query_count": 2142,
-          "Query_load": 0.00083209155,
-          "Query_time_avg": 0.0005678588
+          "Start_ts": "2015-05-01T18:00:00Z",
+          "Query_count": 2162,
+          "Query_load": 0.00090544164,
+          "Query_time_avg": 0.00059281895
         },
         {
           "Point": 16,
-          "Start_ts": "2015-05-01T17:29:36Z",
-          "Query_count": 2001,
-          "Query_load": 0.00079611613,
-          "Query_time_avg": 0.00057590136
+          "Start_ts": "2015-05-01T17:36:00Z",
+          "Query_count": 1979,
+          "Query_load": 0.00080069096,
+          "Query_time_avg": 0.000575322
         },
         {
           "Point": 17,
-          "Start_ts": "2015-05-01T17:05:12Z",
-          "Query_count": 2020,
-          "Query_load": 0.00073972746,
-          "Query_time_avg": 0.00052656484
+          "Start_ts": "2015-05-01T17:12:00Z",
+          "Query_count": 2000,
+          "Query_load": 0.0007719486,
+          "Query_time_avg": 0.00054740795
         },
         {
           "Point": 18,
-          "Start_ts": "2015-05-01T16:40:48Z",
-          "Query_count": 1976,
-          "Query_load": 0.0006925389,
-          "Query_time_avg": 0.00050855597
+          "Start_ts": "2015-05-01T16:48:00Z",
+          "Query_count": 1910,
+          "Query_load": 0.00066394376,
+          "Query_time_avg": 0.0004966658
         },
         {
           "Point": 19,
-          "Start_ts": "2015-05-01T16:16:24Z",
-          "Query_count": 1764,
-          "Query_load": 0.0007227596,
-          "Query_time_avg": 0.0005975853
+          "Start_ts": "2015-05-01T16:24:00Z",
+          "Query_count": 1843,
+          "Query_load": 0.00069761806,
+          "Query_time_avg": 0.0005421598
         },
         {
           "Point": 20,
-          "Start_ts": "2015-05-01T15:52:00Z",
-          "Query_count": 1817,
-          "Query_load": 0.00072750275,
-          "Query_time_avg": 0.000587048
+          "Start_ts": "2015-05-01T16:00:00Z",
+          "Query_count": 1732,
+          "Query_load": 0.0007467715,
+          "Query_time_avg": 0.00062494347
         },
         {
           "Point": 21,
-          "Start_ts": "2015-05-01T15:27:36Z",
-          "Query_count": 1938,
-          "Query_load": 0.00074357516,
-          "Query_time_avg": 0.00055860024
+          "Start_ts": "2015-05-01T15:36:00Z",
+          "Query_count": 1943,
+          "Query_load": 0.00077198405,
+          "Query_time_avg": 0.0005668527
         },
         {
           "Point": 22,
-          "Start_ts": "2015-05-01T15:03:12Z",
-          "Query_count": 1871,
-          "Query_load": 0.0007088675,
-          "Query_time_avg": 0.00055037194
+          "Start_ts": "2015-05-01T15:12:00Z",
+          "Query_count": 1816,
+          "Query_load": 0.0007173049,
+          "Query_time_avg": 0.000568217
         },
         {
           "Point": 23,
-          "Start_ts": "2015-05-01T14:38:48Z",
-          "Query_count": 1723,
-          "Query_load": 0.0006206277,
-          "Query_time_avg": 0.00051973574
+          "Start_ts": "2015-05-01T14:48:00Z",
+          "Query_count": 1747,
+          "Query_load": 0.00064201734,
+          "Query_time_avg": 0.0005187688
         },
         {
           "Point": 24,
-          "Start_ts": "2015-05-01T14:14:24Z",
-          "Query_count": 1740,
-          "Query_load": 0.00066297746,
-          "Query_time_avg": 0.00055773574
+          "Start_ts": "2015-05-01T14:24:00Z",
+          "Query_count": 1793,
+          "Query_load": 0.0006514236,
+          "Query_time_avg": 0.0005200322
         },
         {
           "Point": 25,
-          "Start_ts": "2015-05-01T13:50:00Z",
-          "Query_count": 1714,
-          "Query_load": 0.0006588866,
-          "Query_time_avg": 0.0005640981
+          "Start_ts": "2015-05-01T14:00:00Z",
+          "Query_count": 1607,
+          "Query_load": 0.0006777097,
+          "Query_time_avg": 0.00060591206
         },
         {
           "Point": 26,
-          "Start_ts": "2015-05-01T13:25:36Z",
-          "Query_count": 1809,
-          "Query_load": 0.000627028,
-          "Query_time_avg": 0.0005082768
+          "Start_ts": "2015-05-01T13:36:00Z",
+          "Query_count": 1624,
+          "Query_load": 0.0005786597,
+          "Query_time_avg": 0.00051346514
         },
         {
           "Point": 27,
-          "Start_ts": "2015-05-01T13:01:12Z",
-          "Query_count": 1767,
-          "Query_load": 0.00070750684,
-          "Query_time_avg": 0.0005728466
+          "Start_ts": "2015-05-01T13:12:00Z",
+          "Query_count": 1960,
+          "Query_load": 0.000744825,
+          "Query_time_avg": 0.00053586037
         },
         {
           "Point": 28,
-          "Start_ts": "2015-05-01T12:36:48Z",
-          "Query_count": 1775,
-          "Query_load": 0.0007316851,
-          "Query_time_avg": 0.0006053102
+          "Start_ts": "2015-05-01T12:48:00Z",
+          "Query_count": 1658,
+          "Query_load": 0.0006627625,
+          "Query_time_avg": 0.00057652476
         },
         {
           "Point": 29,
-          "Start_ts": "2015-05-01T12:12:24Z",
-          "Query_count": 1468,
-          "Query_load": 0.00058988936,
-          "Query_time_avg": 0.00058112456
+          "Start_ts": "2015-05-01T12:24:00Z",
+          "Query_count": 1548,
+          "Query_load": 0.0006522306,
+          "Query_time_avg": 0.0005989086
         },
         {
           "Point": 30,
-          "Start_ts": "2015-05-01T11:48:00Z",
-          "Query_count": 1482,
-          "Query_load": 0.0006043859,
-          "Query_time_avg": 0.00059717457
+          "Start_ts": "2015-05-01T12:00:00Z",
+          "Query_count": 1507,
+          "Query_load": 0.00062390766,
+          "Query_time_avg": 0.00059479603
         },
         {
           "Point": 31,
-          "Start_ts": "2015-05-01T11:23:36Z",
-          "Query_count": 1583,
-          "Query_load": 0.00062586955,
-          "Query_time_avg": 0.000579261
+          "Start_ts": "2015-05-01T11:36:00Z",
+          "Query_count": 1555,
+          "Query_load": 0.00063143886,
+          "Query_time_avg": 0.00058818853
         },
         {
           "Point": 32,
-          "Start_ts": "2015-05-01T10:59:12Z",
-          "Query_count": 1498,
-          "Query_load": 0.0005885792,
-          "Query_time_avg": 0.0005726591
+          "Start_ts": "2015-05-01T11:12:00Z",
+          "Query_count": 1459,
+          "Query_load": 0.0005873236,
+          "Query_time_avg": 0.00057598774
         },
         {
           "Point": 33,
-          "Start_ts": "2015-05-01T10:34:48Z",
-          "Query_count": 1655,
-          "Query_load": 0.0006427001,
-          "Query_time_avg": 0.0005692488
+          "Start_ts": "2015-05-01T10:48:00Z",
+          "Query_count": 1492,
+          "Query_load": 0.0005979778,
+          "Query_time_avg": 0.00057598134
         },
         {
           "Point": 34,
-          "Start_ts": "2015-05-01T10:10:24Z",
-          "Query_count": 1600,
-          "Query_load": 0.0006821653,
-          "Query_time_avg": 0.00059967604
+          "Start_ts": "2015-05-01T10:24:00Z",
+          "Query_count": 1647,
+          "Query_load": 0.000631116,
+          "Query_time_avg": 0.0005518569
         },
         {
           "Point": 35,
-          "Start_ts": "2015-05-01T09:46:00Z",
-          "Query_count": 1635,
-          "Query_load": 0.00065560313,
-          "Query_time_avg": 0.00058416714
+          "Start_ts": "2015-05-01T10:00:00Z",
+          "Query_count": 1586,
+          "Query_load": 0.00071435625,
+          "Query_time_avg": 0.0006229782
         },
         {
           "Point": 36,
-          "Start_ts": "2015-05-01T09:21:36Z",
-          "Query_count": 1766,
-          "Query_load": 0.00071846583,
-          "Query_time_avg": 0.0005866281
+          "Start_ts": "2015-05-01T09:36:00Z",
+          "Query_count": 1724,
+          "Query_load": 0.0007181889,
+          "Query_time_avg": 0.0005921159
         },
         {
           "Point": 37,
-          "Start_ts": "2015-05-01T08:57:12Z",
-          "Query_count": 1845,
-          "Query_load": 0.0007612541,
-          "Query_time_avg": 0.0006035039
+          "Start_ts": "2015-05-01T09:12:00Z",
+          "Query_count": 1644,
+          "Query_load": 0.0006803028,
+          "Query_time_avg": 0.0005936934
         },
         {
           "Point": 38,
-          "Start_ts": "2015-05-01T08:32:48Z",
-          "Query_count": 1635,
-          "Query_load": 0.0006307985,
-          "Query_time_avg": 0.00056694914
+          "Start_ts": "2015-05-01T08:48:00Z",
+          "Query_count": 1755,
+          "Query_load": 0.0007221812,
+          "Query_time_avg": 0.00059037545
         },
         {
           "Point": 39,
-          "Start_ts": "2015-05-01T08:08:24Z",
-          "Query_count": 1764,
-          "Query_load": 0.000749431,
-          "Query_time_avg": 0.0006217974
+          "Start_ts": "2015-05-01T08:24:00Z",
+          "Query_count": 1697,
+          "Query_load": 0.00069607014,
+          "Query_time_avg": 0.000598117
         },
         {
           "Point": 40,
-          "Start_ts": "2015-05-01T07:44:00Z",
-          "Query_count": 1949,
-          "Query_load": 0.0007659399,
-          "Query_time_avg": 0.000575458
+          "Start_ts": "2015-05-01T08:00:00Z",
+          "Query_count": 1839,
+          "Query_load": 0.00076483266,
+          "Query_time_avg": 0.0005933043
         },
         {
           "Point": 41,
-          "Start_ts": "2015-05-01T07:19:36Z",
-          "Query_count": 1945,
-          "Query_load": 0.00069900544,
-          "Query_time_avg": 0.0005182824
+          "Start_ts": "2015-05-01T07:36:00Z",
+          "Query_count": 1872,
+          "Query_load": 0.0007013118,
+          "Query_time_avg": 0.00053854624
         },
         {
           "Point": 42,
-          "Start_ts": "2015-05-01T06:55:12Z",
-          "Query_count": 2073,
-          "Query_load": 0.0007213702,
-          "Query_time_avg": 0.00051004614
+          "Start_ts": "2015-05-01T07:12:00Z",
+          "Query_count": 1991,
+          "Query_load": 0.00072064303,
+          "Query_time_avg": 0.00051746966
         },
         {
           "Point": 43,
-          "Start_ts": "2015-05-01T06:30:48Z",
-          "Query_count": 1772,
-          "Query_load": 0.00067145494,
-          "Query_time_avg": 0.000549319
+          "Start_ts": "2015-05-01T06:48:00Z",
+          "Query_count": 1852,
+          "Query_load": 0.00066497014,
+          "Query_time_avg": 0.0005134775
         },
         {
           "Point": 44,
-          "Start_ts": "2015-05-01T06:06:24Z",
-          "Query_count": 1686,
-          "Query_load": 0.0006102869,
-          "Query_time_avg": 0.00052865926
+          "Start_ts": "2015-05-01T06:24:00Z",
+          "Query_count": 1786,
+          "Query_load": 0.00068737846,
+          "Query_time_avg": 0.00054919795
         },
         {
           "Point": 45,
-          "Start_ts": "2015-05-01T05:42:00Z",
-          "Query_count": 1689,
-          "Query_load": 0.0006012671,
-          "Query_time_avg": 0.00052253564
+          "Start_ts": "2015-05-01T06:00:00Z",
+          "Query_count": 1633,
+          "Query_load": 0.0006202021,
+          "Query_time_avg": 0.0005468647
         },
         {
           "Point": 46,
-          "Start_ts": "2015-05-01T05:17:36Z",
-          "Query_count": 1807,
-          "Query_load": 0.00083758676,
-          "Query_time_avg": 0.00069230254
+          "Start_ts": "2015-05-01T05:36:00Z",
+          "Query_count": 1698,
+          "Query_load": 0.0005998854,
+          "Query_time_avg": 0.0005073011
         },
         {
           "Point": 47,
-          "Start_ts": "2015-05-01T04:53:12Z",
-          "Query_count": 1594,
-          "Query_load": 0.00069459697,
-          "Query_time_avg": 0.00060207467
+          "Start_ts": "2015-05-01T05:12:00Z",
+          "Query_count": 1739,
+          "Query_load": 0.00082218193,
+          "Query_time_avg": 0.0006861188
         },
         {
           "Point": 48,
-          "Start_ts": "2015-05-01T04:28:48Z",
-          "Query_count": 1872,
-          "Query_load": 0.0009695997,
-          "Query_time_avg": 0.0007420622
+          "Start_ts": "2015-05-01T04:48:00Z",
+          "Query_count": 1629,
+          "Query_load": 0.00075810833,
+          "Query_time_avg": 0.0006392776
         },
         {
           "Point": 49,
-          "Start_ts": "2015-05-01T04:04:24Z",
-          "Query_count": 1828,
-          "Query_load": 0.0006970601,
-          "Query_time_avg": 0.0005550186
+          "Start_ts": "2015-05-01T04:24:00Z",
+          "Query_count": 1841,
+          "Query_load": 0.00094985415,
+          "Query_time_avg": 0.0007243155
         },
         {
           "Point": 50,
-          "Start_ts": "2015-05-01T03:40:00Z",
-          "Query_count": 1923,
-          "Query_load": 0.0007483354,
-          "Query_time_avg": 0.00057039695
+          "Start_ts": "2015-05-01T04:00:00Z",
+          "Query_count": 1755,
+          "Query_load": 0.00069264515,
+          "Query_time_avg": 0.0005646523
         },
         {
           "Point": 51,
-          "Start_ts": "2015-05-01T03:15:36Z",
-          "Query_count": 1980,
-          "Query_load": 0.000727707,
-          "Query_time_avg": 0.00053425325
+          "Start_ts": "2015-05-01T03:36:00Z",
+          "Query_count": 1904,
+          "Query_load": 0.00074662775,
+          "Query_time_avg": 0.00056525675
         },
         {
           "Point": 52,
-          "Start_ts": "2015-05-01T02:51:12Z",
-          "Query_count": 2003,
-          "Query_load": 0.00075140985,
-          "Query_time_avg": 0.0005472489
+          "Start_ts": "2015-05-01T03:12:00Z",
+          "Query_count": 2002,
+          "Query_load": 0.00074389303,
+          "Query_time_avg": 0.0005303625
         },
         {
           "Point": 53,
-          "Start_ts": "2015-05-01T02:26:48Z",
-          "Query_count": 2188,
-          "Query_load": 0.0008129713,
-          "Query_time_avg": 0.0005383025
+          "Start_ts": "2015-05-01T02:48:00Z",
+          "Query_count": 1900,
+          "Query_load": 0.0007252542,
+          "Query_time_avg": 0.000545934
         },
         {
           "Point": 54,
-          "Start_ts": "2015-05-01T02:02:24Z",
-          "Query_count": 2248,
-          "Query_load": 0.00080316054,
-          "Query_time_avg": 0.00051575573
+          "Start_ts": "2015-05-01T02:24:00Z",
+          "Query_count": 2218,
+          "Query_load": 0.0008377729,
+          "Query_time_avg": 0.00054023
         },
         {
           "Point": 55,
-          "Start_ts": "2015-05-01T01:38:00Z",
-          "Query_count": 2109,
-          "Query_load": 0.0007316441,
-          "Query_time_avg": 0.00050435594
+          "Start_ts": "2015-05-01T02:00:00Z",
+          "Query_count": 2228,
+          "Query_load": 0.00080833957,
+          "Query_time_avg": 0.0005148427
         },
         {
           "Point": 56,
-          "Start_ts": "2015-05-01T01:13:36Z",
-          "Query_count": 2216,
-          "Query_load": 0.0007854385,
-          "Query_time_avg": 0.00051335216
+          "Start_ts": "2015-05-01T01:36:00Z",
+          "Query_count": 2030,
+          "Query_load": 0.0007133993,
+          "Query_time_avg": 0.00050184294
         },
         {
           "Point": 57,
-          "Start_ts": "2015-05-01T00:49:12Z",
-          "Query_count": 2169,
-          "Query_load": 0.0007792336,
-          "Query_time_avg": 0.0005236102
+          "Start_ts": "2015-05-01T01:12:00Z",
+          "Query_count": 2238,
+          "Query_load": 0.0008128771,
+          "Query_time_avg": 0.0005186641
         },
         {
           "Point": 58,
-          "Start_ts": "2015-05-01T00:24:48Z",
-          "Query_count": 2290,
-          "Query_load": 0.0007693074,
-          "Query_time_avg": 0.0004943101
+          "Start_ts": "2015-05-01T00:48:00Z",
+          "Query_count": 2077,
+          "Query_load": 0.0007581361,
+          "Query_time_avg": 0.0005231981
         },
         {
           "Point": 59,
-          "Start_ts": "2015-05-01T00:00:24Z",
-          "Query_count": 117,
-          "Query_load": 0.00006925751,
-          "Query_time_avg": 0.000866607
+          "Start_ts": "2015-05-01T00:24:00Z",
+          "Query_count": 2290,
+          "Query_load": 0.0007821292,
+          "Query_time_avg": 0.0004943101
         }
       ],
       "Stats": {
