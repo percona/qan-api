@@ -2225,13 +2225,6 @@
       "Load": 0.03842458460066053,
       "Log": [
         {
-          "Point": 1,
-          "Start_ts": "2013-07-01T23:36:00Z",
-          "Query_count": 0,
-          "Query_load": 0,
-          "Query_time_avg": 0
-        },
-        {
           "Point": 2,
           "Start_ts": "2013-07-01T23:12:00Z",
           "Query_count": 0,
@@ -2626,6 +2619,13 @@
         {
           "Point": 58,
           "Start_ts": "2013-07-01T00:48:00Z",
+          "Query_count": 0,
+          "Query_load": 0,
+          "Query_time_avg": 0
+        },
+        {
+          "Point": 59,
+          "Start_ts": "2013-07-01T00:24:00Z",
           "Query_count": 0,
           "Query_load": 0,
           "Query_time_avg": 0

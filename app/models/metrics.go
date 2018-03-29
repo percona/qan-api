@@ -210,8 +210,8 @@ func (m metrics) getSparklines(group metricGroup, args args, amountOfPoints int6
 	for pointN = 0; pointN < amountOfPoints; pointN++ {
 		ts := args.EndTS - pointN*args.IntervalTS
 		val, ok := metricLogRaw[ts]
-		// skip first or last point if they are empty
-		if (pointN == 0 || pointN == amountOfPoints-1) && !ok {
+		// skip firsts points if they are empty
+		if pointN < 2 && !ok {
 			continue
 		}
 		if !ok {
