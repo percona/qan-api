@@ -3,6 +3,7 @@
 
 # Require `revel` command (compiled later from vendor dir)
 required = ["github.com/revel/cmd/revel"]
+
 [[constraint]]
   name = "github.com/revel/cmd"
   version = "^0.14.1"
@@ -12,11 +13,13 @@ required = ["github.com/revel/cmd/revel"]
 [[override]]
   name = "github.com/revel/config"
   version = "^0.14.0"
+
 [[override]]
   name = "github.com/revel/modules"
   version = "^0.14.0"
+
 [[override]]
-  name = "gopkg.in/fsnotify.v1"
+  name = "gopkg.in/fsnotify/fsnotify.v1"
   source = "github.com/fsnotify/fsnotify"
 
 [[constraint]]
