@@ -8,3 +8,7 @@ tmp/
 app/routes/routes.go
 distro/
 docs/docs
+tags
+.tags
+.vscode/
+Session.vim
