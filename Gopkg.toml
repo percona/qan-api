@@ -15,6 +15,9 @@ required = ["github.com/revel/cmd/revel"]
 [[override]]
   name = "github.com/revel/modules"
   version = "^0.14.0"
+[[override]]
+  name = "gopkg.in/fsnotify.v1"
+  source = "github.com/fsnotify/fsnotify"
 
 [[constraint]]
   name = "github.com/pkg/errors"
