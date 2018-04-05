@@ -89,10 +89,10 @@ func SparklineData(qr *Reporter, endTs int64, intervalTs int64, queryClassId uin
 		queryLogArrRaw[(ql.Start_ts).Unix()] = ql
 	}
 
-	intervalTime := end.Sub(begin).Minutes()
+	intervalTimeMinutes := end.Sub(begin).Minutes()
 	amountOfPoints := int64(maxAmountOfPoints)
-	if intervalTime < maxAmountOfPoints {
-		amountOfPoints = int64(intervalTime)
+	if intervalTimeMinutes < maxAmountOfPoints {
+		amountOfPoints = int64(intervalTimeMinutes)
 	}
 	var i int64
 	for i = 0; i < amountOfPoints; i++ {
@@ -140,11 +140,12 @@ func (qr *Reporter) Profile(instanceId uint, begin, end time.Time, r qp.RankBy, 
 		searchIn = " AND query_class_id IN (" + strings.Join(valuesText, ", ") + ") "
 	}
 
-	intervalTime := end.Sub(begin).Minutes()
+	intervalTime := end.Sub(begin).Seconds()
+	intervalTimeMinutes := end.Sub(begin).Minutes()
 	endTs := end.Unix()
 	amountOfPoints := int64(maxAmountOfPoints)
-	if intervalTime < maxAmountOfPoints {
-		amountOfPoints = int64(intervalTime)
+	if intervalTimeMinutes < maxAmountOfPoints {
+		amountOfPoints = int64(intervalTimeMinutes)
 	}
 
 	intervalTs := int64(end.Sub(begin).Seconds()) / amountOfPoints
