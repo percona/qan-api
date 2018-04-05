@@ -178,7 +178,7 @@ func (h *MySQLMetricWriter) Write(report qp.Report) error {
 	h.stats.TimingDuration(h.stats.System("insert-class-metrics"), time.Now().Sub(t), h.stats.SampleRate)
 
 	if classDupes > 0 {
-		log.Printf("WARNING: %s duplicate query class metrics: start_ts='%s': %s", classDupes, report.StartTs, trace)
+		log.Printf("WARNING: %d duplicate query class metrics: start_ts='%s': %s", classDupes, report.StartTs, trace)
 	}
 
 	// //////////////////////////////////////////////////////////////////////
