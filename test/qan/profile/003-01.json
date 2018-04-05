@@ -16,8 +16,8 @@
       "Id": "",
       "Abstract": "",
       "Fingerprint": "",
-      "QPS": 18349.12777777778,
-      "Load": 3.6490150050984487,
+      "QPS": 305.8187962962963,
+      "Load": 0.06081691675164082,
       "Log": [
         {
           "Point": 0,
@@ -457,8 +457,8 @@
       "Id": "9E437B2CBBB41257",
       "Abstract": "SELECT wp_usermeta",
       "Fingerprint": "select user_id, meta_key, meta_value from wp_usermeta where user_id in(?+)",
-      "QPS": 6634.365972222222,
-      "Load": 0.7693820487953619,
+      "QPS": 110.57276620370371,
+      "Load": 0.012823034146589364,
       "Log": [
         {
           "Point": 0,
@@ -898,8 +898,8 @@
       "Id": "A1353A96C9FDE55E",
       "Abstract": "SELECT wp_users",
       "Fingerprint": "select * from wp_users where id = ?",
-      "QPS": 6627.686805555555,
-      "Load": 0.5420784742416193,
+      "QPS": 110.46144675925926,
+      "Load": 0.009034641237360322,
       "Log": [
         {
           "Point": 0,
@@ -1339,8 +1339,8 @@
       "Id": "B90978440CC11CC7",
       "Abstract": "SHOW STATUS",
       "Fingerprint": "show /*!? global */ status",
-      "QPS": 59.63055555555555,
-      "Load": 0.07361226522674164,
+      "QPS": 0.9938425925925926,
+      "Load": 0.0012268710871123605,
       "Log": [
         {
           "Point": 0,
@@ -1780,8 +1780,8 @@
       "Id": "92F3B1B361FB0E5B",
       "Abstract": "SELECT wp_options",
       "Fingerprint": "select option_name, option_value from wp_options where autoload = ?",
-      "QPS": 71.39861111111111,
-      "Load": 0.06550592630066805,
+      "QPS": 1.1899768518518519,
+      "Load": 0.0010917654383444675,
       "Log": [
         {
           "Point": 0,
@@ -2221,8 +2221,8 @@
       "Id": "8EAD425AC9D9EF20",
       "Abstract": "SELECT wp_redirection_logs",
       "Fingerprint": "select /*!? sql_no_cache */ /*!? sql_no_fcache */ * from `wp_redirection_logs`",
-      "QPS": 0.0006944444444444445,
-      "Load": 0.03842458460066053,
+      "QPS": 0.000011574074074074073,
+      "Load": 0.0006404097433443422,
       "Log": [
         {
           "Point": 1,
