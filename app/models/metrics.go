@@ -84,10 +84,10 @@ func (m metrics) GetClassMetrics(classID, instanceID uint, begin, end time.Time)
 	currentMetricGroup := m.identifyMetricGroup(instanceID, begin, end)
 	currentMetricGroup.CountField = "query_count"
 
-	intervalTime := end.Sub(begin).Minutes()
+	intervalTimeMinutes := end.Sub(begin).Minutes()
 	amountOfPoints := int64(maxAmountOfPoints)
-	if intervalTime < maxAmountOfPoints {
-		amountOfPoints = int64(intervalTime)
+	if intervalTimeMinutes < maxAmountOfPoints {
+		amountOfPoints = int64(intervalTimeMinutes)
 	}
 	endTs := end.Unix()
 	intervalTs := int64(end.Sub(begin).Seconds()) / amountOfPoints
@@ -133,11 +133,11 @@ func (m metrics) GetGlobalMetrics(instanceID uint, begin, end time.Time) (global
 	currentMetricGroup.ServerSummary = true
 	currentMetricGroup.CountField = "total_query_count"
 
-	intervalTime := end.Sub(begin).Minutes()
+	intervalTimeMinutes := end.Sub(begin).Minutes()
 	endTs := end.Unix()
 	amountOfPoints := int64(maxAmountOfPoints)
-	if intervalTime < maxAmountOfPoints {
-		amountOfPoints = int64(intervalTime)
+	if intervalTimeMinutes < maxAmountOfPoints {
+		amountOfPoints = int64(intervalTimeMinutes)
 	}
 	intervalTs := int64(end.Sub(begin).Seconds()) / amountOfPoints
 	args := args{
