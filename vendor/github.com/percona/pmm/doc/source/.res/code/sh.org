@@ -10,6 +10,18 @@
 
 #+end-block
 
+* curl
+
+#+begin-block:: curl url/ping
++curl.url-ping+
+
+.. code-block:: bash
+
+   $ curl http://192.168.100.1/ping
+   {'version': '1.8.0'}
+
+#+end-block
+
 * bash
 
 ** cd
@@ -154,6 +166,19 @@ SSL related options removed
    
 #+end-block
 
+** sudo
+
+#+begin-block:: sudo data-source-name postgresql-exporter
++sudo.data-source-name.postgresql-exporter+
+
+.. code-block:: bash
+
+   $ sudo -u postgres \
+   DATA_SOURCE_NAME="postgresql://pmm_doc_user:SomeR4ndom-Pa$$w0rd@pmm-doc-postgres-db.cdy17lilqrl7.us-east-1.rds.amazonaws.com:5432/postgres?sslmode=disable" \
+   ./postgres_exporter
+
+#+end-block
+
 * apt-get
 
 #+begin-block: apt-get remove
@@ -289,6 +314,15 @@ SSL related options removed
    $ docker pull percona/pmm-server:latest
 
 #+end-block
+#+begin-block: docker pull perconalab dev-latest
++docker.pull.perconalab-pmm-server-dev-latest+
+
+.. code-block:: bash
+
+   $ docker pull perconalab/pmm-server:dev-latest
+
+#+end-block
+
 #+begin-block: docker pull percona-pmm-server-latest
 +docker.pull.percona-pmm-server-latest+
 
@@ -379,8 +413,8 @@ SSL related options removed
      --volumes-from pmm-data \
      --name pmm-server \
      -e SERVER_USER=jsmith \
-     -e SERVER_PASSWORD=pass1234 \
-     -v /etc/pmm-certs:/etc/nginx/ssl \
+     -e SERVER_PASSWORD=SomeR4ndom-Pa$$w0rd \
+     -v /etc/pmm-certs:/srv/nginx \
      --restart always \
      percona/pmm-server:latest
 
@@ -446,7 +480,7 @@ SSL related options removed
      --volumes-from pmm-data \
      --name pmm-server \
      -e SERVER_USER=jsmith \
-     -e SERVER_PASSWORD=pass1234 \
+     -e SERVER_PASSWORD=SomeR4ndom-Pa$$w0rd \
      --restart always \
      percona/pmm-server:latest
 
@@ -771,10 +805,29 @@ Demonstrates how to set the option to 8 days.
 
 .. code-block:: bash
 
-   pmm-admin add external:metrics JOB-NAME URL:PORT-NUMBER
+   $ pmm-admin add external:metrics JOB-NAME URL:PORT-NUMBER
 
 #+end-block
+#+begin-block: pmm-admin add external-service service-port postgresql
++pmm-admin.add.external-service.service-port.postgresql+
 
+.. code-block:: bash
+
+   $ pmm-admin add external:service --service-port=9187 postgresql
+
+   pmm-admin 1.7.0
+
+   PMM Server      | 127.0.0.1:80 
+   Client Name     | percona
+   Client Address  | 172.17.0.1 
+   Service Manager | linux-systemd
+   
+   ...
+
+   Job name    Scrape interval  Scrape timeout  Metrics path  Scheme  Target           Labels              Health
+   postgresql  1s               1s              /metrics      http    172.17.0.1:9187  instance="percona"  
+   
+#+end-block
 ** config
 
 #+begin-block: pmm-admin config options
@@ -1261,3 +1314,13 @@ Demonstrates how to set the option to 8 days.
    grep cloud-init /tmp/pmm-server-console.log
 
 #+end-block
+* wget
+
+#+begin-block:  wget pmm-server-dev-latest.ova
++wget.pmm-server-dev-latest-ova+
+
+.. code-block:: bash
+
+   $ wget "http://percona-vm.s3-website-us-east-1.amazonaws.com/PMM-Server-dev-latest.ova"
+
+#+end-block:
