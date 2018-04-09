@@ -32,7 +32,7 @@ developed by |percona| and some are third-party open-source tools.
 
 The following diagram illustrates how |pmm| is currently structured:
 
-.. image:: images/pmm-diagram.png
+.. image:: .res/graphics/png/diagram.pmm-architecture.png
 
 .. _pmm-client:
 
@@ -64,29 +64,29 @@ For more information, see :ref:`install-client`.
   that manages the QAN agent
   as it collects query performance data from |mongodb|
   and sends it to |qan| API on :ref:`pmm-server`.
-* |node_exporter| is a |prometheus| exporter that collects general system
+* |node-exporter| is a |prometheus| exporter that collects general system
   metrics.
-* |mysqld_exporter| is a |prometheus| exporter that collects |mysql| server
+* |mysqld-exporter| is a |prometheus| exporter that collects |mysql| server
   metrics.
-* |mongodb_exporter| is a |prometheus| exporter that collects |mongodb| server
+* |mongodb-exporter| is a |prometheus| exporter that collects |mongodb| server
   metrics.
-* |proxysql_exporter| is a |prometheus| exporter that collects |proxysql|
+* |proxysql-exporter| is a |prometheus| exporter that collects |proxysql|
   performance metrics.
 
 .. seealso::
 
-   |mongodb_exporter| repository at |github|
+   |mongodb-exporter| repository at |github|
        `percona/mongodb_exporter`_
-   |mysqld_exporter| repository at |github|
+   |mysqld-exporter| repository at |github|
        `percona/mysqld_exporter`_
-   |node_exporter| repository at |github|
+   |node-exporter| repository at |github|
        `percona/node_exporter`_
-   |proxysql_exporter| repository at |github|
+   |proxysql-exporter| repository at |github|
        `percona/proxysql_exporter`_
    Passing exporter options when adding a monitoring service
        :ref:`pmm.pmm-admin.monitoring-service.pass-parameter`
    List of available exporter options
-       :ref:`pmm/list.exporter-option`
+       :ref:`pmm/list.exporter`
 
 .. _pmm-server:
 
@@ -150,9 +150,9 @@ For more information, see :ref:`using`.
    Enabling orchestrator
       :term:`Orchestrator` in :ref:`pmm/glossary/terminology-reference`
 
-.. rubric:: **References**
+.. .. rubric:: References
 
-.. target-notes::
+.. .. target-notes::
 
 .. include:: .res/replace/name.txt
 .. include:: .res/replace/program.txt

@@ -99,15 +99,11 @@ func SparklineData(qr *Reporter, endTs int64, intervalTs int64, queryClassId uin
 		ts := endTs - i*intervalTs
 		val, ok := queryLogArrRaw[ts]
 
-		// skip first or last point if they are empty
-		if (i == 0 || i == amountOfPoints-1) && !ok {
-			continue
-		}
-
 		if !ok {
 			val = qp.QueryLog{
 				Point:    uint(i),
 				Start_ts: time.Unix(ts, 0).UTC(),
+				NoData:   true,
 			}
 		}
 		queryLogArr = append(queryLogArr, val)

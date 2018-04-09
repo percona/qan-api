@@ -79,10 +79,10 @@
   revision = "63da60b59ae83a05a8d447a5fdf2186ff3c37f4b"
 
 [[projects]]
-  branch = "master"
+  branch = "PMM-946-sparkline-no-data"
   name = "github.com/percona/pmm"
   packages = ["proto","proto/config","proto/metrics","proto/qan","proto/query"]
-  revision = "99e800552681871f9956a84bf5465a6d19455597"
+  revision = "84ec0343470cf74ab45c8c8c563be952fc712888"
 
 [[projects]]
   name = "github.com/pkg/errors"
@@ -177,6 +177,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b4f73c813b5d35fae50297253d534d987dfa387c3af38785b7f1538a6185a450"
+  inputs-digest = "9c88aa2452f46970f15068e9b745b59cc281f69265074c6f8847d0af6a994250"
   solver-name = "gps-cdcl"
   solver-version = 1
