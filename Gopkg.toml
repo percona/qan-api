@@ -5,7 +5,7 @@
 required = ["github.com/revel/cmd/revel"]
 [[constraint]]
   name = "github.com/revel/cmd"
-  version = "^0.15.0"
+  version = "^0.18.0"
 
 # Override version for transitive dependencies
 # otherwise we fetch the latest.

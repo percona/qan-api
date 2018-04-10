@@ -124,8 +124,8 @@
     "harness",
     "revel"
   ]
-  revision = "e1776bda3c1f45b2d0315ca7b40d443d5f7578e1"
-  version = "v0.15.0"
+  revision = "29e594435c59a46332d5dff89e7a6bc535db9085"
+  version = "v0.18.0"
 
 [[projects]]
   name = "github.com/revel/config"
@@ -221,6 +221,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "72321d5833ca65460868e2df875f170ca6d5436c4526f685673604cfb32c3fa1"
+  inputs-digest = "7f25fb544836e84b3231a79208bf9392e0180fcb8d4b089ccaee2534fec3d5e0"
   solver-name = "gps-cdcl"
   solver-version = 1
