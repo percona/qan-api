@@ -1,23 +1,29 @@
 # Revel Framework
 
-[![Build Status](https://secure.travis-ci.org/revel/revel.svg?branch=master)](http://travis-ci.org/revel/revel)  [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Build Status](https://secure.travis-ci.org/revel/revel.svg?branch=master)](http://travis-ci.org/revel/revel) 
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/revel/revel)](https://goreportcard.com/report/github.com/revel/revel)
 
 A high productivity, full-stack web framework for the [Go language](http://www.golang.org).
 
-Current Version: 0.14.0 (2017-03-24)
+Current Version: 0.18.0 (2017-10-30)
 
-**As of Revel 0.13.0, Go 1.4+ is required.**
+**As of Revel 0.15.0, Go 1.6+ is required.**
 
 ## Quick Start
 
-Install revel framework:
+Enter Go's path (format varies based on OS):
+
+	cd $GOPATH
+
+Install Revel:
 
 	go get -u github.com/revel/cmd/revel
 
-Create a new app and run it:
+Create & Run your app:
 
-	revel new github.com/myaccount/my-app
-	revel run github.com/myaccount/my-app
+	revel new my-app
+	revel run my-app
 
 Open http://localhost:9000 in your browser and you should see "It works!"
 
@@ -26,7 +32,6 @@ Open http://localhost:9000 in your browser and you should see "It works!"
 
 * [Gitter](https://gitter.im/revel/community)
 * [StackOverflow](http://stackoverflow.com/questions/tagged/revel)
-* [Google Groups](https://groups.google.com/forum/#!forum/revel-framework)
 
 ## Learn More
 
@@ -38,19 +43,3 @@ Open http://localhost:9000 in your browser and you should see "It works!"
 
 * [Contributing Code Guidelines](https://github.com/revel/revel/blob/master/CONTRIBUTING.md)
 * [Revel Contributors](https://github.com/revel/revel/graphs/contributors)
-
-
-## Gratitude
-
-First and foremost, we'd like to thank the growing community of developers who enjoy using and contributing to Revel. Your patience, feedback, and moral support are vital to the ongoing development of Revel!
-
-Finally, we'd like to thank the professional organizations that have supported the development of Revel:
-* [Looking Glass](https://www.lookingglasscyber.com/)
-
-
-## Announcements
-
-View the [v0.14.0 release notes](https://github.com/revel/revel/releases/tag/v0.14.0)
-for all of the relevant changes.
-
-We are working on increasing the speed and quality of our releases. Your feedback has never been so valuable, please share your thoughts with us and help shape Revel!

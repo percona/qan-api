@@ -5,6 +5,7 @@
 package revel
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -83,6 +84,10 @@ var (
 		"m2[2]":           {"bar"},
 		"m3[a]":           {"1"},
 		"m3[b]":           {"2"},
+		"m4[a].ID":        {"1"},
+		"m4[a].Name":      {"foo"},
+		"m4[b].ID":        {"2"},
+		"m4[b].Name":      {"bar"},
 		"invalidInt":      {"xyz"},
 		"invalidInt2":     {""},
 		"invalidBool":     {"xyz"},
@@ -141,6 +146,7 @@ var binderTestCases = map[string]interface{}{
 	"m":  map[string]string{"a": "foo", "b": "bar"},
 	"m2": map[int]string{1: "foo", 2: "bar"},
 	"m3": map[string]int{"a": 1, "b": 2},
+	"m4": map[string]A{"a": A{ID: 1, Name: "foo"}, "b": A{ID: 2, Name: "bar"}},
 
 	// TODO: Tests that use TypeBinders
 
@@ -165,10 +171,40 @@ var fileBindings = []struct{ val, arrval, f interface{} }{
 	{(*io.ReadSeeker)(nil), []io.ReadSeeker{}, ioutil.ReadAll},
 }
 
+func TestJsonBinder(t *testing.T) {
+	// create a structure to be populated
+	{
+		d, _ := json.Marshal(map[string]int{"a": 1})
+		params := &Params{JSON: d}
+		foo := struct{ A int }{}
+		c := NewTestController(nil, getMultipartRequest())
+
+		ParseParams(params, NewRequest(c.Request.In))
+		actual := Bind(params, "test", reflect.TypeOf(foo))
+		valEq(t, "TestJsonBinder", reflect.ValueOf(actual.Interface().(struct{ A int }).A), reflect.ValueOf(1))
+	}
+	{
+		d, _ := json.Marshal(map[string]interface{}{"a": map[string]int{"b": 45}})
+		params := &Params{JSON: d}
+		testMap := map[string]interface{}{}
+		actual := Bind(params, "test", reflect.TypeOf(testMap)).Interface().(map[string]interface{})
+		if actual["a"].(map[string]interface{})["b"].(float64) != 45 {
+			t.Errorf("Failed to fetch map value %#v", actual["a"])
+		}
+		// Check to see if a named map works
+		actualb := Bind(params, "test", reflect.TypeOf(map[string]map[string]float64{})).Interface().(map[string]map[string]float64)
+		if actualb["a"]["b"] != 45 {
+			t.Errorf("Failed to fetch map value %#v", actual["a"])
+		}
+
+	}
+}
+
 func TestBinder(t *testing.T) {
 	// Reuse the mvc_test.go multipart request to test the binder.
 	params := &Params{}
-	ParseParams(params, NewRequest(getMultipartRequest()))
+	c := NewTestController(nil, getMultipartRequest())
+	ParseParams(params, NewRequest(c.Request.In))
 	params.Values = ParamTestValues
 
 	// Values

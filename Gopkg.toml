@@ -11,10 +11,19 @@ required = ["github.com/revel/cmd/revel"]
 # otherwise we fetch the latest.
 [[override]]
   name = "github.com/revel/config"
-  version = "^0.14.0"
+  version = "^0.18.0"
 [[override]]
   name = "github.com/revel/modules"
-  version = "^0.14.0"
+  version = "^0.18.0"
+
+# https://github.com/revel/revel/issues/1254#issuecomment-341250246
+[[override]]
+  name = "github.com/revel/log15"
+  branch = "master"
+[[override]]
+  name = "github.com/xeonx/timeago"
+  branch = "master"
+
 [[override]]
   name = "gopkg.in/fsnotify.v1"
   source = "github.com/fsnotify/fsnotify"
@@ -25,7 +34,7 @@ required = ["github.com/revel/cmd/revel"]
 
 [[constraint]]
   name = "github.com/revel/revel"
-  version = "^0.14.0"
+  version = "^0.18.0"
 
 [[constraint]]
   name = "github.com/youtube/vitess"

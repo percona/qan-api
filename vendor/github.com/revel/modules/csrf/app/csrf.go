@@ -49,7 +49,11 @@ func CsrfFilter(c *revel.Controller, fc []revel.Filter) {
 		RefreshToken(c)
 	}
 
-	referer, refErr := url.Parse(c.Request.Header.Get("Referer"))
+	referer, refErr := url.Parse(c.Request.Referer())
+	if refErr != nil {
+		c.Result = c.Forbidden("REVEL CSRF: Unable to fetch referer")
+		return
+	}
 	isSameOrigin := sameOrigin(c.Request.URL, referer)
 
 	// If the Request method isn't in the white listed methods
@@ -75,12 +79,12 @@ func CsrfFilter(c *revel.Controller, fc []revel.Filter) {
 		var requestToken string
 		// First check for token in post data
 		if c.Request.Method == "POST" {
-			requestToken = c.Request.FormValue("csrftoken")
+			requestToken = c.Params.Get("csrftoken")
 		}
 
 		// Then check for token in custom headers, as with AJAX
 		if requestToken == "" {
-			requestToken = c.Request.Header.Get("X-CSRFToken")
+			requestToken = c.Request.GetHttpHeader("X-CSRFToken")
 		}
 
 		if requestToken == "" || !compareToken(requestToken, token) {
@@ -92,7 +96,7 @@ func CsrfFilter(c *revel.Controller, fc []revel.Filter) {
 	fc[0](c, fc[1:])
 
 	// Only add token to ViewArgs if the request is: not AJAX, not missing referer header, and is same origin.
-	if c.Request.Header.Get("X-CSRFToken") == "" && isSameOrigin {
+	if c.Request.GetHttpHeader("X-CSRFToken") == "" && isSameOrigin {
 		c.ViewArgs["_csrftoken"] = token
 	}
 }
@@ -115,7 +119,7 @@ func init() {
 		if tokenFunc, ok := viewArgs["_csrftoken"]; !ok {
 			panic("REVEL CSRF: _csrftoken missing from ViewArgs.")
 		} else {
-			return template.HTML(tokenFunc.(func() string)())
+			return template.HTML(tokenFunc.(string))
 		}
 	}
 }
