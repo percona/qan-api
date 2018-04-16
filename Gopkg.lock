@@ -26,6 +26,12 @@
   version = "v1.3"
 
 [[projects]]
+  name = "github.com/go-stack/stack"
+  packages = ["."]
+  revision = "259ab82a6cad3992b4e21ff5cac294ccb06474bc"
+  version = "v1.7.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/golang/glog"
   packages = ["."]
@@ -34,7 +40,13 @@
 [[projects]]
   branch = "master"
   name = "github.com/golang/protobuf"
-  packages = ["proto","ptypes","ptypes/any","ptypes/duration","ptypes/timestamp"]
+  packages = [
+    "proto",
+    "ptypes",
+    "ptypes/any",
+    "ptypes/duration",
+    "ptypes/timestamp"
+  ]
   revision = "925541529c1fa6821df4e44ce2723319eb2be768"
 
 [[projects]]
@@ -44,14 +56,27 @@
   revision = "4fe82ae3040f80a03d04d2cccb5606a626b8e1ee"
 
 [[projects]]
+  name = "github.com/inconshreveable/log15"
+  packages = ["term"]
+  revision = "0decfc6c20d9ca0ad143b0e89dcaa20f810b4fb3"
+  version = "v2.13"
+
+[[projects]]
   branch = "master"
   name = "github.com/jmoiron/sqlx"
-  packages = [".","reflectx"]
+  packages = [
+    ".",
+    "reflectx"
+  ]
   revision = "05cef0741ade10ca668982355b3f3f0bcf0ff0a8"
 
 [[projects]]
   name = "github.com/klauspost/compress"
-  packages = ["flate","gzip","zlib"]
+  packages = [
+    "flate",
+    "gzip",
+    "zlib"
+  ]
   revision = "6c8db69c4b49dd4df1fff66996cf556176d0b9bf"
   version = "v1.2.1"
 
@@ -68,6 +93,18 @@
   version = "v1.1"
 
 [[projects]]
+  name = "github.com/mattn/go-colorable"
+  packages = ["."]
+  revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
+  version = "v0.0.9"
+
+[[projects]]
+  name = "github.com/mattn/go-isatty"
+  packages = ["."]
+  revision = "0360b2af4f38e8d38c7fce2a9f4e702702d73a39"
+  version = "v0.0.3"
+
+[[projects]]
   branch = "master"
   name = "github.com/nu7hatch/gouuid"
   packages = ["."]
@@ -75,13 +112,22 @@
 
 [[projects]]
   name = "github.com/percona/go-mysql"
-  packages = ["event","log"]
+  packages = [
+    "event",
+    "log"
+  ]
   revision = "63da60b59ae83a05a8d447a5fdf2186ff3c37f4b"
 
 [[projects]]
   branch = "master"
   name = "github.com/percona/pmm"
-  packages = ["proto","proto/config","proto/metrics","proto/qan","proto/query"]
+  packages = [
+    "proto",
+    "proto/config",
+    "proto/metrics",
+    "proto/qan",
+    "proto/query"
+  ]
   revision = "99e800552681871f9956a84bf5465a6d19455597"
 
 [[projects]]
@@ -98,9 +144,12 @@
 
 [[projects]]
   name = "github.com/revel/cmd"
-  packages = ["harness","revel"]
-  revision = "95d6366c0d8d727ca62767848fb0801268b49ea6"
-  version = "v0.14.1"
+  packages = [
+    "harness",
+    "revel"
+  ]
+  revision = "29e594435c59a46332d5dff89e7a6bc535db9085"
+  version = "v0.18.0"
 
 [[projects]]
   name = "github.com/revel/config"
@@ -109,22 +158,32 @@
   version = "v0.18.0"
 
 [[projects]]
-  name = "github.com/revel/modules"
-  packages = ["testrunner/app/controllers"]
-  revision = "209cc8b2b7ed93a55067bc0db97707b1432e49c4"
-  version = "v0.15.0"
+  branch = "master"
+  name = "github.com/revel/log15"
+  packages = ["."]
+  revision = "793412a67da6f8d15fede4c38f5c66272478cb8a"
 
 [[projects]]
-  name = "github.com/revel/revel"
-  packages = [".","testing"]
-  revision = "75d66c3c990f01deb5ff2045c04da7eea5be39b2"
-  version = "v0.14.0"
+  name = "github.com/revel/modules"
+  packages = ["testrunner/app/controllers"]
+  revision = "45c500a736554f6951e4855e1ca59658fa2528c3"
+  version = "v0.18.0"
 
 [[projects]]
   branch = "master"
-  name = "github.com/robfig/pathtree"
+  name = "github.com/revel/pathtree"
   packages = ["."]
   revision = "41257a1839e945fce74afd070e02bab2ea2c776a"
+
+[[projects]]
+  name = "github.com/revel/revel"
+  packages = [
+    ".",
+    "logger",
+    "testing"
+  ]
+  revision = "164f0cf561ac8046a994276fa417fc7f11863da5"
+  version = "v0.18.0"
 
 [[projects]]
   name = "github.com/stretchr/testify"
@@ -133,14 +192,33 @@
   version = "v1.2.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/xeonx/timeago"
+  packages = ["."]
+  revision = "714e6695c468c22fb6431a914d8c5f9d19fa2367"
+
+[[projects]]
   name = "github.com/youtube/vitess"
-  packages = ["go/bytes2","go/hack","go/sqltypes","go/vt/proto/query","go/vt/proto/topodata","go/vt/proto/vtgate","go/vt/proto/vtrpc","go/vt/sqlparser","go/vt/vterrors"]
+  packages = [
+    "go/bytes2",
+    "go/hack",
+    "go/sqltypes",
+    "go/vt/proto/query",
+    "go/vt/proto/topodata",
+    "go/vt/proto/vtgate",
+    "go/vt/proto/vtrpc",
+    "go/vt/sqlparser",
+    "go/vt/vterrors"
+  ]
   revision = "98f9189aa016e2a3afafa9ff42cde55bde421d3c"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
-  packages = ["context","websocket"]
+  packages = [
+    "context",
+    "websocket"
+  ]
   revision = "0ed95abb35c445290478a5348a7b38bb154135fd"
 
 [[projects]]
@@ -157,7 +235,10 @@
 
 [[projects]]
   name = "google.golang.org/grpc"
-  packages = ["codes","status"]
+  packages = [
+    "codes",
+    "status"
+  ]
   revision = "6b51017f791ae1cfbec89c52efdf444b13b550ef"
   version = "v1.9.2"
 
@@ -174,9 +255,21 @@
   source = "github.com/fsnotify/fsnotify"
   version = "v1.4.7"
 
+[[projects]]
+  name = "gopkg.in/natefinch/lumberjack.v2"
+  packages = ["."]
+  revision = "a96e63847dc3c67d17befa69c303767e2f84e54f"
+  version = "v2.1"
+
+[[projects]]
+  branch = "v0"
+  name = "gopkg.in/stack.v0"
+  packages = ["."]
+  revision = "9b43fcefddd0178abdabf4d484ab0d695d0011db"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b4f73c813b5d35fae50297253d534d987dfa387c3af38785b7f1538a6185a450"
+  inputs-digest = "82bde264a6b57a5527e80b135838e3faeed81eea8237d07356e5e4debd390077"
   solver-name = "gps-cdcl"
   solver-version = 1

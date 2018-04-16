@@ -66,7 +66,7 @@ func (c *Instance) List() revel.Result {
 
 // POST /instances
 func (c *Instance) Create() revel.Result {
-	body, err := ioutil.ReadAll(c.Request.Body)
+	body, err := ioutil.ReadAll(c.Request.GetBody())
 	if err != nil {
 		return c.Error(err, "Instance.Create: ioutil.ReadAll")
 	}
@@ -125,7 +125,7 @@ func (c *Instance) Get(uuid string) revel.Result {
 
 // PUT /instances/:uuid
 func (c *Instance) Update(uuid string) revel.Result {
-	body, err := ioutil.ReadAll(c.Request.Body)
+	body, err := ioutil.ReadAll(c.Request.GetBody())
 	if err != nil {
 		return c.Error(err, "Instance.Update: ioutil.ReadAll")
 	}

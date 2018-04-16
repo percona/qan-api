@@ -101,7 +101,7 @@ func TestComputeRoute(t *testing.T) {
 			t.Error("Failed to parse route line:", routeLine)
 			continue
 		}
-		actual := NewRoute(method, path, action, fixedArgs, "", 0)
+		actual := NewRoute(appModule, method, path, action, fixedArgs, "", 0)
 		eq(t, "Method", actual.Method, expected.Method)
 		eq(t, "Path", actual.Path, expected.Path)
 		eq(t, "Action", actual.Action, expected.Action)
@@ -121,7 +121,7 @@ GET   /app/:id/                  Application.Show
 GET   /app-wild/*id/             Application.WildShow
 POST  /app/:id                   Application.Save
 PATCH /app/:id/                  Application.Update
-GET   /javascript/:filepath      Static.Serve("public/js")
+GET   /javascript/:filepath      App\Static.Serve("public/js")
 GET   /public/*filepath          Static.Serve("public")
 *     /:controller/:action       :controller.:action
 
@@ -133,7 +133,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Method: "GET",
 		URL:    &url.URL{Path: "/"},
 	}: {
-		ControllerName: "Application",
+		ControllerName: "application",
 		MethodName:     "Index",
 		FixedParams:    []string{},
 		Params:         map[string][]string{},
@@ -143,7 +143,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Method: "GET",
 		URL:    &url.URL{Path: "/test/"},
 	}: {
-		ControllerName: "Application",
+		ControllerName: "application",
 		MethodName:     "Index",
 		FixedParams:    []string{"Test", "Test2"},
 		Params:         map[string][]string{},
@@ -153,7 +153,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Method: "GET",
 		URL:    &url.URL{Path: "/app/123"},
 	}: {
-		ControllerName: "Application",
+		ControllerName: "application",
 		MethodName:     "Show",
 		FixedParams:    []string{},
 		Params:         map[string][]string{"id": {"123"}},
@@ -163,7 +163,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Method: "PATCH",
 		URL:    &url.URL{Path: "/app/123"},
 	}: {
-		ControllerName: "Application",
+		ControllerName: "application",
 		MethodName:     "Update",
 		FixedParams:    []string{},
 		Params:         map[string][]string{"id": {"123"}},
@@ -173,7 +173,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Method: "POST",
 		URL:    &url.URL{Path: "/app/123"},
 	}: {
-		ControllerName: "Application",
+		ControllerName: "application",
 		MethodName:     "Save",
 		FixedParams:    []string{},
 		Params:         map[string][]string{"id": {"123"}},
@@ -183,7 +183,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Method: "GET",
 		URL:    &url.URL{Path: "/app/123/"},
 	}: {
-		ControllerName: "Application",
+		ControllerName: "application",
 		MethodName:     "Show",
 		FixedParams:    []string{},
 		Params:         map[string][]string{"id": {"123"}},
@@ -193,7 +193,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Method: "GET",
 		URL:    &url.URL{Path: "/public/css/style.css"},
 	}: {
-		ControllerName: "Static",
+		ControllerName: "static",
 		MethodName:     "Serve",
 		FixedParams:    []string{"public"},
 		Params:         map[string][]string{"filepath": {"css/style.css"}},
@@ -203,7 +203,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Method: "GET",
 		URL:    &url.URL{Path: "/javascript/sessvars.js"},
 	}: {
-		ControllerName: "Static",
+		ControllerName: "static",
 		MethodName:     "Serve",
 		FixedParams:    []string{"public/js"},
 		Params:         map[string][]string{"filepath": {"sessvars.js"}},
@@ -213,7 +213,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Method: "GET",
 		URL:    &url.URL{Path: "/Implicit/Route"},
 	}: {
-		ControllerName: "Implicit",
+		ControllerName: "implicit",
 		MethodName:     "Route",
 		FixedParams:    []string{},
 		Params: map[string][]string{
@@ -239,7 +239,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		URL:    &url.URL{Path: "/app/123"},
 		Header: http.Header{"X-Http-Method-Override": []string{"PATCH"}},
 	}: {
-		ControllerName: "Application",
+		ControllerName: "application",
 		MethodName:     "Update",
 		FixedParams:    []string{},
 		Params:         map[string][]string{"id": {"123"}},
@@ -250,7 +250,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		URL:    &url.URL{Path: "/app/123"},
 		Header: http.Header{"X-Http-Method-Override": []string{"PATCH"}},
 	}: {
-		ControllerName: "Application",
+		ControllerName: "application",
 		MethodName:     "Show",
 		FixedParams:    []string{},
 		Params:         map[string][]string{"id": {"123"}},
@@ -258,23 +258,34 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 }
 
 func TestRouteMatches(t *testing.T) {
+	initControllers()
 	BasePath = "/BasePath"
 	router := NewRouter("")
-	router.Routes, _ = parseRoutes("", "", TestRoutes, false)
+	router.Routes, _ = parseRoutes(appModule, "", "", TestRoutes, false)
 	if err := router.updateTree(); err != nil {
 		t.Errorf("updateTree failed: %s", err)
 	}
 	for req, expected := range routeMatchTestCases {
 		t.Log("Routing:", req.Method, req.URL)
-		actual := router.Route(req)
+
+		context := NewGoContext(nil)
+		context.Request.SetRequest(req)
+		c := NewTestController(nil, req)
+
+		actual := router.Route(c.Request)
 		if !eq(t, "Found route", actual != nil, expected != nil) {
 			continue
 		}
-		eq(t, "ControllerName", actual.ControllerName, expected.ControllerName)
-		eq(t, "MethodName", actual.MethodName, expected.MethodName)
+		if expected.ControllerName != "" {
+			eq(t, "ControllerName", actual.ControllerName, appModule.Namespace()+expected.ControllerName)
+		} else {
+			eq(t, "ControllerName", actual.ControllerName, expected.ControllerName)
+		}
+
+		eq(t, "MethodName", actual.MethodName, strings.ToLower(expected.MethodName))
 		eq(t, "len(Params)", len(actual.Params), len(expected.Params))
 		for key, actualValue := range actual.Params {
-			eq(t, "Params", actualValue[0], expected.Params[key][0])
+			eq(t, "Params "+key, actualValue[0], expected.Params[key][0])
 		}
 		eq(t, "len(FixedParams)", len(actual.FixedParams), len(expected.FixedParams))
 		for i, actualValue := range actual.FixedParams {
@@ -315,7 +326,7 @@ var reverseRoutingTestCases = map[*ReverseRouteArgs]*ActionDefinition{
 		action: "Implicit.Route",
 		args:   map[string]string{},
 	}: {
-		URL:    "/Implicit/Route",
+		URL:    "/implicit/route",
 		Method: "GET",
 		Star:   true,
 		Action: "Implicit.Route",
@@ -342,12 +353,20 @@ var reverseRoutingTestCases = map[*ReverseRouteArgs]*ActionDefinition{
 	},
 }
 
+type testController struct {
+	*Controller
+}
+
+func initControllers() {
+	registerControllers()
+}
 func TestReverseRouting(t *testing.T) {
+	initControllers()
 	router := NewRouter("")
-	router.Routes, _ = parseRoutes("", "", TestRoutes, false)
+	router.Routes, _ = parseRoutes(appModule, "", "", TestRoutes, false)
 	for routeArgs, expected := range reverseRoutingTestCases {
 		actual := router.Reverse(routeArgs.action, routeArgs.args)
-		if !eq(t, "Found route", actual != nil, expected != nil) {
+		if !eq(t, fmt.Sprintf("Found route %s %s", routeArgs.action, actual), actual != nil, expected != nil) {
 			continue
 		}
 		eq(t, "Url", actual.URL, expected.URL)
@@ -359,14 +378,15 @@ func TestReverseRouting(t *testing.T) {
 
 func BenchmarkRouter(b *testing.B) {
 	router := NewRouter("")
-	router.Routes, _ = parseRoutes("", "", TestRoutes, false)
+	router.Routes, _ = parseRoutes(nil, "", "", TestRoutes, false)
 	if err := router.updateTree(); err != nil {
 		b.Errorf("updateTree failed: %s", err)
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N/len(routeMatchTestCases); i++ {
 		for req := range routeMatchTestCases {
-			r := router.Route(req)
+			c := NewTestController(nil, req)
+			r := router.Route(c.Request)
 			if r == nil {
 				b.Errorf("Request not found: %s", req.URL.Path)
 			}
@@ -397,7 +417,7 @@ func BenchmarkLargeRouter(b *testing.B) {
 
 	for _, p := range routePaths {
 		router.Routes = append(router.Routes,
-			NewRoute("GET", p, "Controller.Action", "", "", 0))
+			NewRoute(appModule, "GET", p, "Controller.Action", "", "", 0))
 	}
 	if err := router.updateTree(); err != nil {
 		b.Errorf("updateTree failed: %s", err)
@@ -419,7 +439,8 @@ func BenchmarkLargeRouter(b *testing.B) {
 
 	for i := 0; i < b.N/len(reqs); i++ {
 		for _, req := range reqs {
-			route := router.Route(req)
+			c := NewTestController(nil, req)
+			route := router.Route(c.Request)
 			if route == nil {
 				b.Errorf("Failed to route: %s", req.URL.Path)
 			}
@@ -430,8 +451,8 @@ func BenchmarkLargeRouter(b *testing.B) {
 func BenchmarkRouterFilter(b *testing.B) {
 	startFakeBookingApp()
 	controllers := []*Controller{
-		{Request: NewRequest(showRequest)},
-		{Request: NewRequest(staticRequest)},
+		NewTestController(nil, showRequest),
+		NewTestController(nil, staticRequest),
 	}
 	for _, c := range controllers {
 		c.Params = &Params{}
@@ -449,12 +470,10 @@ func BenchmarkRouterFilter(b *testing.B) {
 func TestOverrideMethodFilter(t *testing.T) {
 	req, _ := http.NewRequest("POST", "/hotels/3", strings.NewReader("_method=put"))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
-	c := Controller{
-		Request: NewRequest(req),
-	}
+	c := NewTestController(nil, req)
 
-	if HTTPMethodOverride(&c, NilChain); c.Request.Request.Method != "PUT" {
-		t.Errorf("Expected to override current method '%s' in route, found '%s' instead", "", c.Request.Request.Method)
+	if HTTPMethodOverride(c, NilChain); c.Request.Method != "PUT" {
+		t.Errorf("Expected to override current method '%s' in route, found '%s' instead", "", c.Request.Method)
 	}
 }
 

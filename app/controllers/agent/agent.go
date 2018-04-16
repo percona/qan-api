@@ -63,7 +63,7 @@ func (c Agent) List() revel.Result {
 
 // POST /agents
 func (c Agent) Create() revel.Result {
-	body, err := ioutil.ReadAll(c.Request.Body)
+	body, err := ioutil.ReadAll(c.Request.GetBody())
 	if err != nil {
 		return c.Error(err, "Agent.Create: ioutil.ReadAll")
 	}
@@ -129,7 +129,7 @@ func (c Agent) Get(uuid string) revel.Result {
 
 // PUT /agents/:uuid
 func (c Agent) Update(uuid string) revel.Result {
-	body, err := ioutil.ReadAll(c.Request.Body)
+	body, err := ioutil.ReadAll(c.Request.GetBody())
 	if err != nil {
 		return c.Error(err, "Agent.Update: ioutil.ReadAll")
 	}

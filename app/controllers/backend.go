@@ -101,7 +101,7 @@ func (c BackEnd) RenderNoContent() revel.Result {
 }
 
 func (j *NoContent) Apply(req *revel.Request, resp *revel.Response) {
-	resp.Out.WriteHeader(http.StatusNoContent) // 204
+	resp.SetStatus(http.StatusNoContent) // 204
 }
 
 type Created struct {
@@ -116,5 +116,5 @@ func (c BackEnd) RenderCreated(location string) revel.Result {
 
 func (j *Created) Apply(req *revel.Request, resp *revel.Response) {
 	resp.Out.Header().Set("Location", j.Location)
-	resp.Out.WriteHeader(http.StatusCreated) // 201
+	resp.SetStatus(http.StatusCreated) // 201
 }

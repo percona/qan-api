@@ -54,7 +54,7 @@ func (c Agent) SendCmd(uuid string) revel.Result {
 	agentId := c.Args["agentId"].(uint)
 
 	// Read the proto.Cmd from the client.
-	body, err := ioutil.ReadAll(c.Request.Body)
+	body, err := ioutil.ReadAll(c.Request.GetBody())
 	if err != nil {
 		return c.Error(err, "ioutil.ReadAll")
 	}

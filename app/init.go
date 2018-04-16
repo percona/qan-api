@@ -166,11 +166,12 @@ func beforeController(c *revel.Controller) revel.Result {
 		apiBasePath = config.Get("api.base.path")
 	}
 	schema := "http"
-	if strings.Contains(strings.ToLower(c.Request.Request.Proto), "https") {
+	req := c.Request.In.GetRaw().(*http.Request)
+	if strings.Contains(strings.ToLower(req.Proto), "https") {
 		schema = "https"
 	}
-	c.Args["wsBase"] = "ws://" + c.Request.Request.Host + apiBasePath
-	c.Args["httpBase"] = schema + "://" + c.Request.Request.Host + apiBasePath
+	c.Args["wsBase"] = "ws://" + req.Host + apiBasePath
+	c.Args["httpBase"] = schema + "://" + req.Host + apiBasePath
 
 	agentVersion := c.Request.Header.Get("X-Percona-QAN-Agent-Version")
 	if agentVersion == "" {

@@ -75,7 +75,7 @@ func (a *AgentHandlerMock) RemoveConfig(agentId uint, service, otherUUID string)
 }
 
 func (a *AgentHandlerMock) UpdateConfigs(agentId uint, configs []proto.AgentConfig, reset bool) error {
-	if a.UpdateConfigs != nil {
+	if a.UpdateConfigsMock != nil {
 		return a.UpdateConfigsMock(agentId, configs, reset)
 	}
 	return nil

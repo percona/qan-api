@@ -75,7 +75,7 @@ func (c *Query) GetTables(id string) revel.Result {
 func (c *Query) UpdateTables(id string) revel.Result {
 	classId := c.Args["classId"].(uint)
 
-	body, err := ioutil.ReadAll(c.Request.Body)
+	body, err := ioutil.ReadAll(c.Request.GetBody())
 	if err != nil {
 		return c.Error(err, "Query.UpdateTables: ioutil.ReadAll")
 	}
@@ -143,7 +143,7 @@ func (c *Query) GetExamples(id string) revel.Result {
 func (c *Query) UpdateExample(id string) revel.Result {
 	classId := c.Args["classId"].(uint)
 
-	body, err := ioutil.ReadAll(c.Request.Body)
+	body, err := ioutil.ReadAll(c.Request.GetBody())
 	if err != nil {
 		return c.Error(err, "Query.UpdateExample: ioutil.ReadAll")
 	}

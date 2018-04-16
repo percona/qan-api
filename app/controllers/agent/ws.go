@@ -54,13 +54,14 @@ func init() {
 }
 
 // WS /agents/:uuid/cmd
-func (c Agent) Cmd(uuid string, conn *websocket.Conn) revel.Result {
+func (c Agent) Cmd(uuid string, conn revel.ServerWebSocket) revel.Result {
 	origin := c.Request.Header.Get("Origin")
 	agentId := c.Args["agentId"].(uint)
 	agentVersion := c.Args["agentVersion"].(string)
 	prefix := fmt.Sprintf("[Agent.Cmd] agent_id=%d %s %s", agentId, agentVersion, origin)
 
-	wsConn := ws.ExistingConnection(origin, c.Request.URL.String(), conn)
+	rawConn := conn.GetRaw().(*websocket.Conn)
+	wsConn := ws.ExistingConnection(origin, c.Request.URL.String(), rawConn)
 	defer wsConn.Disconnect()
 
 	// When the agent disconnects, set oN.agent_configs.running=0 for the agent.
@@ -111,12 +112,13 @@ func (c Agent) Cmd(uuid string, conn *websocket.Conn) revel.Result {
 	return nil
 }
 
-func (c Agent) Data(conn *websocket.Conn) revel.Result {
+func (c Agent) Data(conn revel.ServerWebSocket) revel.Result {
 	origin := c.Request.Header.Get("Origin")
 	agentId := c.Args["agentId"].(uint)
 
 	// Authenticate/authorize agent
-	wsConn := ws.ExistingConnection(origin, c.Request.URL.String(), conn)
+	rawConn := conn.GetRaw().(*websocket.Conn)
+	wsConn := ws.ExistingConnection(origin, c.Request.URL.String(), rawConn)
 	defer wsConn.Disconnect()
 
 	dbStats := msgStats // copy
@@ -148,13 +150,14 @@ func (c Agent) Data(conn *websocket.Conn) revel.Result {
 	return nil
 }
 
-func (c Agent) Log(conn *websocket.Conn) revel.Result {
+func (c Agent) Log(conn revel.ServerWebSocket) revel.Result {
 	origin := c.Request.Header.Get("Origin")
 	agentId := c.Args["agentId"].(uint)
 	prefix := fmt.Sprintf("%s [Data.Log] agent_id=%d", origin, agentId)
 	revel.TRACE.Println(prefix)
 
-	wsConn := ws.ExistingConnection(origin, c.Request.URL.String(), conn)
+	rawConn := conn.GetRaw().(*websocket.Conn)
+	wsConn := ws.ExistingConnection(origin, c.Request.URL.String(), rawConn)
 	defer wsConn.Disconnect()
 
 	dbStats := msgStats // copy
