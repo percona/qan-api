@@ -178,7 +178,7 @@ func (h *MySQLMetricWriter) Write(report qp.Report) error {
 	h.stats.TimingDuration(h.stats.System("insert-class-metrics"), time.Now().Sub(t), h.stats.SampleRate)
 
 	if classDupes > 0 {
-		log.Printf("WARNING: %s duplicate query class metrics: start_ts='%s': %s", classDupes, report.StartTs, trace)
+		log.Printf("WARNING: %d duplicate query class metrics: start_ts='%s': %s", classDupes, report.StartTs, trace)
 	}
 
 	// //////////////////////////////////////////////////////////////////////
@@ -260,7 +260,7 @@ func (h *MySQLMetricWriter) getClassId(checksum string) (uint, error) {
 }
 
 func (h *MySQLMetricWriter) newClass(instanceId uint, subsystem string, class *event.Class, lastSeen string) (uint, error) {
-	var queryAbstract, queryQuery string
+	var queryAbstract, queryFingerprint string
 	var tables interface{}
 
 	switch subsystem {
@@ -277,24 +277,24 @@ func (h *MySQLMetricWriter) newClass(instanceId uint, subsystem string, class *e
 
 		// Truncate long fingerprints and abstracts to avoid MySQL warning 1265:
 		// Data truncated for column 'abstract'
-		if len(query.Query) > MAX_FINGERPRINT {
-			query.Query = query.Query[0:MAX_FINGERPRINT-3] + "..."
+		if len(query.Fingerprint) > MAX_FINGERPRINT {
+			query.Fingerprint = query.Fingerprint[0:MAX_FINGERPRINT-3] + "..."
 		}
 		if len(query.Abstract) > MAX_ABSTRACT {
 			query.Abstract = query.Abstract[0:MAX_ABSTRACT-3] + "..."
 		}
 		queryAbstract = query.Abstract
-		queryQuery = query.Query
+		queryFingerprint = query.Fingerprint
 	case instance.SubsystemNameMongo:
 		queryAbstract = class.Fingerprint
-		queryQuery = class.Fingerprint
+		queryFingerprint = class.Fingerprint
 	}
 
 	// Create the query class which is internally identified by its query_class_id.
 	// The query checksum is the class is identified externally (in a QAN report).
 	// Since this is the first time we've seen the query, firstSeen=lastSeen.
 	t := time.Now()
-	res, err := h.stmtInsertQueryClass.Exec(class.Id, queryAbstract, queryQuery, tables, lastSeen, lastSeen)
+	res, err := h.stmtInsertQueryClass.Exec(class.Id, queryAbstract, queryFingerprint, tables, lastSeen, lastSeen)
 
 	h.stats.TimingDuration(h.stats.System("insert-query-class"), time.Now().Sub(t), h.stats.SampleRate)
 	if err != nil {
@@ -327,13 +327,11 @@ func (h *MySQLMetricWriter) getQueryAndTables(class *event.Class) (query.QueryIn
 		return queryInfo, "", fmt.Errorf("empty fingerprint")
 	}
 
-	class.Fingerprint = strings.TrimSpace(class.Fingerprint)
-	// If we have a query example, that's better to parse than a fingerprint
-	queryExample := class.Fingerprint
+	queryExample := ""
 	if class.Example != nil && class.Example.Query != "" {
 		queryExample = class.Example.Query
 	}
-	query, err := h.m.Parse(queryExample, schema)
+	query, err := h.m.Parse(class.Fingerprint, queryExample, schema)
 	if err != nil {
 		return queryInfo, "", err
 	}
@@ -342,9 +340,6 @@ func (h *MySQLMetricWriter) getQueryAndTables(class *event.Class) (query.QueryIn
 		bytes, _ := json.Marshal(query.Tables)
 		tables = string(bytes)
 	}
-	// We still want to store the fingerprint in the database
-	// even if an example is available
-	query.Query = class.Fingerprint
 	return query, tables, nil
 }
 

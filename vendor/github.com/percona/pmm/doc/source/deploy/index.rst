@@ -18,18 +18,17 @@ this scenario, the |pmm.abbrev| server is set up on a dedicated monitoring host.
 Installing |pmm-server|
 ================================================================================
 
-To install and set up the |pmm-server|, use one of the following
-options:
+To install and set up the |pmm-server|, use one of the following options:
 
--  :ref:`run-server-docker`
--  :ref:`run-server-ova`
--  :ref:`run-server-ami`
+.. -  :ref:`run-server-docker`
+.. -  :ref:`pmm/deploying/server/virtual-appliance`
+.. -  :ref:`run-server-ami`
 
 .. toctree::
-   :hidden:
+   :maxdepth: 1
 
    server/docker
-   server/virtual-appliance
+   ../deploying.server.virtual-appliance
    server/ami
 
 .. include:: ../.res/contents/important.port.txt
@@ -49,18 +48,79 @@ In the given example, you would need to direct your browser to
 *http://192.168.100.1*. Since you have not added any monitoring
 services yet, the site will not show any data.
 
+.. _deploy-pmm.table.web-interface.component.access:
+
 .. table:: Accessing the Components of the Web Interface
 
    ==================================== ======================================
    Component                            URL
    ==================================== ======================================
    :term:`PMM Home Page`                ``http://192.168.100.1``
-   :term:`Query Analytics (QAN)`        ``http://192.168.100.1/qan/``
    :term:`Metrics Monitor (MM)`         | ``http://192.168.100.1/graph/``
                                         | User name: ``admin``
                                         | Password: ``admin``
    Orchestrator                         ``http://192.168.100.1/orchestrator``
    ==================================== ======================================
+
+You can also check if |pmm-server| is available requesting the /ping
+URL as in the following example:
+
+.. include:: ../.res/code/sh.org
+   :start-after: +curl.url-ping+
+   :end-before: #+end-block
+
+.. .. _deploy-pmm.server.plugin:
+..
+.. Excluded to apply changes requested in jira@pmm-2247
+.. 
+.. ..|pmm| Plugin
+.. --------------------------------------------------------------------------------
+.. 
+.. ..|pmm| web interface is implemented on top of |grafana| as a separate
+.. plugin with all dashboards inside.
+.. 
+.. .. figure:: ../.res/graphics/png/pmm.menu.png
+.. 
+..    To reach the |pmm| plugin use the |grafana| menu.
+.. 
+.. To reach the plugin, click the |grafana| menu button at the top left
+.. corner and select |gui.plugins|. Then, select the |gui.apps| tab. 
+.. 
+.. .. figure:: ../.res/graphics/png/pmm.plugins.apps.png
+.. 
+..    The |pmm| plugin on the |gui.apps| tab
+.. 
+.. .. important::
+.. 
+..    The |gui.plugins| menu option may not be available if you have not
+..    logged in to |grafana| or you lack the required permissions.
+.. 
+..    .. seealso::
+.. 
+..       Permissions in |grafana|
+..          http://docs.grafana.org/administration/permissions/
+.. 
+.. Click the |pmm| button to open the plugin settings. The |gui.config|
+.. tab enables updating and enabling the plugin.
+.. 
+.. The |gui.dashboards| tab lists all available dashboards. To deactivate any
+.. dashboard, select the |gui.trash-bin| button.
+.. 
+.. .. figure:: ../.res/graphics/png/pmm.plugins.dashboards.png
+.. 
+..    The |prometheus-exporter-status| dashboard is deactivated
+.. 
+.. The |gui.import| button appears in its place for you to import this dashboard
+.. later. If a dashboard is deactivated it is automatically removed from the
+.. ..|gui.dashboard-dropdown| and the dashboard navigation menu.
+.. 
+.. The data associated with the deactivated dashboard are not lost and become
+.. available when you activate the dashboard again.
+.. 
+.. .. seealso::
+.. 
+..    More about navigating dashboards
+.. ..       :ref:`using-mm`
 
 .. _deploy-pmm.client.installing:
 
@@ -114,7 +174,7 @@ specify it after the server's IP address. For example:
 
 .. _deploy-pmm.data-collecting:
 
-Collecting Data from |pmm.abbrev| Clients on |pmm.abbrev| Server
+Collecting Data from |pmm.abbrev| Clients on |pmm-server|
 ========================================================================
 
 To start collecting data on each |pmm.abbrev| client connected to a
@@ -175,25 +235,22 @@ run :program:`pmm-admin add --help` in your terminal.
 Updating
 ================================================================================
 
-When changing to a new version of |pmm.abbrev|, you update the |pmm.abbrev|
-server and each |pmm.abbrev| client separately.
+When changing to a new version of |pmm|, you update the |pmm-server|
+and each |pmm-client| separately.
 
-The updating procedure of your |pmm.abbrev| server, depends on the option
-that you selected for installing it. If you have installed your |pmm.abbrev|
-server from a |docker| image, follow instructions in the
+The updating procedure of your |pmm.abbrev| server, depends on the
+option that you selected for installing it. If you have installed your
+|pmm-server| from a |docker| image, follow instructions in the
 :ref:`update-server.docker` section.
 
-If you are running |pmm-server| as a :ref:`virtual appliance <run-server-ova>`
-or using :ref:`Amazon Machine Image <run-server-ami>`, you can use the update
-button in the bottom right corner of the |pmm.abbrev| home page (see
-:term:`PMM Home Page`).
+If you are running |pmm-server| as a :ref:`virtual appliance <pmm/deploying/server/virtual-appliance>`
+or using :ref:`Amazon Machine Image <run-server-ami>`, you can use the |gui.check-for-updates-manually|
+button on the Home dashboard (see :term:`PMM Home Page`).
 
-.. TODO: Replace screenshot with Grafana looks
+.. figure:: ../.res/graphics/png/pmm.home-page.1.png
 
-.. figure:: ../images/update-button.png
-
-   Update your server by clicking the |gui.update| button on the
-   |pmm.abbrev| landing page.
+   Update your server by clicking the |gui.check-for-updates-manually| button on the
+   |pmm| home page.
 
 .. rubric:: **Updating clients**
 
@@ -214,7 +271,7 @@ install a newer version <deploy-pmm.client.installing>`.
 
 .. _deploy-pmm.removing:
 
-Removing the |pmm.abbrev| Client and |pmm.abbrev| Server
+Removing the |pmm.abbrev| Client and |pmm-server|
 ================================================================================
 
 Each |pmm.abbrev| client and the |pmm.abbrev| server are removed

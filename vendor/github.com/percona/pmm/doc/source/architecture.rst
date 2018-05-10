@@ -32,7 +32,7 @@ developed by |percona| and some are third-party open-source tools.
 
 The following diagram illustrates how |pmm| is currently structured:
 
-.. image:: images/pmm-diagram.png
+.. image:: .res/graphics/png/diagram.pmm-architecture.png
 
 .. _pmm-client:
 
@@ -64,29 +64,29 @@ For more information, see :ref:`install-client`.
   that manages the QAN agent
   as it collects query performance data from |mongodb|
   and sends it to |qan| API on :ref:`pmm-server`.
-* |node_exporter| is a |prometheus| exporter that collects general system
+* |node-exporter| is a |prometheus| exporter that collects general system
   metrics.
-* |mysqld_exporter| is a |prometheus| exporter that collects |mysql| server
+* |mysqld-exporter| is a |prometheus| exporter that collects |mysql| server
   metrics.
-* |mongodb_exporter| is a |prometheus| exporter that collects |mongodb| server
+* |mongodb-exporter| is a |prometheus| exporter that collects |mongodb| server
   metrics.
-* |proxysql_exporter| is a |prometheus| exporter that collects |proxysql|
+* |proxysql-exporter| is a |prometheus| exporter that collects |proxysql|
   performance metrics.
 
 .. seealso::
 
-   |mongodb_exporter| repository at |github|
+   |mongodb-exporter| repository at |github|
        `percona/mongodb_exporter`_
-   |mysqld_exporter| repository at |github|
+   |mysqld-exporter| repository at |github|
        `percona/mysqld_exporter`_
-   |node_exporter| repository at |github|
+   |node-exporter| repository at |github|
        `percona/node_exporter`_
-   |proxysql_exporter| repository at |github|
+   |proxysql-exporter| repository at |github|
        `percona/proxysql_exporter`_
    Passing exporter options when adding a monitoring service
        :ref:`pmm.pmm-admin.monitoring-service.pass-parameter`
    List of available exporter options
-       :ref:`pmm/list.exporter-option`
+       :ref:`pmm/list.exporter`
 
 .. _pmm-server:
 
@@ -149,6 +149,50 @@ For more information, see :ref:`using`.
       :term:`Ports` in :ref:`pmm/glossary/terminology-reference`
    Enabling orchestrator
       :term:`Orchestrator` in :ref:`pmm/glossary/terminology-reference`
+
+.. _pmm/using.orchestrator:
+
+|orchestrator|
+================================================================================
+
+|orchestrator| is a |mysql| replication topology management and visualization
+tool.  If it is enabled, you can access it using the ``/orchestrator`` URL after
+|pmm-server| address.  Alternatively, you can click the
+|gui.mysql-replication-topology-manager| button on the |pmm-server| landing
+page.
+
+To use it, create a |mysql| user for |orchestrator| on all managed instances:
+
+.. include:: .res/code/sql.org
+   :start-after: +grant.orc-client-user+
+   :end-before: #+end-block
+
+.. note:: The credentials in the previous example are default.
+   If you use a different user name or password,
+   you have to pass them when
+   :ref:`running PMM Server <deploy-pmm.server.installing>`
+   using the
+   :term:`ORCHESTRATOR_PASSWORD <ORCHESTRATOR_PASSWORD (Option)>`
+   and
+   :term:`ORCHESTRATOR_USER  <ORCHESTRATOR_USER (Option)>` options.
+
+   .. include:: .res/code/sh.org
+      :start-after: +docker.run.orchestrator-enabled.orchestrator-user.orchestrator-password+
+      :end-before: #+end-block
+
+Then you can use the |gui.discover| page in the |orchestrator| web interface
+to add the instances to the topology.
+
+.. note:: **Orchestrator is not enabled by default starting with PMM 1.3.0**
+
+   |orchestrator| was included into |pmm| for experimental purposes.  It is a
+   standalone tool, not integrated with |pmm| other than that you can access it
+   from the landing page.
+
+   In version 1.3.0 and later, |orchestrator| is not enabled
+   by default. To enable it, see
+   :ref:`pmm/docker.additional_option` in the
+   :ref:`run-server-docker` section.
 
 .. .. rubric:: References
 

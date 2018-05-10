@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+const maxAmountOfPoints = 60
+
 // Metrics provire instruments to works with metrics
 type metrics struct{}
 
@@ -81,8 +83,14 @@ type classMetrics struct {
 func (m metrics) GetClassMetrics(classID, instanceID uint, begin, end time.Time) (classMetrics, []rateMetrics) {
 	currentMetricGroup := m.identifyMetricGroup(instanceID, begin, end)
 	currentMetricGroup.CountField = "query_count"
+
+	intervalTimeMinutes := end.Sub(begin).Minutes()
+	amountOfPoints := int64(maxAmountOfPoints)
+	if intervalTimeMinutes < maxAmountOfPoints {
+		amountOfPoints = int64(intervalTimeMinutes)
+	}
 	endTs := end.Unix()
-	intervalTs := (endTs - begin.Unix()) / (amountOfPoints - 1)
+	intervalTs := int64(end.Sub(begin).Seconds()) / amountOfPoints
 	args := args{
 		classID,
 		instanceID,
@@ -93,7 +101,7 @@ func (m metrics) GetClassMetrics(classID, instanceID uint, begin, end time.Time)
 	}
 	// this two lines should be before ServerSummary = true
 	generalClassMetrics := m.getMetrics(currentMetricGroup, args)
-	sparks := m.getSparklines(currentMetricGroup, args)
+	sparks := m.getSparklines(currentMetricGroup, args, amountOfPoints)
 
 	// turns metric group to global
 	currentMetricGroup.ServerSummary = true
@@ -124,8 +132,14 @@ func (m metrics) GetGlobalMetrics(instanceID uint, begin, end time.Time) (global
 	currentMetricGroup := m.identifyMetricGroup(instanceID, begin, end)
 	currentMetricGroup.ServerSummary = true
 	currentMetricGroup.CountField = "total_query_count"
+
+	intervalTimeMinutes := end.Sub(begin).Minutes()
 	endTs := end.Unix()
-	intervalTs := (endTs - begin.Unix()) / (amountOfPoints - 1)
+	amountOfPoints := int64(maxAmountOfPoints)
+	if intervalTimeMinutes < maxAmountOfPoints {
+		amountOfPoints = int64(intervalTimeMinutes)
+	}
+	intervalTs := int64(end.Sub(begin).Seconds()) / amountOfPoints
 	args := args{
 		0,
 		instanceID,
@@ -136,7 +150,7 @@ func (m metrics) GetGlobalMetrics(instanceID uint, begin, end time.Time) (global
 	}
 
 	generalGlobalMetrics := m.getMetrics(currentMetricGroup, args)
-	sparks := m.getSparklines(currentMetricGroup, args)
+	sparks := m.getSparklines(currentMetricGroup, args, amountOfPoints)
 
 	aMetrics := m.computeRateMetrics(generalGlobalMetrics, begin, end)
 	sMetrics := m.computeSpecialMetrics(generalGlobalMetrics)
@@ -167,9 +181,7 @@ func (m metrics) getMetrics(group metricGroup, args args) generalMetrics {
 	return gMetrics
 }
 
-const amountOfPoints = 60
-
-func (m metrics) getSparklines(group metricGroup, args args) []rateMetrics {
+func (m metrics) getSparklines(group metricGroup, args args, amountOfPoints int64) []rateMetrics {
 	var querySparklinesBuffer bytes.Buffer
 	if tmpl, err := template.New("querySparklinesSQL").Parse(querySparklinesTemplate); err != nil {
 		log.Fatalln(err)
@@ -197,12 +209,15 @@ func (m metrics) getSparklines(group metricGroup, args args) []rateMetrics {
 	var pointN int64
 	for pointN = 0; pointN < amountOfPoints; pointN++ {
 		ts := args.EndTS - pointN*args.IntervalTS
-		if val, ok := metricLogRaw[ts]; ok {
-			sparks = append(sparks, val)
-		} else {
-			val := rateMetrics{Point: pointN, Ts: time.Unix(ts, 0).UTC()}
-			sparks = append(sparks, val)
+		val, ok := metricLogRaw[ts]
+		// skip first or last point if they are empty
+		if (pointN == 0 || pointN == amountOfPoints-1) && !ok {
+			continue
 		}
+		if !ok {
+			val = rateMetrics{Point: pointN, Ts: time.Unix(ts, 0).UTC()}
+		}
+		sparks = append(sparks, val)
 	}
 	return sparks
 }
@@ -265,24 +280,24 @@ func (m metrics) computeSpecialMetrics(gMetrics generalMetrics) specialMetrics {
 }
 
 type specialMetrics struct {
-	Lock_time_avg_per_query_time                 float32 `json:",omitempty" divider:"Query_time_avg"`
-	InnoDB_rec_lock_wait_avg_per_query_time      float32 `json:",omitempty" divider:"Query_time_avg"`
-	InnoDB_IO_r_wait_avg_per_query_time          float32 `json:",omitempty" divider:"Query_time_avg"`
-	InnoDB_queue_wait_avg_per_query_time         float32 `json:",omitempty" divider:"Query_time_avg"`
-	InnoDB_IO_r_bytes_sum_per_io                 float32 `json:",omitempty" divider:"InnoDB_IO_r_ops_sum"`
-	QC_Hit_sum_per_query                         float32 `json:",omitempty" divider:"Query_count"`
-	Bytes_sent_sum_per_rows                      float32 `json:",omitempty" divider:"Rows_sent_sum"`
-	Rows_examined_sum_per_rows                   float32 `json:",omitempty" divider:"Rows_sent_sum"`
-	Filesort_sum_per_query                       float32 `json:",omitempty" divider:"Query_count"`
-	Filesort_on_disk_sum_per_query               float32 `json:",omitempty" divider:"Query_count"`
-	Merge_passes_sum_per_external_sort           float32 `json:",omitempty" divider:"Filesort_sum"`
-	Full_join_sum_per_query                      float32 `json:",omitempty" divider:"Query_count"`
-	Full_scan_sum_per_query                      float32 `json:",omitempty" divider:"Query_count"`
-	Tmp_table_sum_per_query                      float32 `json:",omitempty" divider:"Query_count"`
-	Tmp_tables_sum_per_query_with_tmp_table      float32 `json:",omitempty" divider:"Tmp_table_sum"`
-	Tmp_table_on_disk_sum_per_query              float32 `json:",omitempty" divider:"Query_count"`
-	Tmp_disk_tables_sum_per_query_with_tmp_table float32 `json:",omitempty" divider:"Tmp_table_on_disk_sum"`
-	Tmp_table_sizes_sum_per_query                float32 `json:",omitempty" divider:"Query_count"`
+	Lock_time_avg_per_query_time                     float32 `json:",omitempty" divider:"Query_time_avg"`
+	InnoDB_rec_lock_wait_avg_per_query_time          float32 `json:",omitempty" divider:"Query_time_avg"`
+	InnoDB_IO_r_wait_avg_per_query_time              float32 `json:",omitempty" divider:"Query_time_avg"`
+	InnoDB_queue_wait_avg_per_query_time             float32 `json:",omitempty" divider:"Query_time_avg"`
+	InnoDB_IO_r_bytes_sum_per_io                     float32 `json:",omitempty" divider:"InnoDB_IO_r_ops_sum"`
+	QC_Hit_sum_per_query                             float32 `json:",omitempty" divider:"Query_count"`
+	Bytes_sent_sum_per_rows                          float32 `json:",omitempty" divider:"Rows_sent_sum"`
+	Rows_examined_sum_per_rows                       float32 `json:",omitempty" divider:"Rows_sent_sum"`
+	Filesort_sum_per_query                           float32 `json:",omitempty" divider:"Query_count"`
+	Filesort_on_disk_sum_per_query                   float32 `json:",omitempty" divider:"Query_count"`
+	Merge_passes_sum_per_external_sort               float32 `json:",omitempty" divider:"Filesort_sum"`
+	Full_join_sum_per_query                          float32 `json:",omitempty" divider:"Query_count"`
+	Full_scan_sum_per_query                          float32 `json:",omitempty" divider:"Query_count"`
+	Tmp_table_sum_per_query                          float32 `json:",omitempty" divider:"Query_count"`
+	Tmp_tables_sum_per_query_with_tmp_table          float32 `json:",omitempty" divider:"Tmp_table_sum"`
+	Tmp_table_on_disk_sum_per_query                  float32 `json:",omitempty" divider:"Query_count"`
+	Tmp_disk_tables_sum_per_query_with_tmp_table     float32 `json:",omitempty" divider:"Tmp_table_on_disk_sum"`
+	Tmp_table_sizes_sum_per_query_with_any_tmp_table float32 `json:",omitempty" divider:"Total_tmp_tables_sum"` // = Tmp_table_sum + Tmp_table_on_disk_sum
 }
 
 type rateMetrics struct {
@@ -438,6 +453,7 @@ type generalMetrics struct {
 	Tmp_table_sizes_med   float32 `json:",omitempty"`
 	Tmp_table_sizes_p95   float32 `json:",omitempty"`
 	Tmp_table_sizes_max   float32 `json:",omitempty"`
+	Total_tmp_tables_sum  float32 `json:",omitempty"`
 	QC_Hit_sum            float32 `json:",omitempty"`
 	Full_scan_sum         float32 `json:",omitempty"`
 	Full_join_sum         float32 `json:",omitempty"`
@@ -592,6 +608,7 @@ SELECT
  COALESCE(AVG(Tmp_table_sizes_med), 0) AS tmp_table_sizes_med,
  COALESCE(AVG(Tmp_table_sizes_p95), 0) AS tmp_table_sizes_p95,
  COALESCE(MAX(Tmp_table_sizes_max), 0) AS tmp_table_sizes_max,
+ COALESCE(SUM(Tmp_table_sum + Tmp_table_on_disk_sum), 0) AS total_tmp_tables_sum,
 
  COALESCE(SUM(QC_Hit_sum), 0) AS qc_hit_sum,
  COALESCE(SUM(Filesort_sum), 0) AS filesort_sum,

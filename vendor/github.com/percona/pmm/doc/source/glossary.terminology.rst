@@ -7,6 +7,36 @@ Terminology Reference
 .. glossary::
    :sorted:
 
+   PMM annotation
+
+      A feature of |pmm-server| which adds a special mark to all
+      dashboards and signifies an important event in your
+      application. Annotations are added on the |pmm-client| by using
+      the |pmm-admin.annotate| command.
+
+      .. seealso::
+
+	 |grafana| Documentation: Annotations
+
+	    http://docs.grafana.org/reference/annotations/
+
+   PMM user permissions for AWS
+
+      When creating a `IAM user
+      <https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_SettingUp.html#CHAP_SettingUp.IAM>`_
+      for |amazon-rds| DB instance that you intend to monitor in PMM, you need to set all
+      required permissions properly. For this, you may copy the following |JSON| for your
+      IAM user:
+
+      .. include:: .res/code/js.org
+	 :start-after: +aws.iam-user.permission+
+	 :end-before: #+end-block
+
+      .. seealso::
+
+	 Creating an IAM user
+	    :ref:`pmm.amazon-rds.iam-user.creating`
+
    Data retention
 
       By default, |prometheus| stores time-series data for 30 days,
@@ -174,9 +204,9 @@ Terminology Reference
 
       The version of PMM appears at the bottom of the :term:`PMM server home page <PMM Home Page>`.
 
-      .. figure:: ./images/update-button.png
+      .. figure:: .res/graphics/png/pmm.home-page.1.png
 
-	 To update your |pmm-server|, click the *Update* button
+	 To update your |pmm-server|, click the |gui.check-for-updates-manually| button
 	 located next to the version number.
 
       .. seealso::
@@ -197,10 +227,10 @@ Terminology Reference
 
    PMM Home Page
 
-      The starting page of the PMM portal from which you can open the tools of
-      PMM, view or download documentation.
+      The starting page of the PMM portal from which you can have an overview of your environment, open the tools of
+      PMM, and browse to online resources.
 
-      On the PMM home page, you can also find the version number and a button to
+      On the |pmm| home page, you can also find the version number and a button to
       update your |pmm-server| (see :term:`PMM Version`).
 
    PMM

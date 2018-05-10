@@ -63,7 +63,7 @@ func (c *Query) GetTables(id string) revel.Result {
 	}
 
 	queryHandler := query.NewMySQLHandler(dbm, stats.NullStats())
-	tables, _, err := queryHandler.Tables(classId, shared.TableParser)
+	tables, err := queryHandler.Tables(classId, shared.TableParser)
 	if err != nil {
 		return c.Error(err, "Query.GetTables: queryHandler.Tables")
 	}

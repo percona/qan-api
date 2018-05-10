@@ -32,7 +32,7 @@ import (
 	"github.com/percona/qan-api/stats"
 )
 
-const amountOfPoints = 60
+const maxAmountOfPoints = 60
 
 // get data for spark-lines at query profile
 const sparkLinesQueryClass = "SELECT (? - UNIX_TIMESTAMP(start_ts)) DIV ? as point," +
@@ -89,10 +89,21 @@ func SparklineData(qr *Reporter, endTs int64, intervalTs int64, queryClassId uin
 		queryLogArrRaw[(ql.Start_ts).Unix()] = ql
 	}
 
+	intervalTimeMinutes := end.Sub(begin).Minutes()
+	amountOfPoints := int64(maxAmountOfPoints)
+	if intervalTimeMinutes < maxAmountOfPoints {
+		amountOfPoints = int64(intervalTimeMinutes)
+	}
 	var i int64
 	for i = 0; i < amountOfPoints; i++ {
 		ts := endTs - i*intervalTs
 		val, ok := queryLogArrRaw[ts]
+
+		// skip first or last point if they are empty
+		if (i == 0 || i == amountOfPoints-1) && !ok {
+			continue
+		}
+
 		if !ok {
 			val = qp.QueryLog{
 				Point:    uint(i),
@@ -130,10 +141,14 @@ func (qr *Reporter) Profile(instanceId uint, begin, end time.Time, r qp.RankBy, 
 	}
 
 	intervalTime := end.Sub(begin).Seconds()
-
+	intervalTimeMinutes := end.Sub(begin).Minutes()
 	endTs := end.Unix()
-	intervalTs := (endTs - begin.Unix()) / (amountOfPoints - 1)
+	amountOfPoints := int64(maxAmountOfPoints)
+	if intervalTimeMinutes < maxAmountOfPoints {
+		amountOfPoints = int64(intervalTimeMinutes)
+	}
 
+	intervalTs := int64(end.Sub(begin).Seconds()) / amountOfPoints
 	stats := make([]string, len(metrics.StatNames)-1)
 
 	i := 0
