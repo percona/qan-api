@@ -5,7 +5,7 @@
 required = ["github.com/revel/cmd/revel"]
 [[constraint]]
   name = "github.com/revel/cmd"
-  version = "^0.14.1"
+  version = "^0.19.0"
 
 # Override version for transitive dependencies
 # otherwise we fetch the latest.
@@ -34,3 +34,8 @@ required = ["github.com/revel/cmd/revel"]
 [[constraint]]
   name = "github.com/percona/go-mysql"
   revision = "63da60b59ae83a05a8d447a5fdf2186ff3c37f4b"
+
+[prune]
+  go-tests = true
+  non-go = true
+
