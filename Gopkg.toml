@@ -38,5 +38,4 @@ required = ["github.com/revel/cmd/revel"]
 
 [prune]
   go-tests = true
-  non-go = true
 
