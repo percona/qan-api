@@ -87,6 +87,12 @@
   revision = "179d4d0c4d8d407a32af483c2354df1d2c91e6c3"
 
 [[projects]]
+  name = "github.com/percona-lab/revel-cmd"
+  packages = ["revel"]
+  revision = "451d480f447d3d2c1d26f7207ac321cd26bff28f"
+  version = "v0.14.2"
+
+[[projects]]
   name = "github.com/percona/go-mysql"
   packages = [
     "event",
@@ -120,12 +126,9 @@
 
 [[projects]]
   name = "github.com/revel/cmd"
-  packages = [
-    "harness",
-    "revel"
-  ]
-  revision = "97ec1422620f1a83cd13738708a109fe092364ca"
-  version = "v0.19.0"
+  packages = ["harness"]
+  revision = "95d6366c0d8d727ca62767848fb0801268b49ea6"
+  version = "v0.14.1"
 
 [[projects]]
   name = "github.com/revel/config"
@@ -221,6 +224,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6b0cfb8eeea709270238cfa939dd7f574523bf9b9dd4699fba7e9a748e9c511a"
+  inputs-digest = "3124fccd303a59abc8efe6782d0f697b475dd5f01586e6ecc64c3dae6ea3342c"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -13,7 +13,7 @@ In the empty dir run:
 ```
 export GOPATH=$(pwd)
 git clone http://github.com/percona/qan-api ./src/github.com/percona/qan-api
-go build -o ./revel ./src/github.com/percona/qan-api/vendor/github.com/revel/cmd/revel
+go build -o ./revel ./src/github.com/percona/qan-api/vendor/github.com/percona-lab/revel-cmd/revel
 ln -s $(pwd)/src/github.com/percona/qan-api/vendor/github.com/revel src/github.com/revel
 ./revel build github.com/percona/qan-api <destination dir> prod
 ```

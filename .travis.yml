@@ -34,7 +34,7 @@ script:
   - cp -R ./ /tmp/qan-api
   - mkdir -p ./src/github.com/percona
   - mv /tmp/qan-api ./src/github.com/percona
-  - go build -o ./revel ./src/github.com/percona/qan-api/vendor/github.com/revel/cmd/revel
+  - go build -o ./revel ./src/github.com/percona/qan-api/vendor/github.com/percona-lab/revel-cmd/revel
   - ln -s $(pwd)/src/github.com/percona/qan-api/vendor/github.com/revel src/github.com/revel
   - ./revel build github.com/percona/qan-api qan-api prod
 
