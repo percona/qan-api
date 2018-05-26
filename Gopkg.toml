@@ -2,13 +2,11 @@
 # for detailed Gopkg.toml documentation.
 
 # Require `revel` command (compiled later from vendor dir)
-required = ["github.com/percona-lab/revel-cmd/revel"]
-[[override]]
-  name = "github.com/percona-lab/revel-cmd"
-  version = "^0.14.2"
+required = ["github.com/revel/cmd/revel"]
 [[override]]
   name = "github.com/revel/cmd"
-  version = "^0.14.1"
+  version = "^0.14.2"
+  source = "github.com/percona-lab/revel-cmd"
 
 # Override version for transitive dependencies
 # otherwise we fetch the latest.
