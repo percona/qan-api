@@ -34,7 +34,13 @@
 [[projects]]
   branch = "master"
   name = "github.com/golang/protobuf"
-  packages = ["proto","ptypes","ptypes/any","ptypes/duration","ptypes/timestamp"]
+  packages = [
+    "proto",
+    "ptypes",
+    "ptypes/any",
+    "ptypes/duration",
+    "ptypes/timestamp"
+  ]
   revision = "925541529c1fa6821df4e44ce2723319eb2be768"
 
 [[projects]]
@@ -46,12 +52,19 @@
 [[projects]]
   branch = "master"
   name = "github.com/jmoiron/sqlx"
-  packages = [".","reflectx"]
+  packages = [
+    ".",
+    "reflectx"
+  ]
   revision = "05cef0741ade10ca668982355b3f3f0bcf0ff0a8"
 
 [[projects]]
   name = "github.com/klauspost/compress"
-  packages = ["flate","gzip","zlib"]
+  packages = [
+    "flate",
+    "gzip",
+    "zlib"
+  ]
   revision = "6c8db69c4b49dd4df1fff66996cf556176d0b9bf"
   version = "v1.2.1"
 
@@ -75,13 +88,22 @@
 
 [[projects]]
   name = "github.com/percona/go-mysql"
-  packages = ["event","log"]
+  packages = [
+    "event",
+    "log"
+  ]
   revision = "63da60b59ae83a05a8d447a5fdf2186ff3c37f4b"
 
 [[projects]]
   branch = "master"
   name = "github.com/percona/pmm"
-  packages = ["proto","proto/config","proto/metrics","proto/qan","proto/query"]
+  packages = [
+    "proto",
+    "proto/config",
+    "proto/metrics",
+    "proto/qan",
+    "proto/query"
+  ]
   revision = "99e800552681871f9956a84bf5465a6d19455597"
 
 [[projects]]
@@ -98,9 +120,13 @@
 
 [[projects]]
   name = "github.com/revel/cmd"
-  packages = ["harness","revel"]
-  revision = "95d6366c0d8d727ca62767848fb0801268b49ea6"
-  version = "v0.14.1"
+  packages = [
+    "harness",
+    "revel"
+  ]
+  revision = "451d480f447d3d2c1d26f7207ac321cd26bff28f"
+  source = "github.com/percona-lab/revel-cmd"
+  version = "v0.14.2"
 
 [[projects]]
   name = "github.com/revel/config"
@@ -116,7 +142,10 @@
 
 [[projects]]
   name = "github.com/revel/revel"
-  packages = [".","testing"]
+  packages = [
+    ".",
+    "testing"
+  ]
   revision = "75d66c3c990f01deb5ff2045c04da7eea5be39b2"
   version = "v0.14.0"
 
@@ -134,13 +163,26 @@
 
 [[projects]]
   name = "github.com/youtube/vitess"
-  packages = ["go/bytes2","go/hack","go/sqltypes","go/vt/proto/query","go/vt/proto/topodata","go/vt/proto/vtgate","go/vt/proto/vtrpc","go/vt/sqlparser","go/vt/vterrors"]
+  packages = [
+    "go/bytes2",
+    "go/hack",
+    "go/sqltypes",
+    "go/vt/proto/query",
+    "go/vt/proto/topodata",
+    "go/vt/proto/vtgate",
+    "go/vt/proto/vtrpc",
+    "go/vt/sqlparser",
+    "go/vt/vterrors"
+  ]
   revision = "98f9189aa016e2a3afafa9ff42cde55bde421d3c"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
-  packages = ["context","websocket"]
+  packages = [
+    "context",
+    "websocket"
+  ]
   revision = "0ed95abb35c445290478a5348a7b38bb154135fd"
 
 [[projects]]
@@ -157,7 +199,10 @@
 
 [[projects]]
   name = "google.golang.org/grpc"
-  packages = ["codes","status"]
+  packages = [
+    "codes",
+    "status"
+  ]
   revision = "6b51017f791ae1cfbec89c52efdf444b13b550ef"
   version = "v1.9.2"
 
@@ -177,6 +222,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b4f73c813b5d35fae50297253d534d987dfa387c3af38785b7f1538a6185a450"
+  inputs-digest = "c5d6bf7bbf8a672f8b2cd32872f4c0a906b7c82c431d2f109b21486a4c6a0a30"
   solver-name = "gps-cdcl"
   solver-version = 1
