@@ -81,6 +81,7 @@ func (s *ProcTestSuite) TestStartServiceQAN(c *C) {
 	// Test how StartService to QAN is processed. It should cause agent.Processor
 	// to call its db.AgentHandler.SetConfig() with the config data in the
 	// cmd. So first we make a full SetConfig cmd:
+	exampleQueries := false
 	config := pc.QAN{
 		UUID: s.mysqlUUID,
 		Start: []string{
@@ -94,8 +95,7 @@ func (s *ProcTestSuite) TestStartServiceQAN(c *C) {
 		},
 		Interval:       300,        // 5 min
 		MaxSlowLogSize: 1073741824, // 1 GiB
-		ExampleQueries: false,
-		WorkerRunTime:  600, // 10 min
+		ExampleQueries: &exampleQueries,
 	}
 	data, err := json.Marshal(config)
 	c.Assert(err, IsNil)
