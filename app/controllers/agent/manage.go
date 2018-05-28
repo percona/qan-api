@@ -22,7 +22,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -108,6 +107,7 @@ func (c Agent) SendCmd(uuid string) revel.Result {
 	return c.RenderJSON(reply)
 }
 
+// addVisualExplain converts classic explain in JSON form into visual explain.
 func addVisualExplain(data []byte) ([]byte, error) {
 	explains := struct {
 		Classic []proto.ExplainRow
@@ -154,7 +154,7 @@ func addVisualExplain(data []byte) ([]byte, error) {
 	cmd := exec.Command("bash", "-c", "pt-visual-explain <(echo '"+rawExplain+"')")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Fatal(err)
+		return []byte{}, fmt.Errorf("cannot execute pt-visual-explain: %s", err.Error())
 	}
 	explains.Visual = fmt.Sprintf("%s", out)
 	return json.Marshal(explains)
