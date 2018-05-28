@@ -3,9 +3,10 @@
 
 # Require `revel` command (compiled later from vendor dir)
 required = ["github.com/revel/cmd/revel"]
-[[constraint]]
+[[override]]
   name = "github.com/revel/cmd"
-  version = "^0.14.1"
+  version = "^0.14.2"
+  source = "github.com/percona-lab/revel-cmd"
 
 # Override version for transitive dependencies
 # otherwise we fetch the latest.
@@ -31,6 +32,5 @@ required = ["github.com/revel/cmd/revel"]
   name = "github.com/youtube/vitess"
   revision = "98f9189aa016e2a3afafa9ff42cde55bde421d3c"
 
-[[constraint]]
-  name = "github.com/percona/go-mysql"
-  revision = "373945f3aa5d8a990e5a63282f16366633d23c97"
+[prune]
+  go-tests = true
