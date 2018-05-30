@@ -18,6 +18,7 @@
 package agent
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -146,12 +147,14 @@ func addVisualExplain(data []byte) ([]byte, error) {
 			filtered,
 			extra,
 		)
-		explainRowString = strings.Replace(explainRowString, "<nil>", "NULL", -1)
 		rawExplainRows = append(rawExplainRows, explainRowString)
 	}
 	rawExplain := strings.Join(rawExplainRows, "\n")
+	rawExplain = strings.NewReplacer("<nil>", "NULL", "'", "").Replace(rawExplain)
 
-	cmd := exec.Command("bash", "-c", "pt-visual-explain <(echo '"+rawExplain+"')")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "bash", "-c", "pt-visual-explain <(echo '"+rawExplain+"')")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return []byte{}, fmt.Errorf("cannot execute pt-visual-explain: %s", err.Error())
