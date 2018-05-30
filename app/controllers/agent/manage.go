@@ -18,13 +18,16 @@
 package agent
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/percona/pmm/proto"
@@ -84,6 +87,13 @@ func (c Agent) SendCmd(uuid string) revel.Result {
 		Filename string
 		Data     []byte
 	}{}
+
+	if reply.Cmd == "Explain" {
+		reply.Data, err = addVisualExplain(reply.Data)
+		if err != nil {
+			reply.Error = fmt.Sprintf("cannot do visual explain: %s", err.Error())
+		}
+	}
 	err = json.Unmarshal(reply.Data, &dst)
 	if dst.Filename != "" {
 		err := c.writeResponseFile(dst.Filename, dst.Data)
@@ -96,6 +106,61 @@ func (c Agent) SendCmd(uuid string) revel.Result {
 	}
 
 	return c.RenderJSON(reply)
+}
+
+// addVisualExplain converts classic explain in JSON form into visual explain.
+func addVisualExplain(data []byte) ([]byte, error) {
+	explains := struct {
+		Classic []proto.ExplainRow
+		JSON    string
+		Visual  string
+	}{[]proto.ExplainRow{}, "", ""}
+	err := json.Unmarshal(data, &explains)
+	if err != nil {
+		return []byte{}, fmt.Errorf("cannot unmarshal classic expain to do visual explain: %s", err.Error())
+	}
+	rawExplainRows := []string{"id\tselect_type\ttable\tpartitions\ttype\tpossible_keys\tkey\tkey_len\tref\trows\tfiltered\tExtra"}
+	for _, explainRow := range explains.Classic {
+		id, _ := explainRow.Id.Value()
+		selectType, _ := explainRow.SelectType.Value()
+		table, _ := explainRow.Table.Value()
+		partitions, _ := explainRow.Partitions.Value()
+		theType, _ := explainRow.Type.Value()
+		possibleKeys, _ := explainRow.PossibleKeys.Value()
+		key, _ := explainRow.Key.Value()
+		keyLen, _ := explainRow.KeyLen.Value()
+		ref, _ := explainRow.Ref.Value()
+		rows, _ := explainRow.Rows.Value()
+		filtered, _ := explainRow.Filtered.Value()
+		extra, _ := explainRow.Extra.Value()
+		explainRowString := fmt.Sprintf("%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v",
+			id,
+			selectType,
+			table,
+			partitions,
+			theType,
+			possibleKeys,
+			key,
+			keyLen,
+			ref,
+			rows,
+			filtered,
+			extra,
+		)
+		rawExplainRows = append(rawExplainRows, explainRowString)
+	}
+	rawExplain := strings.Join(rawExplainRows, "\n")
+	rawExplain = strings.NewReplacer("<nil>", "NULL", "'", "").Replace(rawExplain)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "bash", "-c", "pt-visual-explain <(echo '"+rawExplain+"')")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return []byte{}, fmt.Errorf("cannot execute pt-visual-explain: %s", err.Error())
+	}
+	explains.Visual = fmt.Sprintf("%s", out)
+	return json.Marshal(explains)
 }
 
 func (c *Agent) writeResponseFile(filename string, data []byte) error {
