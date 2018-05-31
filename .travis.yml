@@ -4,6 +4,14 @@ go:
   - 1.9.x
   - 1.10.x
 
+addons:
+  apt:
+    sources:
+      - sourceline: "deb http://repo.percona.com/apt $(lsb_release -s -c) main"
+        key_url: 'http://keyserver.ubuntu.com/pks/lookup?op=get&fingerprint=on&search=0x8507EFA5'
+    packages:
+      - percona-toolkit
+
 install:
   # Ensure that vendor/ is in sync with code and Gopkg.lock
   - curl https://github.com/golang/dep/releases/download/v0.4.1/dep-linux-amd64 -L -o ~/dep && chmod +x ~/dep
