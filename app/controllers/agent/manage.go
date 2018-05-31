@@ -22,6 +22,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -117,7 +118,7 @@ func addVisualExplain(data []byte) ([]byte, error) {
 	}{[]proto.ExplainRow{}, "", ""}
 	err := json.Unmarshal(data, &explains)
 	if err != nil {
-		return []byte{}, fmt.Errorf("cannot unmarshal classic expain to do visual explain: %s", err.Error())
+		return nil, fmt.Errorf("cannot unmarshal classic expain to do visual explain: %s", err.Error())
 	}
 	rawExplainRows := []string{"id\tselect_type\ttable\tpartitions\ttype\tpossible_keys\tkey\tkey_len\tref\trows\tfiltered\tExtra"}
 	for _, explainRow := range explains.Classic {
@@ -154,10 +155,19 @@ func addVisualExplain(data []byte) ([]byte, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, "bash", "-c", "pt-visual-explain <(echo '"+rawExplain+"')")
+	cmd := exec.CommandContext(ctx, "pt-visual-explain")
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return nil, err
+	}
+	go func() {
+		defer stdin.Close()
+		io.WriteString(stdin, rawExplain)
+	}()
+
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return []byte{}, fmt.Errorf("cannot execute pt-visual-explain: %s", err.Error())
+		return nil, fmt.Errorf("cannot execute pt-visual-explain: %s", err.Error())
 	}
 	explains.Visual = fmt.Sprintf("%s", out)
 	return json.Marshal(explains)
