@@ -1,7 +1,7 @@
 language: go
 
 go:
-  - 1.10.x
+  - master
 
 install:
   # Ensure that vendor/ is in sync with code and Gopkg.lock
