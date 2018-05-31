@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -162,7 +163,8 @@ func addVisualExplain(data []byte) ([]byte, error) {
 	}
 	go func() {
 		defer stdin.Close()
-		io.WriteString(stdin, rawExplain)
+		_, err := io.WriteString(stdin, rawExplain)
+		log.Println(err)
 	}()
 
 	out, err := cmd.CombinedOutput()
