@@ -19,19 +19,38 @@ package agent
 
 import (
 	"errors"
+	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAddVisualExplain(t *testing.T) {
-	explain, err := addVisualExplain([]byte{})
-	assert.Equal(t, explain, []byte{})
-	assert.Equal(t, err, errors.New("cannot unmarshal classic expain to do visual explain: unexpected end of JSON input"))
+	t.Run("err", func(t *testing.T) {
+		explain, err := addVisualExplain([]byte{})
+		assert.Nil(t, explain)
+		assert.Equal(t, err, errors.New("cannot unmarshal classic expain to do visual explain: unexpected end of JSON input"))
+	})
 
-	const agentResp = `{"Classic":[{"Id":1,"SelectType":"SIMPLE","Table":"sbtest1","Partitions":null,"CreateTable":null,"Type":"const","PossibleKeys":"PRIMARY","Key":"PRIMARY","KeyLen":"4","Ref":"const","Rows":1,"Filtered":null,"Extra":""}],"JSON":"{\n  \"query_block\": {\n    \"select_id\": 1,\n    \"table\": {\n      \"table_name\": \"sbtest1\",\n      \"access_type\": \"const\",\n      \"possible_keys\": [\"PRIMARY\"],\n      \"key\": \"PRIMARY\",\n      \"key_length\": \"4\",\n      \"used_key_parts\": [\"id\"],\n      \"ref\": [\"const\"],\n      \"rows\": 1,\n      \"filtered\": 100\n    }\n  }\n}"}`
+	t.Run("ok", func(t *testing.T) {
+		const agentResp = `{"Classic":[{"Id":1,"SelectType":"SIMPLE","Table":"sbtest1","Partitions":null,"CreateTable":null,"Type":"const","PossibleKeys":"PRIMARY","Key":"PRIMARY","KeyLen":"4","Ref":"const","Rows":1,"Filtered":null,"Extra":""}],"JSON":"{\n  \"query_block\": {\n    \"select_id\": 1,\n    \"table\": {\n      \"table_name\": \"sbtest1\",\n      \"access_type\": \"const\",\n      \"possible_keys\": [\"PRIMARY\"],\n      \"key\": \"PRIMARY\",\n      \"key_length\": \"4\",\n      \"used_key_parts\": [\"id\"],\n      \"ref\": [\"const\"],\n      \"rows\": 1,\n      \"filtered\": 100\n    }\n  }\n}"}`
+		got, err := addVisualExplain([]byte(agentResp))
+		assert.NoError(t, err)
+		expected, err := loadExpected("testdata/visual-explain.txt", got)
+		assert.NoError(t, err)
+		assert.JSONEq(t, string(expected), string(got))
+	})
+}
 
-	explain, err = addVisualExplain([]byte(agentResp))
-	assert.Equal(t, explain, []byte{})
-	assert.Equal(t, err, errors.New("cannot execute pt-visual-explain: exit status 127"))
+func loadExpected(file string, got []byte) ([]byte, error) {
+	updateTestData := os.Getenv("UPDATE_TEST_DATA")
+	if updateTestData != "" {
+		ioutil.WriteFile(file, got, 0666)
+	}
+	b, err := ioutil.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+	return b, nil
 }
