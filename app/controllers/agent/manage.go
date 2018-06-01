@@ -22,9 +22,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -152,8 +150,7 @@ func addVisualExplain(data []byte) ([]byte, error) {
 		rawExplainRows = append(rawExplainRows, explainRowString)
 	}
 	rawExplain := strings.Join(rawExplainRows, "\n")
-	rawExplain = strings.NewReplacer("<nil>", "NULL", "'", "").Replace(rawExplain)
-	rawExplain += "\n"
+	rawExplain = strings.NewReplacer("<nil>", "NULL").Replace(rawExplain)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -164,8 +161,7 @@ func addVisualExplain(data []byte) ([]byte, error) {
 	}
 	go func() {
 		defer stdin.Close()
-		_, err := io.WriteString(stdin, rawExplain)
-		log.Println(err)
+		fmt.Fprintln(stdin, rawExplain)
 	}()
 
 	out, err := cmd.CombinedOutput()
