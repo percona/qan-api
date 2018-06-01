@@ -153,6 +153,7 @@ func addVisualExplain(data []byte) ([]byte, error) {
 	}
 	rawExplain := strings.Join(rawExplainRows, "\n")
 	rawExplain = strings.NewReplacer("<nil>", "NULL", "'", "").Replace(rawExplain)
+	rawExplain += "\n"
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
