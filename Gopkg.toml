@@ -32,9 +32,11 @@ required = ["github.com/revel/cmd/revel"]
   name = "github.com/youtube/vitess"
   revision = "98f9189aa016e2a3afafa9ff42cde55bde421d3c"
 
+# PMM-2569: Version 1.4.0 introduces support for new auth methods in MySQL 8.
+#           At the moment of writing it's not required for this project as it uses older MySQL version.
 [[constraint]]
-  name = "github.com/percona/go-mysql"
-  revision = "63da60b59ae83a05a8d447a5fdf2186ff3c37f4b"
+  name = "github.com/go-sql-driver/mysql"
+  version = "^1.4.0"
 
 [prune]
   go-tests = true
