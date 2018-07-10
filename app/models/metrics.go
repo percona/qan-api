@@ -9,8 +9,6 @@ import (
 	"time"
 )
 
-const maxAmountOfPoints = 60
-
 // Metrics provire instruments to works with metrics
 type metrics struct{}
 

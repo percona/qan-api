@@ -25,7 +25,6 @@ import (
 	"github.com/percona/qan-api/app/config"
 	"github.com/percona/qan-api/app/db"
 	"github.com/percona/qan-api/app/models"
-	"github.com/percona/qan-api/app/qan"
 	"github.com/percona/qan-api/app/query"
 	"github.com/percona/qan-api/app/shared"
 	"github.com/percona/qan-api/stats"
@@ -42,10 +41,12 @@ func (c QAN) Profile(uuid string) revel.Result {
 	// Convert and validate the time range.
 	var beginTs, endTs, search, searchB64 string
 	var offset int
+	var firstSeen bool
 	c.Params.Bind(&beginTs, "begin")
 	c.Params.Bind(&endTs, "end")
 	c.Params.Bind(&searchB64, "search")
 	c.Params.Bind(&offset, "offset")
+	c.Params.Bind(&firstSeen, "first_seen")
 	searchB, err := base64.StdEncoding.DecodeString(searchB64)
 	if err != nil {
 		fmt.Println("error decoding base64 search :", err)
@@ -69,8 +70,7 @@ func (c QAN) Profile(uuid string) revel.Result {
 	if err := dbm.Open(); err != nil {
 		return c.Error(err, "QAN.Profile: dbm.Open")
 	}
-	qh := qan.NewReporter(dbm, stats.NullStats())
-	profile, err := qh.Profile(instanceId, begin, end, r, offset, search)
+	profile, err := models.Report.Profile(instanceId, begin, end, r, offset, search, firstSeen)
 	if err != nil {
 		return c.Error(err, "qh.Profile")
 	}
