@@ -59,7 +59,7 @@ func (c QAN) Profile(uuid string) revel.Result {
 	}
 
 	// todo: let caller specify rank by args via URL params
-	r := qp.RankBy{
+	r := models.RankBy{
 		Metric: "Query_time",
 		Stat:   "sum",
 		Limit:  10,

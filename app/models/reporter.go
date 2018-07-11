@@ -23,11 +23,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/percona/pmm/proto"
 	"github.com/percona/qan-api/app/db/mysql"
-
-	mp "github.com/percona/pmm/proto/metrics"
-	qp "github.com/percona/pmm/proto/qan"
 )
 
 // report provide methods to works with query report
@@ -36,13 +32,61 @@ type report struct{}
 // Report instance of report model
 var Report = report{}
 
+type QueryRank struct {
+	Rank        uint    // compared to global, same as Profile.Ranks index
+	Percentage  float64 // of global value
+	Id          string  // hex checksum
+	Abstract    string  // e.g. SELECT tbl
+	Fingerprint string  // e.g. SELECT tbl
+	QPS         float64 // ResponseTime.Cnt / Profile.TotalTime
+	Load        float64 // Query_time_sum / (Profile.End - Profile.Begin)
+	FirstSeen   time.Time
+	Log         []QueryLog
+	Stats       Stats // this query's Profile.Metric stats
+}
+
+type QueryLog struct {
+	Point          uint      `db:"Point"`
+	Start_ts       time.Time `db:"Start_ts"`
+	Query_count    float32   `db:"Query_count"`
+	Query_load     float32   `db:"Query_load"`
+	Query_time_avg float32   `db:"Query_time_avg"`
+}
+
+type RankBy struct {
+	Metric string // default: Query_time
+	Stat   string // default: sum
+	Limit  uint   // default: 10
+}
+
+type Profile struct {
+	InstanceId   string      // UUID of MySQL instance
+	Begin        time.Time   // time range [Begin, End)
+	End          time.Time   // time range [Being, End)
+	TotalTime    uint        // total seconds in time range minus gaps (missing periods)
+	TotalQueries uint        // total unique class queries in time range
+	RankBy       RankBy      // criteria for ranking queries compared to global
+	Query        []QueryRank // 0=global, 1..N=queries
+}
+
+type Stats struct {
+	Cnt uint64  `db:"query_count"`
+	Sum float64 `db:"query_time_sum"`
+	Min float64 `db:"query_time_min"`
+	P5  float64
+	Avg float64 `db:"query_time_avg"`
+	Med float64 `db:"query_time_med"`
+	P95 float64 `db:"query_time_p95"`
+	Max float64 `db:"query_time_max"`
+}
+
 // get data for spark-lines at query profile
 const sparkLinesQueryClass = `
 	SELECT (:end_ts - UNIX_TIMESTAMP(start_ts)) DIV :interval_ts AS Point,
 	FROM_UNIXTIME(:end_ts - (SELECT point) * :interval_ts) AS Start_ts,
-	SUM(query_count) AS Query_count,
-	SUM(Query_time_sum)/:interval_ts AS Query_load,
-	AVG(Query_time_avg) AS Query_time_avg
+	COALESCE(SUM(query_count), 0) AS Query_count,
+	COALESCE(SUM(Query_time_sum)/:interval_ts, 0) AS Query_load,
+	COALESCE(AVG(Query_time_avg), 0) AS Query_time_avg
 	FROM query_class_metrics
 	WHERE query_class_id = :query_class_id AND instance_id = :instance_id AND (start_ts >= :begin AND start_ts < :end) GROUP BY point;
 	`
@@ -50,18 +94,18 @@ const sparkLinesQueryClass = `
 const sparkLinesQueryGlobal = `
 	SELECT (:end_ts - UNIX_TIMESTAMP(start_ts)) DIV :interval_ts AS Point,
 	FROM_UNIXTIME(:end_ts - (SELECT point) * :interval_ts) AS Start_ts,
-	SUM(total_query_count) AS Query_count,
-	SUM(Query_time_sum)/:interval_ts AS Query_load,
-	AVG(Query_time_avg) AS Query_time_avg
+	COALESCE(SUM(total_query_count), 0) AS Query_count,
+	COALESCE(SUM(Query_time_sum)/:interval_ts, 0) AS Query_load,
+	COALESCE(AVG(Query_time_avg), 0) AS Query_time_avg
 	FROM query_global_metrics
 	WHERE instance_id = :instance_id AND (start_ts >= :begin AND start_ts < :end) GROUP BY point;
 	`
 
 // get data for spark-lines at query profile
-func (r report) SparklineData(endTs int64, intervalTs int64, queryClassId uint, instanceId uint, begin, end time.Time) []qp.QueryLog {
+func (r report) SparklineData(endTs int64, intervalTs int64, queryClassID uint, instanceId uint, begin, end time.Time) []QueryLog {
 
-	queryLogArrRaw := make(map[int64]qp.QueryLog)
-	queryLogArr := []qp.QueryLog{}
+	queryLogArrRaw := make(map[int64]QueryLog)
+	queryLogArr := []QueryLog{}
 
 	args := struct {
 		EndTS        int64     `db:"end_ts"`
@@ -70,15 +114,15 @@ func (r report) SparklineData(endTs int64, intervalTs int64, queryClassId uint, 
 		InstanceID   uint      `db:"instance_id"`
 		Begin        time.Time `db:"begin"`
 		End          time.Time `db:"end"`
-	}{endTs, intervalTs, queryClassId, instanceId, begin, end}
+	}{endTs, intervalTs, queryClassID, instanceId, begin, end}
 
 	query := sparkLinesQueryClass
 	// if for sparklines for total
-	if queryClassId == 0 {
+	if queryClassID == 0 {
 		query = sparkLinesQueryGlobal
 	}
 
-	ql := []qp.QueryLog{}
+	ql := []QueryLog{}
 	if nstmt, err := db.PrepareNamed(query); err != nil {
 		log.Fatalln(err)
 	} else if err = nstmt.Select(&ql, args); err != nil {
@@ -105,7 +149,7 @@ func (r report) SparklineData(endTs int64, intervalTs int64, queryClassId uint, 
 		}
 
 		if !ok {
-			val = qp.QueryLog{
+			val = QueryLog{
 				Point:    uint(i),
 				Start_ts: time.Unix(ts, 0).UTC(),
 			}
@@ -128,13 +172,13 @@ const queryReportCountUniqueTemplate = `
 const queryReportTotal = `
 	SELECT
 		COALESCE(SUM(TIMESTAMPDIFF(SECOND, start_ts, end_ts)), 0) AS total_time,
-		COALESCE(SUM(total_query_count), 0) AS total_query_count,
-		SUM(Query_time_sum) AS query_time_sum,
-		MIN(Query_time_min) AS query_time_min,
-		SUM(Query_time_sum)/SUM(total_query_count) AS query_time_avg,
-		AVG(Query_time_med) AS query_time_med,
-		AVG(Query_time_p95) AS query_time_p95,
-		MAX(Query_time_max) AS query_time_max
+		COALESCE(SUM(total_query_count), 0) AS query_count,
+		COALESCE(SUM(Query_time_sum), 0) AS query_time_sum,
+		COALESCE(MIN(Query_time_min), 0) AS query_time_min,
+		COALESCE(SUM(Query_time_sum)/SUM(total_query_count), 0) AS query_time_avg,
+		COALESCE(AVG(Query_time_med), 0) AS query_time_med,
+		COALESCE(AVG(Query_time_p95), 0) AS query_time_p95,
+		COALESCE(MAX(Query_time_max), 0) AS query_time_max
 	FROM query_global_metrics
 	WHERE instance_id = :instance_id AND start_ts BETWEEN :begin AND :end
 `
@@ -142,13 +186,13 @@ const queryReportTotal = `
 const queryReportTemplate = `
 	SELECT
 		qcm.query_class_id AS query_class_id,
-		SUM(qcm.query_count) AS query_count,
-		SUM(qcm.Query_time_sum) AS query_time_sum,
-		MIN(qcm.Query_time_min) AS query_time_min,
-		SUM(qcm.Query_time_sum)/SUM(qcm.query_count) AS query_time_avg,
-		AVG(qcm.Query_time_med) AS query_time_med,
-		AVG(qcm.Query_time_p95) AS query_time_p95,
-		MAX(qcm.Query_time_max) AS query_time_max,
+		COALESCE(SUM(qcm.query_count), 0) AS query_count,
+		COALESCE(SUM(qcm.Query_time_sum), 0) AS query_time_sum,
+		COALESCE(MIN(qcm.Query_time_min), 0) AS query_time_min,
+		COALESCE(SUM(qcm.Query_time_sum)/SUM(qcm.query_count), 0) AS query_time_avg,
+		COALESCE(AVG(qcm.Query_time_med), 0) AS query_time_med,
+		COALESCE(AVG(qcm.Query_time_p95), 0) AS query_time_p95,
+		COALESCE(MAX(qcm.Query_time_max), 0) AS query_time_max,
 		qc.checksum AS checksum,
 		qc.abstract AS abstract,
 		qc.fingerprint AS fingerprint,
@@ -160,14 +204,15 @@ const queryReportTemplate = `
 		{{ if .Keyword }} AND (qc.checksum = ':keyword' OR qc.abstract LIKE '%:keyword' OR qc.fingerprint LIKE '%:keyword') {{ end }}
 	GROUP BY qcm.query_class_id
 	ORDER BY SUM(qcm.Query_time_sum) DESC
-	LIMIT 10 OFFSET :offset;
+	LIMIT :limit OFFSET :offset;
 `
 
-func (r report) Profile(instanceID uint, begin, end time.Time, rank qp.RankBy, offset int, search string, firstSeen bool) (qp.Profile, error) {
+func (r report) Profile(instanceID uint, begin, end time.Time, rank RankBy, offset int, search string, firstSeen bool) (Profile, error) {
 	args := struct {
 		InstanceID uint `db:"instance_id"`
 		Begin      time.Time
 		End        time.Time
+		Limit      uint
 		Offset     int
 		Keyword    string
 		FirstSeen  bool
@@ -175,11 +220,12 @@ func (r report) Profile(instanceID uint, begin, end time.Time, rank qp.RankBy, o
 		InstanceID: instanceID,
 		Begin:      begin,
 		End:        end,
+		Limit:      rank.Limit,
 		Offset:     offset,
 		Keyword:    search,
 		FirstSeen:  firstSeen,
 	}
-	p := qp.Profile{
+	p := Profile{
 		// caller sets InstanceId (MySQL instance UUID)
 		Begin:  begin,
 		End:    end,
@@ -210,30 +256,18 @@ func (r report) Profile(instanceID uint, begin, end time.Time, rank qp.RankBy, o
 		return p, mysql.Error(err, "Reporter.Profile: nstmt.Get: SELECT COUNT(DISTINCT query_class_id)")
 	}
 
-	s := mp.Stats{}
 	totalValues := struct {
-		TotalTime       uint              `db:"total_time"`
-		TotalQueryCount uint64            `db:"total_query_count"`
-		QueryTimeSum    proto.NullFloat64 `db:"query_time_sum"`
-		QueryTimeMin    proto.NullFloat64 `db:"query_time_min"`
-		QueryTimeAvg    proto.NullFloat64 `db:"query_time_avg"`
-		QueryTimeMed    proto.NullFloat64 `db:"query_time_med"`
-		QueryTimeP95    proto.NullFloat64 `db:"query_time_p95"`
-		QueryTimeMax    proto.NullFloat64 `db:"query_time_max"`
+		TotalTime uint `db:"total_time"`
+		Stats
 	}{}
 	if nstmt, err := db.PrepareNamed(queryReportTotal); err != nil {
 		return p, mysql.Error(err, "Reporter.Profile: db.PrepareNamed: queryReportTotal")
 	} else if err = nstmt.Get(&totalValues, args); err != nil {
 		return p, mysql.Error(err, "Reporter.Profile: nstmt.Get: queryReportTotal")
 	}
+
 	p.TotalTime = totalValues.TotalTime
-	s.Cnt = totalValues.TotalQueryCount
-	s.Sum = totalValues.QueryTimeSum
-	s.Min = totalValues.QueryTimeMin
-	s.Avg = totalValues.QueryTimeAvg
-	s.Med = totalValues.QueryTimeMed
-	s.P95 = totalValues.QueryTimeP95
-	s.Max = totalValues.QueryTimeMax
+	s := totalValues.Stats
 
 	// There's always a row because of the aggregate functions, but if there's
 	// no data then COALESCE will cause zero time. In this case, return an empty
@@ -243,13 +277,18 @@ func (r report) Profile(instanceID uint, begin, end time.Time, rank qp.RankBy, o
 		return p, nil
 	}
 
-	globalSum := s.Sum.Float64 // to calculate Percentage
+	globalSum := s.Sum // to calculate Percentage
 
-	p.Query = make([]qp.QueryRank, int64(rank.Limit)+1)
+	qsize := rank.Limit
+	if rank.Limit > p.TotalQueries {
+		qsize = p.TotalQueries
+	}
+
+	p.Query = make([]QueryRank, int64(qsize)+1)
 	p.Query[0].Percentage = 1 // 100%
 	p.Query[0].Stats = s
 	p.Query[0].QPS = float64(s.Cnt) / intervalTime
-	p.Query[0].Load = s.Sum.Float64 / intervalTime
+	p.Query[0].Load = globalSum / intervalTime
 	p.Query[0].Log = r.SparklineData(endTs, intervalTs, 0, instanceID, begin, end)
 
 	// Select query profile
@@ -262,18 +301,12 @@ func (r report) Profile(instanceID uint, begin, end time.Time, rank qp.RankBy, o
 	}
 
 	type QueryValue struct {
-		QueryClassID uint              `db:"query_class_id"`
-		QueryCount   uint64            `db:"query_count"`
-		QueryTimeSum proto.NullFloat64 `db:"query_time_sum"`
-		QueryTimeMin proto.NullFloat64 `db:"query_time_min"`
-		QueryTimeAvg proto.NullFloat64 `db:"query_time_avg"`
-		QueryTimeMed proto.NullFloat64 `db:"query_time_med"`
-		QueryTimeP95 proto.NullFloat64 `db:"query_time_p95"`
-		QueryTimeMax proto.NullFloat64 `db:"query_time_max"`
-		Checksum     string            `db:"checksum"`
-		Abstract     string            `db:"abstract"`
-		Fingerprint  string            `db:"fingerprint"`
-		FirstSeen    time.Time         `db:"first_seen"`
+		QueryClassID uint      `db:"query_class_id"`
+		Checksum     string    `db:"checksum"`
+		Abstract     string    `db:"abstract"`
+		Fingerprint  string    `db:"fingerprint"`
+		FirstSeen    time.Time `db:"first_seen"`
+		Stats
 	}
 	queriesValues := []QueryValue{}
 	if nstmt, err := db.PrepareNamed(queryReportBuffer.String()); err != nil {
@@ -284,24 +317,16 @@ func (r report) Profile(instanceID uint, begin, end time.Time, rank qp.RankBy, o
 
 	for i, row := range queriesValues {
 		i++
-		qrank := qp.QueryRank{
+		qrank := QueryRank{
 			Rank:        uint(i),
-			Percentage:  row.QueryTimeSum.Float64 / globalSum,
+			Percentage:  row.Stats.Sum / globalSum,
 			Id:          row.Checksum,
 			Abstract:    row.Abstract,
 			Fingerprint: row.Fingerprint,
 			FirstSeen:   row.FirstSeen,
-			QPS:         float64(row.QueryCount) / intervalTime,
-			Load:        row.QueryTimeSum.Float64 / intervalTime,
-			Stats: mp.Stats{
-				Cnt: row.QueryCount,
-				Sum: row.QueryTimeSum,
-				Min: row.QueryTimeMin,
-				Avg: row.QueryTimeAvg,
-				Med: row.QueryTimeMed,
-				P95: row.QueryTimeP95,
-				Max: row.QueryTimeMax,
-			},
+			QPS:         float64(row.Stats.Cnt) / intervalTime,
+			Load:        row.Stats.Sum / intervalTime,
+			Stats:       row.Stats,
 		}
 		qrank.Log = r.SparklineData(endTs, intervalTs, row.QueryClassID, instanceID, begin, end)
 		p.Query[i] = qrank
