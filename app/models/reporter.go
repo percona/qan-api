@@ -32,10 +32,11 @@ type report struct{}
 // Report instance of report model
 var Report = report{}
 
+// QueryRank - represents a row of query profile
 type QueryRank struct {
 	Rank        uint    // compared to global, same as Profile.Ranks index
 	Percentage  float64 // of global value
-	Id          string  // hex checksum
+	ID          string  `json:"Id"` // hex checksum
 	Abstract    string  // e.g. SELECT tbl
 	Fingerprint string  // e.g. SELECT tbl
 	QPS         float64 // ResponseTime.Cnt / Profile.TotalTime
@@ -45,22 +46,26 @@ type QueryRank struct {
 	Stats       Stats // this query's Profile.Metric stats
 }
 
+// QueryLog - a point of sparkline
 type QueryLog struct {
-	Point          uint      `db:"Point"`
-	Start_ts       time.Time `db:"Start_ts"`
-	Query_count    float32   `db:"Query_count"`
-	Query_load     float32   `db:"Query_load"`
-	Query_time_avg float32   `db:"Query_time_avg"`
+	Point        uint      `db:"Point"`
+	StartTs      time.Time `db:"Start_ts" json:"Start_ts"`
+	NoData       bool
+	QueryCount   float32 `db:"Query_count" json:"Query_count"`
+	QueryLoad    float32 `db:"Query_load" json:"Query_load"`
+	QueryTimeAvg float32 `db:"Query_time_avg" json:"Query_time_avg"`
 }
 
+// RankBy - a createria of calculating queries with lowest performance.
 type RankBy struct {
 	Metric string // default: Query_time
 	Stat   string // default: sum
 	Limit  uint   // default: 10
 }
 
+// Profile - container for query profile
 type Profile struct {
-	InstanceId   string      // UUID of MySQL instance
+	InstanceID   string      `json:"InstanceId"` // UUID of MySQL instance
 	Begin        time.Time   // time range [Begin, End)
 	End          time.Time   // time range [Being, End)
 	TotalTime    uint        // total seconds in time range minus gaps (missing periods)
@@ -69,6 +74,7 @@ type Profile struct {
 	Query        []QueryRank // 0=global, 1..N=queries
 }
 
+// Stats - perquery statistics
 type Stats struct {
 	Cnt uint64  `db:"query_count"`
 	Sum float64 `db:"query_time_sum"`
@@ -102,7 +108,7 @@ const sparkLinesQueryGlobal = `
 	`
 
 // get data for spark-lines at query profile
-func (r report) SparklineData(endTs int64, intervalTs int64, queryClassID uint, instanceId uint, begin, end time.Time) []QueryLog {
+func (r report) SparklineData(endTs int64, intervalTs int64, queryClassID uint, instanceID uint, begin, end time.Time) []QueryLog {
 
 	queryLogArrRaw := make(map[int64]QueryLog)
 	queryLogArr := []QueryLog{}
@@ -114,7 +120,7 @@ func (r report) SparklineData(endTs int64, intervalTs int64, queryClassID uint, 
 		InstanceID   uint      `db:"instance_id"`
 		Begin        time.Time `db:"begin"`
 		End          time.Time `db:"end"`
-	}{endTs, intervalTs, queryClassID, instanceId, begin, end}
+	}{endTs, intervalTs, queryClassID, instanceID, begin, end}
 
 	query := sparkLinesQueryClass
 	// if for sparklines for total
@@ -123,14 +129,18 @@ func (r report) SparklineData(endTs int64, intervalTs int64, queryClassID uint, 
 	}
 
 	ql := []QueryLog{}
-	if nstmt, err := db.PrepareNamed(query); err != nil {
+	nstmtQuery, err := db.PrepareNamed(query)
+	defer nstmtQuery.Close()
+	if err != nil {
 		log.Fatalln(err)
-	} else if err = nstmt.Select(&ql, args); err != nil {
+	}
+	err = nstmtQuery.Select(&ql, args)
+	if err != nil {
 		log.Fatalln(err)
 	}
 
 	for _, row := range ql {
-		queryLogArrRaw[(row.Start_ts).Unix()] = row
+		queryLogArrRaw[(row.StartTs).Unix()] = row
 	}
 
 	intervalTimeMinutes := end.Sub(begin).Minutes()
@@ -150,8 +160,9 @@ func (r report) SparklineData(endTs int64, intervalTs int64, queryClassID uint, 
 
 		if !ok {
 			val = QueryLog{
-				Point:    uint(i),
-				Start_ts: time.Unix(ts, 0).UTC(),
+				Point:   uint(i),
+				StartTs: time.Unix(ts, 0).UTC(),
+				NoData:  true,
 			}
 		}
 		queryLogArr = append(queryLogArr, val)
@@ -250,9 +261,13 @@ func (r report) Profile(instanceID uint, begin, end time.Time, rank RankBy, offs
 		log.Fatalln(err)
 	}
 
-	if nstmt, err := db.PrepareNamed(queryReportCountUniqueBuffer.String()); err != nil {
+	nstmtQueryReportCountUnique, err := db.PrepareNamed(queryReportCountUniqueBuffer.String())
+	defer nstmtQueryReportCountUnique.Close()
+	if err != nil {
 		return p, mysql.Error(err, "Reporter.Profile: db.PrepareNamed: SELECT COUNT(DISTINCT query_class_id)")
-	} else if err = nstmt.Get(&p.TotalQueries, args); err != nil {
+	}
+	err = nstmtQueryReportCountUnique.Get(&p.TotalQueries, args)
+	if err != nil {
 		return p, mysql.Error(err, "Reporter.Profile: nstmt.Get: SELECT COUNT(DISTINCT query_class_id)")
 	}
 
@@ -260,9 +275,13 @@ func (r report) Profile(instanceID uint, begin, end time.Time, rank RankBy, offs
 		TotalTime uint `db:"total_time"`
 		Stats
 	}{}
-	if nstmt, err := db.PrepareNamed(queryReportTotal); err != nil {
+	nstmtQueryReportTotal, err := db.PrepareNamed(queryReportTotal)
+	defer nstmtQueryReportTotal.Close()
+	if err != nil {
 		return p, mysql.Error(err, "Reporter.Profile: db.PrepareNamed: queryReportTotal")
-	} else if err = nstmt.Get(&totalValues, args); err != nil {
+	}
+	err = nstmtQueryReportTotal.Get(&totalValues, args)
+	if err != nil {
 		return p, mysql.Error(err, "Reporter.Profile: nstmt.Get: queryReportTotal")
 	}
 
@@ -292,7 +311,6 @@ func (r report) Profile(instanceID uint, begin, end time.Time, rank RankBy, offs
 	p.Query[0].Log = r.SparklineData(endTs, intervalTs, 0, instanceID, begin, end)
 
 	// Select query profile
-
 	var queryReportBuffer bytes.Buffer
 	if tmpl, err := template.New("queryReportSQL").Parse(queryReportTemplate); err != nil {
 		log.Fatalln(err)
@@ -309,9 +327,13 @@ func (r report) Profile(instanceID uint, begin, end time.Time, rank RankBy, offs
 		Stats
 	}
 	queriesValues := []QueryValue{}
-	if nstmt, err := db.PrepareNamed(queryReportBuffer.String()); err != nil {
+	nstmtQueryReport, err := db.PrepareNamed(queryReportBuffer.String())
+	defer nstmtQueryReport.Close()
+	if err != nil {
 		return p, mysql.Error(err, "Reporter.Profile: db.PrepareNamed: queryReport")
-	} else if err = nstmt.Select(&queriesValues, args); err != nil {
+	}
+	err = nstmtQueryReport.Select(&queriesValues, args)
+	if err != nil {
 		return p, mysql.Error(err, "Reporter.Profile: nstmt.Select: queryReport")
 	}
 
@@ -320,7 +342,7 @@ func (r report) Profile(instanceID uint, begin, end time.Time, rank RankBy, offs
 		qrank := QueryRank{
 			Rank:        uint(i),
 			Percentage:  row.Stats.Sum / globalSum,
-			Id:          row.Checksum,
+			ID:          row.Checksum,
 			Abstract:    row.Abstract,
 			Fingerprint: row.Fingerprint,
 			FirstSeen:   row.FirstSeen,
