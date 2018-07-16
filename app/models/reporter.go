@@ -130,10 +130,10 @@ func (r report) SparklineData(endTs int64, intervalTs int64, queryClassID uint, 
 
 	ql := []QueryLog{}
 	nstmtQuery, err := db.PrepareNamed(query)
-	defer nstmtQuery.Close()
 	if err != nil {
 		log.Fatalln(err)
 	}
+	defer nstmtQuery.Close()
 	err = nstmtQuery.Select(&ql, args)
 	if err != nil {
 		log.Fatalln(err)
@@ -262,10 +262,10 @@ func (r report) Profile(instanceID uint, begin, end time.Time, rank RankBy, offs
 	}
 
 	nstmtQueryReportCountUnique, err := db.PrepareNamed(queryReportCountUniqueBuffer.String())
-	defer nstmtQueryReportCountUnique.Close()
 	if err != nil {
 		return p, mysql.Error(err, "Reporter.Profile: db.PrepareNamed: SELECT COUNT(DISTINCT query_class_id)")
 	}
+	defer nstmtQueryReportCountUnique.Close()
 	err = nstmtQueryReportCountUnique.Get(&p.TotalQueries, args)
 	if err != nil {
 		return p, mysql.Error(err, "Reporter.Profile: nstmt.Get: SELECT COUNT(DISTINCT query_class_id)")
@@ -276,10 +276,10 @@ func (r report) Profile(instanceID uint, begin, end time.Time, rank RankBy, offs
 		Stats
 	}{}
 	nstmtQueryReportTotal, err := db.PrepareNamed(queryReportTotal)
-	defer nstmtQueryReportTotal.Close()
 	if err != nil {
 		return p, mysql.Error(err, "Reporter.Profile: db.PrepareNamed: queryReportTotal")
 	}
+	defer nstmtQueryReportTotal.Close()
 	err = nstmtQueryReportTotal.Get(&totalValues, args)
 	if err != nil {
 		return p, mysql.Error(err, "Reporter.Profile: nstmt.Get: queryReportTotal")
@@ -328,10 +328,10 @@ func (r report) Profile(instanceID uint, begin, end time.Time, rank RankBy, offs
 	}
 	queriesValues := []QueryValue{}
 	nstmtQueryReport, err := db.PrepareNamed(queryReportBuffer.String())
-	defer nstmtQueryReport.Close()
 	if err != nil {
 		return p, mysql.Error(err, "Reporter.Profile: db.PrepareNamed: queryReport")
 	}
+	defer nstmtQueryReport.Close()
 	err = nstmtQueryReport.Select(&queriesValues, args)
 	if err != nil {
 		return p, mysql.Error(err, "Reporter.Profile: nstmt.Select: queryReport")
