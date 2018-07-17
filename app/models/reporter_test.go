@@ -15,20 +15,17 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-package qan_test
+package models_test
 
 import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
 	"time"
+	"fmt"
 
-	"github.com/cactus/go-statsd-client/statsd"
-	qp "github.com/percona/pmm/proto/qan"
-	"github.com/percona/qan-api/app/db"
-	"github.com/percona/qan-api/app/qan"
+	"github.com/percona/qan-api/app/models"
 	"github.com/percona/qan-api/config"
-	"github.com/percona/qan-api/stats"
 	"github.com/percona/qan-api/test"
 	testDb "github.com/percona/qan-api/tests/setup/db"
 	"github.com/stretchr/testify/assert"
@@ -37,7 +34,6 @@ import (
 
 type ReporterTestSuite struct {
 	testDb    *testDb.Db
-	nullStats *stats.Stats
 	mysqlId   uint
 }
 
@@ -46,13 +42,11 @@ var _ = Suite(&ReporterTestSuite{})
 func (s *ReporterTestSuite) SetUpSuite(t *C) {
 	// Create test_o1 database.
 	dsn := config.Get("mysql.dsn")
+	fmt.Println(dsn, config.SchemaDir, config.TestDir)
 	s.testDb = testDb.NewDb(dsn, config.SchemaDir, config.TestDir)
 	if err := s.testDb.Start(); err != nil {
 		t.Fatalf("Could not prepare org db for %s: %s", dsn, err)
 	}
-
-	nullStats := stats.NewStats(&statsd.NoopClient{}, "test", "localhost", "mm", "1.0")
-	s.nullStats = &nullStats
 
 	s.mysqlId = 1259
 }
@@ -72,7 +66,7 @@ func (s *ReporterTestSuite) TearDownTest(t *C) {
 		}
 		time.Sleep(200 * time.Millisecond)
 	}
-	t.Fatalf("Prepared_stmt_count=%d, expected 0", ps)
+	t.Fatalf("Prepared_stmt_count=%d, expected 0.", ps)
 }
 
 // --------------------------------------------------------------------------
@@ -83,14 +77,13 @@ func (s *ReporterTestSuite) TestSimple(t *C) {
 
 	begin := time.Date(2015, time.May, 01, 0, 0, 0, 0, time.UTC)
 	end := time.Date(2015, time.May, 02, 0, 0, 0, 0, time.UTC)
-	r := qp.RankBy{
+	r := models.RankBy{
 		Metric: "Query_time",
 		Stat:   "sum",
 		Limit:  5,
 	}
 
-	qr := qan.NewReporter(db.DBManager, s.nullStats)
-	got, err := qr.Profile(s.mysqlId, begin, end, r, 0, "")
+	got, err := models.Report.Profile(s.mysqlId, begin, end, r, 0, "", false)
 	t.Check(err, IsNil)
 
 	expectedFile := config.TestDir + "/qan/profile/may-2015-01.json"
@@ -98,12 +91,11 @@ func (s *ReporterTestSuite) TestSimple(t *C) {
 	if updateTestData != "" {
 		data, _ := json.MarshalIndent(&got, "", "  ")
 		ioutil.WriteFile(expectedFile, data, 0666)
-
 	}
 
 	j, err := ioutil.ReadFile(expectedFile)
 	t.Assert(err, IsNil)
-	var expect qp.Profile
+	var expect models.Profile
 	err = json.Unmarshal(j, &expect)
 	t.Assert(err, IsNil)
 
@@ -115,14 +107,13 @@ func (s *ReporterTestSuite) Test003(t *C) {
 
 	begin := time.Date(2013, time.July, 01, 0, 0, 0, 0, time.UTC)
 	end := time.Date(2013, time.July, 02, 0, 0, 0, 0, time.UTC)
-	r := qp.RankBy{
+	r := models.RankBy{
 		Metric: "Query_time",
 		Stat:   "sum",
 		Limit:  5,
 	}
 
-	qr := qan.NewReporter(db.DBManager, s.nullStats)
-	got, err := qr.Profile(3, begin, end, r, 0, "")
+	got, err := models.Report.Profile(3, begin, end, r, 0, "", false)
 	t.Check(err, IsNil)
 
 	expectedFile := config.TestDir + "/qan/profile/003-01.json"

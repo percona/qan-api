@@ -9,8 +9,6 @@ import (
 	"time"
 )
 
-const maxAmountOfPoints = 60
-
 // Metrics provire instruments to works with metrics
 type metrics struct{}
 
@@ -210,12 +208,8 @@ func (m metrics) getSparklines(group metricGroup, args args, amountOfPoints int6
 	for pointN = 0; pointN < amountOfPoints; pointN++ {
 		ts := args.EndTS - pointN*args.IntervalTS
 		val, ok := metricLogRaw[ts]
-		// skip first or last point if they are empty
-		if (pointN == 0 || pointN == amountOfPoints-1) && !ok {
-			continue
-		}
 		if !ok {
-			val = rateMetrics{Point: pointN, Ts: time.Unix(ts, 0).UTC()}
+			val = rateMetrics{Point: pointN, Ts: time.Unix(ts, 0).UTC(), NoData: true}
 		}
 		sparks = append(sparks, val)
 	}
@@ -303,6 +297,7 @@ type specialMetrics struct {
 type rateMetrics struct {
 	Point                            int64
 	Ts                               time.Time
+	NoData                           bool
 	Query_count_per_sec              float32 `json:",omitempty"`
 	Query_time_sum_per_sec           float32 `json:",omitempty"`
 	Lock_time_sum_per_sec            float32 `json:",omitempty"` // load

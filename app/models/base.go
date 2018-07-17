@@ -11,6 +11,8 @@ import (
 
 var db *sqlx.DB
 
+const maxAmountOfPoints = 60
+
 func init() {
 	var err error
 	dsn := config.Get("mysql.dsn")
