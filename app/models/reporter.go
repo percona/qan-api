@@ -177,7 +177,7 @@ const queryReportCountUniqueTemplate = `
 	JOIN query_classes AS qc ON qcm.query_class_id = qc.query_class_id
 	WHERE qcm.instance_id = :instance_id AND (qcm.start_ts >= :begin AND qcm.start_ts < :end)
 		{{ if .FirstSeen }} AND qc.first_seen >= :begin {{ end }}
-		{{ if .Keyword }} AND (qc.checksum = ':keyword' OR qc.abstract LIKE '%:keyword' OR qc.fingerprint LIKE '%:keyword') {{ end }};
+		{{ if .Keyword }} AND (qc.checksum = :keyword OR qc.abstract LIKE :start_keyword OR qc.fingerprint LIKE :start_keyword) {{ end }};
 `
 
 const queryReportTotal = `
@@ -212,7 +212,7 @@ const queryReportTemplate = `
 	JOIN query_classes AS qc ON qcm.query_class_id = qc.query_class_id
 	WHERE qcm.instance_id = :instance_id AND (qcm.start_ts >= :begin AND qcm.start_ts < :end)
 		{{ if .FirstSeen }} AND qc.first_seen >= :begin {{ end }}
-		{{ if .Keyword }} AND (qc.checksum = ':keyword' OR qc.abstract LIKE '%:keyword' OR qc.fingerprint LIKE '%:keyword') {{ end }}
+		{{ if .Keyword }} AND (qc.checksum = :keyword OR qc.abstract LIKE :start_keyword OR qc.fingerprint LIKE :start_keyword) {{ end }}
 	GROUP BY qcm.query_class_id
 	ORDER BY SUM(qcm.Query_time_sum) DESC
 	LIMIT :limit OFFSET :offset;
@@ -220,21 +220,23 @@ const queryReportTemplate = `
 
 func (r report) Profile(instanceID uint, begin, end time.Time, rank RankBy, offset int, search string, firstSeen bool) (Profile, error) {
 	args := struct {
-		InstanceID uint `db:"instance_id"`
-		Begin      time.Time
-		End        time.Time
-		Limit      uint
-		Offset     int
-		Keyword    string
-		FirstSeen  bool
+		InstanceID   uint `db:"instance_id"`
+		Begin        time.Time
+		End          time.Time
+		Limit        uint
+		Offset       int
+		Keyword      string `db:"keyword"`
+		StartKeyword string `db:"start_keyword"`
+		FirstSeen    bool
 	}{
-		InstanceID: instanceID,
-		Begin:      begin,
-		End:        end,
-		Limit:      rank.Limit,
-		Offset:     offset,
-		Keyword:    search,
-		FirstSeen:  firstSeen,
+		InstanceID:   instanceID,
+		Begin:        begin,
+		End:          end,
+		Limit:        rank.Limit,
+		Offset:       offset,
+		Keyword:      search,
+		StartKeyword: search + "%",
+		FirstSeen:    firstSeen,
 	}
 	p := Profile{
 		// caller sets InstanceId (MySQL instance UUID)
@@ -340,7 +342,7 @@ func (r report) Profile(instanceID uint, begin, end time.Time, rank RankBy, offs
 	for i, row := range queriesValues {
 		i++
 		qrank := QueryRank{
-			Rank:        uint(i),
+			Rank:        uint(i) + uint(offset),
 			Percentage:  row.Stats.Sum / globalSum,
 			ID:          row.Checksum,
 			Abstract:    row.Abstract,
