@@ -289,6 +289,7 @@ func (r report) Profile(instanceID uint, begin, end time.Time, rank RankBy, offs
 
 	p.TotalTime = totalValues.TotalTime
 	s := totalValues.Stats
+	globalSum := s.Sum // to calculate Percentage
 
 	// There's always a row because of the aggregate functions, but if there's
 	// no data then COALESCE will cause zero time. In this case, return an empty
@@ -297,20 +298,6 @@ func (r report) Profile(instanceID uint, begin, end time.Time, rank RankBy, offs
 	if p.TotalTime == 0 {
 		return p, nil
 	}
-
-	globalSum := s.Sum // to calculate Percentage
-
-	qsize := rank.Limit
-	if rank.Limit > p.TotalQueries {
-		qsize = p.TotalQueries
-	}
-
-	p.Query = make([]QueryRank, int64(qsize)+1)
-	p.Query[0].Percentage = 1 // 100%
-	p.Query[0].Stats = s
-	p.Query[0].QPS = float64(s.Cnt) / intervalTime
-	p.Query[0].Load = globalSum / intervalTime
-	p.Query[0].Log = r.SparklineData(endTs, intervalTs, 0, instanceID, begin, end)
 
 	// Select query profile
 	var queryReportBuffer bytes.Buffer
@@ -339,6 +326,13 @@ func (r report) Profile(instanceID uint, begin, end time.Time, rank RankBy, offs
 		return p, mysql.Error(err, "Reporter.Profile: nstmt.Select: queryReport")
 	}
 
+	p.Query = append(p.Query, QueryRank{
+		Percentage: 1, // 100%
+		Stats:      s,
+		QPS:        float64(s.Cnt) / intervalTime,
+		Load:       globalSum / intervalTime,
+		Log:        r.SparklineData(endTs, intervalTs, 0, instanceID, begin, end),
+	})
 	for i, row := range queriesValues {
 		i++
 		qrank := QueryRank{
@@ -353,7 +347,7 @@ func (r report) Profile(instanceID uint, begin, end time.Time, rank RankBy, offs
 			Stats:       row.Stats,
 		}
 		qrank.Log = r.SparklineData(endTs, intervalTs, row.QueryClassID, instanceID, begin, end)
-		p.Query[i] = qrank
+		p.Query = append(p.Query, qrank)
 	}
 	return p, nil
 }
