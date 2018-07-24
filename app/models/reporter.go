@@ -301,8 +301,11 @@ func (r report) Profile(instanceID uint, begin, end time.Time, rank RankBy, offs
 	globalSum := s.Sum // to calculate Percentage
 
 	qsize := rank.Limit
-	if rank.Limit > p.TotalQueries {
-		qsize = p.TotalQueries
+	if rank.Limit > p.TotalQueries-uint(offset) {
+		qsize = p.TotalQueries - uint(offset) // less then default 10 limit.
+	}
+	if p.TotalQueries < uint(offset) {
+		qsize = 0 // guard, when offset is bigger then actual amount of rows.
 	}
 
 	p.Query = make([]QueryRank, int64(qsize)+1)
