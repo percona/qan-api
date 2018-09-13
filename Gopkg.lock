@@ -92,7 +92,7 @@
     "event",
     "log"
   ]
-  revision = "63da60b59ae83a05a8d447a5fdf2186ff3c37f4b"
+  revision = "8863d30f944bc83d6d7b1d5c4b3cfa2d69d84cf3"
 
 [[projects]]
   branch = "master"
