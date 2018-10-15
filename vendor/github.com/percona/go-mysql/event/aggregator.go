@@ -45,6 +45,7 @@ type Aggregator struct {
 }
 
 // NewAggregator returns a new Aggregator.
+// outlierTime is https://www.percona.com/doc/percona-server/5.5/diagnostics/slow_extended_55.html#slow_query_log_always_write_time
 func NewAggregator(samples bool, utcOffset time.Duration, outlierTime float64) *Aggregator {
 	a := &Aggregator{
 		samples:     samples,
@@ -88,7 +89,7 @@ func (a *Aggregator) Finalize() Result {
 		class.Finalize(a.rateLimit)
 		class.UniqueQueries = 1
 		if class.Example != nil && class.Example.Ts != "" {
-			if t, err := time.Parse("060102 15:04:05", class.Example.Ts); err != nil {
+			if t, err := time.Parse("2006-01-02 15:04:05", class.Example.Ts); err != nil {
 				class.Example.Ts = ""
 			} else {
 				class.Example.Ts = t.Add(a.utcOffset).Format("2006-01-02 15:04:05")
