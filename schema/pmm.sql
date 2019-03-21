@@ -28,12 +28,13 @@ CREATE TABLE IF NOT EXISTS agent_configs (
 
 CREATE TABLE IF NOT EXISTS agent_log (
   instance_id    INT UNSIGNED NOT NULL,
-  sec            BIGINT UNSIGNED NOT NULL,     -- Unix timestamp (seconds)
-  nsec           BIGINT UNSIGNED NOT NULL,     -- nanoseconds for ^
+  sec            INT UNSIGNED NOT NULL,     -- Unix timestamp (seconds)
+  nsec           INT UNSIGNED NOT NULL,     -- nanoseconds for ^
   level          TINYINT(1) UNSIGNED NOT NULL, -- 7 debug, 6 info, ...
   service        VARCHAR(50) NOT NULL,         -- service + instance name, e.g. mm-mysql-db01
   msg            VARCHAR(5000) CHARSET 'utf8' NOT NULL,
-  INDEX (instance_id, sec, level)
+  INDEX (instance_id, sec, level),
+  INDEX (sec)
 );
 
 CREATE TABLE IF NOT EXISTS query_classes (
